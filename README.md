@@ -37,13 +37,34 @@ de dados, caracterizando o sistema distribuido:
                                                                |  server/data/app.db       |
                                                                +---------------------------+
 
-O servidor tambem consome uma fonte externa real de dados de qualidade do ar:
-Open-Meteo Air Quality API (sem chave), usada no endpoint de atualizacao de ar.
+O servidor tambem consome fontes externas reais de dados: a Open-Meteo Air
+Quality API (sem chave) para qualidade do ar, e a Overpass API do OpenStreetMap
+(sem chave, dados sob licenca ODbL) para transito.
 ```
 
 - Base da API: `http://HOST:8000`, prefixo `/api/v1`, corpo em JSON.
 - Documentacao interativa (Swagger) em `http://HOST:8000/docs`.
 - Verificacao de saude em `http://HOST:8000/health`.
+
+### Atualizacao com fontes reais
+
+- `POST /api/v1/regioes/{id}/atualizar-ar` - busca a qualidade do ar atual na
+  Open-Meteo (sem chave) e persiste as medicoes de `qualidade_ar`.
+- `POST /api/v1/regioes/{id}/atualizar-transito` - busca as vias reais ao redor
+  da regiao na **Overpass API do OpenStreetMap** e persiste metricas de
+  infraestrutura viaria como medicoes de `transito`: numero de vias principais,
+  media de faixas (`lanes`) e media de velocidade maxima (`maxspeed`). Os dados
+  do OpenStreetMap sao publicados sob a licenca **ODbL**
+  ([openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)); o
+  campo `fonte` de cada medicao cita a origem. A chamada exige o header
+  `User-Agent` (a API responde HTTP 406 sem ele).
+
+Ambos os endpoints retornam **HTTP 502** padronizado em PT-BR quando a fonte
+externa falha. Exemplo:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/regioes/1/atualizar-transito
+```
 
 ## Pre-requisitos
 
@@ -156,6 +177,10 @@ README.md      Este arquivo
 - [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) -
   fonte real e gratuita (sem chave) de dados de qualidade do ar, consumida pelo
   servidor.
+- [Overpass API do OpenStreetMap](https://wiki.openstreetmap.org/wiki/Overpass_API) -
+  fonte real e gratuita (sem chave) de infraestrutura viaria (transito),
+  consumida pelo servidor. Dados sob licenca
+  [ODbL](https://www.openstreetmap.org/copyright).
 
 Referencias adicionais, com indicacao de onde cada tecnologia foi aplicada,
 estao em [docs/08_bibliografia.md](docs/08_bibliografia.md).

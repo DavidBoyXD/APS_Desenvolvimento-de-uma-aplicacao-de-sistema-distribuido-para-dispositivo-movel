@@ -24,9 +24,10 @@ de 2026).
 - **Uvicorn** - servidor ASGI que executa a aplicacao.
   [https://www.uvicorn.org](https://www.uvicorn.org).
   Aplicado no comando de execucao do servidor (capitulo 7).
-- **httpx** - cliente HTTP usado para consumir a Open-Meteo.
+- **httpx** - cliente HTTP usado para consumir a Open-Meteo e a Overpass API.
   [https://www.python-httpx.org](https://www.python-httpx.org).
-  Aplicado em `server/app/services/openmeteo.py`.
+  Aplicado em `server/app/services/openmeteo.py` e
+  `server/app/services/overpass.py`.
 - **pytest** - testes automatizados do back-end.
   [https://docs.pytest.org](https://docs.pytest.org).
   Aplicado em `server/tests/*`.
@@ -88,6 +89,16 @@ de 2026).
 - **Copernicus Atmosphere Monitoring Service (CAMS)** - base dos modelos de
   qualidade do ar servidos pela Open-Meteo.
   [https://atmosphere.copernicus.eu](https://atmosphere.copernicus.eu).
+- **Overpass API do OpenStreetMap** - fonte real de infraestrutura viaria
+  (transito), gratuita e sem chave. Documentacao:
+  [https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API).
+  Endpoint usado: `https://overpass-api.de/api/interpreter`.
+  Aplicado em `server/app/services/overpass.py`.
+- **OpenStreetMap** - projeto colaborativo de dados geograficos que alimenta a
+  Overpass API. [https://www.openstreetmap.org](https://www.openstreetmap.org).
+- **ODbL (Open Database License)** - licenca sob a qual os dados do OpenStreetMap
+  sao disponibilizados; citada no campo `fonte` das medicoes de transito.
+  [https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright).
 
 ## 8.4 Conceitos e plataformas de referencia
 

@@ -132,15 +132,41 @@ producao (PostgreSQL) sem reescrever a aplicacao.
   API (schemas). Referencia:
   [https://docs.pydantic.dev](https://docs.pydantic.dev).
   Aplicado em: `server/app/schemas.py`.
-- **httpx** (0.28.1) - cliente HTTP em Python usado pelo servidor para consumir a
-  Open-Meteo. Referencia:
+- **httpx** (0.28.1) - cliente HTTP em Python usado pelo servidor para consumir as
+  fontes externas de dados. Referencia:
   [https://www.python-httpx.org](https://www.python-httpx.org).
-  Aplicado em: `server/app/services/openmeteo.py`.
+  Aplicado em: `server/app/services/openmeteo.py` (qualidade do ar) e
+  `server/app/services/overpass.py` (transito via OpenStreetMap).
 - **Fetch API** - usada pelo cliente movel para chamar a API REST. Referencia:
   [https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API](https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API).
   Aplicado em: `mobile/src/api/client.ts`.
 
-## 3.7 Testes
+## 3.7 Fontes de dados ambientais reais
+
+O sistema prioriza dados publicos, gratuitos, sem chave de API e comprovaveis.
+
+- **Open-Meteo Air Quality API** - fonte real de qualidade do ar. Referencia:
+  [https://open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api).
+  Endpoint: `https://air-quality-api.open-meteo.com/v1/air-quality`. Sem chave.
+  Aplicado em: `server/app/services/openmeteo.py`, consumido pelo endpoint
+  `POST /api/v1/regioes/{id}/atualizar-ar`.
+- **Overpass API do OpenStreetMap** - fonte real de infraestrutura viaria
+  (transito). Referencia da API:
+  [https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API).
+  Endpoint: `https://overpass-api.de/api/interpreter`. Gratuita e sem chave; os
+  dados do OpenStreetMap sao publicados sob a licenca **ODbL (Open Database
+  License)**: [https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright).
+  Aplicado em: `server/app/services/overpass.py`, consumido pelo endpoint
+  `POST /api/v1/regioes/{id}/atualizar-transito`. A partir das vias reais ao
+  redor de uma regiao (lat/lon do modelo `Regiao`), o servico deriva metricas de
+  infraestrutura: numero de vias principais, media de faixas (`lanes`) e media de
+  velocidade maxima (`maxspeed`). **Observacao tecnica:** a chamada HTTP a
+  Overpass exige o header `User-Agent` (usamos `APS-UNIP-SD/1.0`); sem ele a API
+  responde HTTP 406.
+- **Alagamento** - permanece com dado simulado (academico), pois nao ha API
+  publica gratuita e sem chave unificada para esse indicador.
+
+## 3.8 Testes
 
 - **pytest** (8.3.4) - framework de testes do back-end.
   Referencia: [https://docs.pytest.org](https://docs.pytest.org).

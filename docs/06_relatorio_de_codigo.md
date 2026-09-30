@@ -143,6 +143,84 @@ Pontos-chave:
   cru), atendendo ao requisito de tratamento de erros.
 - Persiste as novas medicoes com `tipo=qualidade_ar` e `fonte` da Open-Meteo.
 
+### 6.1.4.1 Integracao com dados reais de transito - `server/app/services/overpass.py`
+
+Consome a Overpass API do OpenStreetMap e deriva metricas reais de infraestrutura
+viaria, espelhando o padrao do servico da Open-Meteo (dataclass de leitura,
+funcao `mapear_payload`, funcao `buscar_*` com `httpx.Client` injetavel e excecao
+dedicada). A chamada obrigatoriamente envia o header `User-Agent`:
+
+```python
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+USER_AGENT = "APS-UNIP-SD/1.0"  # sem User-Agent a Overpass retorna HTTP 406
+
+def buscar_transito(latitude, longitude, client=None):
+    query = _montar_query(latitude, longitude)
+    headers = {"User-Agent": USER_AGENT}
+    ...
+    try:
+        resposta = client.post(OVERPASS_URL, data={"data": query}, headers=headers)
+        resposta.raise_for_status()
+        payload = resposta.json()
+    except httpx.HTTPError as exc:
+        raise OverpassError(f"Falha ao consultar a Overpass API: {exc}") from exc
+    ...
+    return mapear_payload(payload)
+```
+
+E a derivacao das metricas a partir das vias (`way`) e suas tags:
+
+```python
+def mapear_payload(payload):
+    elements = payload.get("elements")
+    if not isinstance(elements, list):
+        raise OverpassError("Resposta da Overpass sem o bloco 'elements'.")
+    for elemento in elements:
+        ...
+        tags = elemento.get("tags")
+        if not isinstance(tags, dict) or not tags.get("name"):
+            continue
+        total_vias += 1
+        # lê lanes (faixas) e maxspeed (km/h), ignorando ausentes/invalidas
+    ...
+    # deriva: vias_principais (contagem), faixas_media, velocidade_maxima_media
+```
+
+Pontos-chave:
+
+- Query Overpass QL validada em runtime, com raio e limite parametrizados por
+  constantes: `way(around:1500,LAT,LON)[highway~"primary|secondary|trunk|motorway"][name]`.
+- A fonte e sua licenca ficam no proprio codigo (rastreabilidade). Fonte:
+  [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API); dados sob
+  licenca **ODbL** ([openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)).
+- Qualquer `httpx.HTTPError` vira `OverpassError`, evitando erro 500 cru.
+- `mapear_payload` levanta `OverpassError` quando falta `elements` ou nao ha via
+  valida, mesma filosofia do servico da Open-Meteo.
+
+### 6.1.4.2 Rota de atualizacao de transito - `server/app/routers/medicoes.py`
+
+Funcao `atualizar_transito` (endpoint `POST /api/v1/regioes/{id}/atualizar-transito`):
+
+```python
+regiao = obter_regiao_ou_404(db, regiao_id)
+try:
+    leituras = buscar_transito(regiao.latitude, regiao.longitude)
+except OverpassError as exc:
+    raise HTTPException(status_code=502, detail=f"Nao foi possivel obter dados de transito: {exc}") from exc
+...
+for leitura in leituras:
+    medicao = Medicao(regiao_id=regiao.id, tipo=TipoMedicao.transito, parametro=leitura.parametro, ..., fonte=FONTE_TRANSITO)
+    db.add(medicao)
+db.commit()
+```
+
+Pontos-chave:
+
+- Reusa `obter_regiao_ou_404` e o padrao de **502 Bad Gateway** padronizado da
+  atualizacao de ar.
+- Persiste as metricas derivadas com `tipo=transito` e `fonte` citando
+  OpenStreetMap/Overpass (ODbL) com link.
+
 ### 6.1.5 Consulta por regiao e helper 404 - `server/app/routers/regioes.py`
 
 ```python
@@ -367,3 +445,12 @@ listagem/filtro de medicoes; agregacao do relatorio; criacao e avaliacao de
 alertas; validacao invalida retornando 422; e o mapeamento do payload da
 Open-Meteo a partir de um JSON fixture (`server/tests/fixtures/openmeteo_sample.json`),
 com a chamada externa mockada para nao depender de rede.
+
+A fonte real de transito tem testes proprios em `server/tests/test_transito.py`,
+espelhando o padrao da Open-Meteo: mapeamento do payload da Overpass a partir de
+um JSON fixture (`server/tests/fixtures/overpass_sample.json`) validando as
+metricas derivadas (numero de vias, media de faixas e media de velocidade
+maxima); payload invalido levantando `OverpassError`; e o endpoint
+`POST /api/v1/regioes/{id}/atualizar-transito` com a rede mockada, cobrindo o
+caminho de sucesso (status 200, tipo `transito`) e o de falha (HTTP 502
+padronizado). Os testes **nunca** acessam a Overpass real.

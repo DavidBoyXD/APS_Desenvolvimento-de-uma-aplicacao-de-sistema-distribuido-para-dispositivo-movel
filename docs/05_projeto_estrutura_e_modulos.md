@@ -35,11 +35,12 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
 │   │   ├── errors.py               # exception handlers globais (PT-BR)
 │   │   ├── seed.py                 # populacao inicial idempotente
 │   │   ├── services/
-│   │   │   └── openmeteo.py        # integracao Open-Meteo (httpx)
+│   │   │   ├── openmeteo.py        # integracao Open-Meteo (httpx)
+│   │   │   └── overpass.py         # integracao Overpass/OpenStreetMap (httpx)
 │   │   └── routers/
 │   │       ├── saude.py            # GET /api/v1/saude
 │   │       ├── regioes.py          # GET regioes (mapa) + helper 404
-│   │       ├── medicoes.py         # listar/filtrar + atualizar-ar
+│   │       ├── medicoes.py         # listar/filtrar + atualizar-ar + atualizar-transito
 │   │       ├── relatorios.py       # agregacoes por regiao
 │   │       └── alertas.py          # regras e avaliacao de alertas
 │   └── tests/                      # suite pytest
@@ -47,10 +48,12 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
 │       ├── test_health.py
 │       ├── test_regioes.py
 │       ├── test_medicoes.py
+│       ├── test_transito.py
 │       ├── test_relatorios.py
 │       ├── test_alertas.py
 │       └── fixtures/
-│           └── openmeteo_sample.json
+│           ├── openmeteo_sample.json
+│           └── overpass_sample.json
 └── mobile/                         # CLIENTE MOVEL (React Native / Expo)
     ├── app.json                    # config Expo (nome "Monitor Ambiental Urbano")
     ├── package.json                # dependencias e scripts
@@ -99,8 +102,8 @@ Entidades:
 O enum `TipoMedicao` (em `models.py`) fixa os tres tipos suportados. Como o
 `parametro` e uma string, o mesmo tipo pode ter varios parametros (por exemplo,
 `qualidade_ar` com `pm2_5`, `pm10`, `carbon_monoxide`, `nitrogen_dioxide`,
-`ozone`). O campo `fonte` documenta, por linha, se o dado e real (Open-Meteo) ou
-simulado (transito/alagamento).
+`ozone`). O campo `fonte` documenta, por linha, se o dado e real (Open-Meteo para
+qualidade do ar; Overpass/OpenStreetMap para transito) ou simulado (alagamento).
 
 ## 5.3 Modulos do back-end (`server/app/`)
 
@@ -130,6 +133,13 @@ simulado (transito/alagamento).
   extrai a leitura horaria mais recente nao nula por parametro) e
   `buscar_qualidade_ar` (faz a chamada HTTP com httpx e converte qualquer falha em
   `OpenMeteoError`).
+- **`services/overpass.py`** - integracao com a Overpass API do OpenStreetMap
+  (fonte real de transito, dados sob licenca ODbL). Espelha o padrao do
+  `openmeteo.py`: define a URL/endpoint, a query Overpass QL (vias principais em
+  um raio ao redor da regiao), a funcao `mapear_payload` (que deriva
+  `vias_principais`, `faixas_media` e `velocidade_maxima_media` a partir das tags
+  das vias) e `buscar_transito` (faz o POST com httpx enviando o header
+  `User-Agent` obrigatorio e converte qualquer falha em `OverpassError`).
 - **`seed.py`** - `executar_seed` popula o banco (se vazio) com 3 regioes reais
   (Sao Paulo/SP, Rio de Janeiro/RJ, Curitiba/PR) e, para cada uma, medicoes seed
   dos tres tipos e duas regras de alerta (PM2.5 > 25 e nivel_agua > 0.5).
@@ -138,7 +148,10 @@ simulado (transito/alagamento).
   - `regioes.py`: `GET /api/v1/regioes`, `GET /api/v1/regioes/{id}` e o helper
     `obter_regiao_ou_404` (reusado pelos demais routers).
   - `medicoes.py`: `GET /api/v1/medicoes` (filtros por regiao/tipo),
-    `GET /api/v1/regioes/{id}/medicoes`, `POST /api/v1/regioes/{id}/atualizar-ar`.
+    `GET /api/v1/regioes/{id}/medicoes`, `POST /api/v1/regioes/{id}/atualizar-ar`
+    (qualidade do ar via Open-Meteo) e
+    `POST /api/v1/regioes/{id}/atualizar-transito` (transito via Overpass/
+    OpenStreetMap).
   - `relatorios.py`: `GET /api/v1/relatorios/regiao/{id}` (agregacoes).
   - `alertas.py`: `GET /api/v1/alertas`, `POST /api/v1/alertas`,
     `GET /api/v1/alertas/avaliar/{regiao_id}`.

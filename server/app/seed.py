@@ -7,9 +7,12 @@ medicao registra a ``fonte`` do dado:
 - qualidade_ar: valores iniciais de exemplo, substituiveis por dados reais da
   Open-Meteo Air Quality API via POST /api/v1/regioes/{id}/atualizar-ar.
   Fonte real: https://open-meteo.com/en/docs/air-quality-api
-- transito e alagamento: DADOS SIMULADOS para fins academicos (a APS pede o
-  tema, mas nao ha API publica gratuita e sem chave unificada para esses
-  dados). A fonte deixa isso explicito.
+- transito: valor inicial de exemplo (simulado), substituivel por dados REAIS
+  de infraestrutura viaria da Overpass API do OpenStreetMap via
+  POST /api/v1/regioes/{id}/atualizar-transito. Fonte real (licenca ODbL):
+  https://overpass-api.de/api/interpreter e https://www.openstreetmap.org/copyright
+- alagamento: DADOS SIMULADOS para fins academicos (nao ha API publica
+  gratuita e sem chave unificada para esse dado). A fonte deixa isso explicito.
 
 Coordenadas (fonte: IBGE / Wikipedia dos municipios):
 - Sao Paulo/SP: -23.55, -46.63
@@ -25,7 +28,10 @@ from sqlalchemy.orm import Session
 from .models import Alerta, Medicao, Regiao, TipoMedicao
 
 FONTE_AR = "Valor inicial de exemplo; atualizavel via Open-Meteo Air Quality API"
-FONTE_TRANSITO = "Dado simulado (academico) - nao ha API publica gratuita sem chave"
+FONTE_TRANSITO = (
+    "Valor inicial de exemplo; atualizavel com dados reais via Overpass API do "
+    "OpenStreetMap (POST /api/v1/regioes/{id}/atualizar-transito)"
+)
 FONTE_ALAGAMENTO = "Dado simulado (academico) - nao ha API publica gratuita sem chave"
 
 # Regioes brasileiras reais com coordenadas para o mapa.

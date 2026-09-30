@@ -48,6 +48,16 @@ Fluxo de atualizacao de dados reais (botao "Atualizar qualidade do ar"):
 4. Em caso de falha de rede com a Open-Meteo, o servidor devolve um erro 502
    padronizado (nunca um erro 500 cru), e o cliente mostra uma mensagem amigavel.
 
+Fluxo de atualizacao de transito (dados reais de infraestrutura viaria):
+
+1. O cliente faz `POST /api/v1/regioes/{id}/atualizar-transito`.
+2. O servidor chama a Overpass API do OpenStreetMap (via httpx, com header
+   `User-Agent`) buscando as vias principais ao redor da regiao.
+3. O servidor deriva metricas reais (numero de vias, media de faixas e media de
+   velocidade maxima), persiste como medicoes de `transito` (com `fonte` citando
+   OpenStreetMap/Overpass sob ODbL) e as retorna ao cliente.
+4. Em caso de falha da Overpass, o servidor devolve o mesmo 502 padronizado.
+
 ## 4.2 Elementos do projeto (monorepo)
 
 O repositorio e um monorepo com tres areas:
@@ -69,13 +79,20 @@ Alem disso, na raiz: `README.md`, `.gitignore`, o documento de requisitos
 | Uvicorn (standard) | 0.32.1 | [uvicorn.org](https://www.uvicorn.org) | Execucao do servidor (capitulo 7) |
 | SQLAlchemy | 2.0.36 | [sqlalchemy.org](https://www.sqlalchemy.org) | `server/app/database.py`, `server/app/models.py` |
 | Pydantic | 2.10.4 | [docs.pydantic.dev](https://docs.pydantic.dev) | `server/app/schemas.py` |
-| httpx | 0.28.1 | [python-httpx.org](https://www.python-httpx.org) | `server/app/services/openmeteo.py` |
+| httpx | 0.28.1 | [python-httpx.org](https://www.python-httpx.org) | `server/app/services/openmeteo.py`, `server/app/services/overpass.py` |
 | pytest | 8.3.4 | [docs.pytest.org](https://docs.pytest.org) | `server/tests/*` |
 | Python | 3.9 | [python.org](https://www.python.org) | Runtime do back-end |
 
-Fonte de dados externa: **Open-Meteo Air Quality API**
-([open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api)),
-aplicada em `server/app/services/openmeteo.py`.
+Fontes de dados externas (reais, gratuitas, sem chave):
+
+- **Open-Meteo Air Quality API** (qualidade do ar)
+  ([open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api)),
+  aplicada em `server/app/services/openmeteo.py`.
+- **Overpass API do OpenStreetMap** (transito / infraestrutura viaria)
+  ([wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API)),
+  endpoint `https://overpass-api.de/api/interpreter`, dados sob licenca **ODbL**
+  ([openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)),
+  aplicada em `server/app/services/overpass.py`. Exige o header `User-Agent`.
 
 ### Cliente movel (`mobile/package.json`)
 
@@ -105,8 +122,9 @@ repositorio em estado funcional (baseline verde):
 2. **Back-end completo (API REST).**
    - Camada de dados: `database.py` (engine/sessao SQLite), `models.py` (Regiao,
      Medicao, Alerta) e `schemas.py` (Pydantic).
-   - Integracao externa: `services/openmeteo.py` (consulta a Open-Meteo com httpx
-     e tratamento de erro).
+   - Integracao externa: `services/openmeteo.py` (qualidade do ar) e
+     `services/overpass.py` (transito via OpenStreetMap), ambos com consulta via
+     httpx e tratamento de erro dedicado.
    - Rotas por dominio em `routers/` (regioes, medicoes, relatorios, alertas,
      saude) e tratamento de erros global em `errors.py`.
    - Seed idempotente (`seed.py`) com 3 regioes brasileiras reais e medicoes/

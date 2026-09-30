@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Monitor Ambiental Urbano",
+    "slug": "monitor-ambiental-urbano",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

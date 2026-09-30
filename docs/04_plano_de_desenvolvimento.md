@@ -150,5 +150,6 @@ repositorio em estado funcional (baseline verde):
   Portugues.
 - Cada tecnologia/biblioteca/API citada tem link de referencia real e a indicacao
   de onde foi aplicada (ver tabelas acima e `08_bibliografia.md`).
-- O campo `fonte` de cada medicao no banco registra a origem do dado (real ou
-  simulado), reforcando a rastreabilidade tambem em tempo de execucao.
+- O campo `fonte` de cada medicao no banco registra a origem real do dado
+  (Open-Meteo Air Quality, Overpass/OpenStreetMap ODbL ou Open-Meteo Flood API /
+  GloFAS), reforcando a rastreabilidade tambem em tempo de execucao.

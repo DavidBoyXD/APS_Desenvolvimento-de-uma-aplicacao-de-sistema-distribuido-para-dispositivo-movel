@@ -153,8 +153,9 @@ producao (PostgreSQL) sem reescrever a aplicacao.
 - **httpx** (0.28.1) - cliente HTTP em Python usado pelo servidor para consumir as
   fontes externas de dados. Referencia:
   [https://www.python-httpx.org](https://www.python-httpx.org).
-  Aplicado em: `server/app/services/openmeteo.py` (qualidade do ar) e
-  `server/app/services/overpass.py` (transito via OpenStreetMap).
+  Aplicado em: `server/app/services/openmeteo.py` (qualidade do ar),
+  `server/app/services/overpass.py` (transito via OpenStreetMap) e
+  `server/app/services/flood.py` (alagamento via Open-Meteo Flood API / GloFAS).
 - **Fetch API** - usada pelo cliente movel para chamar a API REST. Referencia:
   [https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API](https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API).
   Aplicado em: `mobile/src/api/client.ts`.
@@ -181,8 +182,19 @@ O sistema prioriza dados publicos, gratuitos, sem chave de API e comprovaveis.
   velocidade maxima (`maxspeed`). **Observacao tecnica:** a chamada HTTP a
   Overpass exige o header `User-Agent` (usamos `APS-UNIP-SD/1.0`); sem ele a API
   responde HTTP 406.
-- **Alagamento** - permanece com dado simulado (academico), pois nao ha API
-  publica gratuita e sem chave unificada para esse indicador.
+- **Open-Meteo Flood API** - fonte real de alagamento (risco de cheia).
+  Referencia:
+  [https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api).
+  Endpoint: `https://flood-api.open-meteo.com/v1/flood`. Gratuita e sem chave,
+  da mesma familia da Air Quality API. Tem base cientifica no **GloFAS (Global
+  Flood Awareness System)**, o sistema global de alerta de inundacoes do programa
+  Copernicus. Aplicado em: `server/app/services/flood.py`, consumido pelo endpoint
+  `POST /api/v1/regioes/{id}/atualizar-alagamento`. A metrica principal e a
+  **descarga fluvial** (`river_discharge`, em m3/s): a partir da serie diaria
+  retornada para a lat/lon da regiao (do modelo `Regiao`), o servico deriva
+  metricas reais de descarga atual, media e maxima do periodo. Quanto maior a
+  vazao do rio, maior o potencial de transbordamento e alagamento. A unidade e
+  lida do bloco `daily_units` do payload, com fallback para `m3/s`.
 
 ## 3.8 Testes
 

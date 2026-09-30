@@ -221,6 +221,91 @@ Pontos-chave:
 - Persiste as metricas derivadas com `tipo=transito` e `fonte` citando
   OpenStreetMap/Overpass (ODbL) com link.
 
+### 6.1.4.3 Integracao com dados reais de alagamento - `server/app/services/flood.py`
+
+Consome a Open-Meteo Flood API (base cientifica GloFAS) e deriva metricas reais
+de descarga fluvial, espelhando o padrao dos servicos anteriores (dataclass de
+leitura `LeituraAlagamento`, funcao `mapear_payload`, funcao `buscar_*` com
+`httpx.Client` injetavel e excecao dedicada `FloodError`):
+
+```python
+FLOOD_API_URL = "https://flood-api.open-meteo.com/v1/flood"
+DAILY_PARAMS = "river_discharge,river_discharge_mean,river_discharge_max"
+UNIDADE_PADRAO = "m3/s"  # fallback; a unidade real vem de daily_units
+
+def buscar_alagamento(latitude, longitude, client=None):
+    params = {"latitude": latitude, "longitude": longitude,
+              "daily": DAILY_PARAMS, "forecast_days": FORECAST_DAYS}
+    ...
+    try:
+        resposta = client.get(FLOOD_API_URL, params=params)
+        resposta.raise_for_status()
+        payload = resposta.json()
+    except httpx.HTTPError as exc:
+        raise FloodError(f"Falha ao consultar a Open-Meteo Flood API: {exc}") from exc
+    ...
+    return mapear_payload(payload)
+```
+
+E a derivacao das metricas a partir da serie diaria de descarga fluvial:
+
+```python
+def mapear_payload(payload):
+    if payload.get("error"):
+        raise FloodError(f"Erro retornado pela Open-Meteo Flood API: {payload.get('reason')}")
+    daily = payload.get("daily")
+    if not isinstance(daily, dict):
+        raise FloodError("Resposta da Flood API sem o bloco 'daily'.")
+    ...
+    daily_units = payload.get("daily_units") or {}
+    unidade_descarga = daily_units.get("river_discharge") or UNIDADE_PADRAO
+    # river_discharge: valor nao-nulo mais recente (descarga atual)
+    # river_discharge_media: media do periodo (river_discharge_mean ou media dos validos)
+    # river_discharge_maxima: maxima do periodo (river_discharge_max ou max dos validos)
+```
+
+Pontos-chave:
+
+- URL, documentacao e base cientifica (GloFAS) estao no proprio codigo
+  (rastreabilidade). Fonte:
+  [Open-Meteo Flood API](https://open-meteo.com/en/docs/flood-api); base cientifica
+  [GloFAS - Global Flood Awareness System](https://global-flood.emergency.copernicus.eu).
+- A descarga fluvial (`river_discharge`, em m3/s) e um indicador reconhecido de
+  risco de cheia: quanto maior a vazao, maior o potencial de transbordamento e
+  alagamento. Derivamos tres metricas reais: descarga atual (valor nao-nulo mais
+  recente), media e maxima do periodo.
+- A **unidade e lida do bloco `daily_units`** com fallback constante `m3/s`,
+  nunca hardcodada (mesmo cuidado adotado no servico da Open-Meteo).
+- Qualquer `httpx.HTTPError` vira `FloodError`; `mapear_payload` tambem levanta
+  `FloodError` quando a API sinaliza `error: true`, falta o bloco `daily` ou nao
+  ha valor de descarga valido. Nunca estoura um 500 cru.
+
+### 6.1.4.4 Rota de atualizacao de alagamento - `server/app/routers/medicoes.py`
+
+Funcao `atualizar_alagamento` (endpoint `POST /api/v1/regioes/{id}/atualizar-alagamento`):
+
+```python
+regiao = obter_regiao_ou_404(db, regiao_id)
+try:
+    leituras = buscar_alagamento(regiao.latitude, regiao.longitude)
+except FloodError as exc:
+    raise HTTPException(status_code=502, detail=f"Nao foi possivel obter dados de alagamento: {exc}") from exc
+...
+for leitura in leituras:
+    medicao = Medicao(regiao_id=regiao.id, tipo=TipoMedicao.alagamento, parametro=leitura.parametro, ..., fonte=FONTE_ALAGAMENTO)
+    db.add(medicao)
+db.commit()
+```
+
+Pontos-chave:
+
+- Reusa `obter_regiao_ou_404` e o mesmo padrao de **502 Bad Gateway** padronizado
+  das atualizacoes de ar e transito.
+- Converte o `timestamp` ISO 8601 de `daily.time` em `datetime` com fuso (UTC
+  quando ausente), com fallback para o instante atual.
+- Persiste as metricas derivadas com `tipo=alagamento` e `fonte` citando a
+  Open-Meteo Flood API / GloFAS com link.
+
 ### 6.1.5 Consulta por regiao e helper 404 - `server/app/routers/regioes.py`
 
 ```python
@@ -330,8 +415,12 @@ async def lifespan(app):
 ```
 
 O `seed.py` cria 3 regioes reais e, por regiao, medicoes dos tres tipos e duas
-regras de alerta, distinguindo dados reais de simulados pelo campo `fonte`. E
-idempotente: se ja houver regioes, nao faz nada.
+regras de alerta. As medicoes de seed sao apenas valores iniciais de exemplo, e o
+campo `fonte` de cada uma ja aponta a fonte real substituivel: Open-Meteo Air
+Quality (ar), Overpass/OpenStreetMap ODbL (transito) e Open-Meteo Flood API /
+GloFAS (alagamento) via os respectivos endpoints de atualizacao. Nenhum tipo e
+classificado como dado definitivo simulado. O seed e idempotente: se ja houver
+regioes, nao faz nada.
 
 ## 6.2 Cliente movel
 
@@ -525,3 +614,15 @@ maxima); payload invalido levantando `OverpassError`; e o endpoint
 `POST /api/v1/regioes/{id}/atualizar-transito` com a rede mockada, cobrindo o
 caminho de sucesso (status 200, tipo `transito`) e o de falha (HTTP 502
 padronizado). Os testes **nunca** acessam a Overpass real.
+
+A fonte real de alagamento tem testes proprios em `server/tests/test_alagamento.py`,
+no mesmo padrao: mapeamento do payload da Flood API a partir de um JSON fixture
+(`server/tests/fixtures/flood_sample.json`) validando as metricas derivadas
+(descarga fluvial atual, media e maxima, com a unidade lida de `daily_units`);
+ramos de erro levantando `FloodError` (payload com `error: true`, sem o bloco
+`daily` ou sem valores validos); o endpoint
+`POST /api/v1/regioes/{id}/atualizar-alagamento` com a rede mockada, cobrindo
+sucesso (status 200, tipo `alagamento`) e falha (HTTP 502 padronizado); e a
+camada HTTP de `buscar_alagamento` com `httpx.MockTransport` (parametros corretos
+e status de erro convertido em `FloodError`). Os testes **nunca** acessam a Flood
+API real.

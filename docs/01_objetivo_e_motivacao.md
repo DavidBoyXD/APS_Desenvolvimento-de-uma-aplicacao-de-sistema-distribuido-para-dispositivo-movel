@@ -66,6 +66,8 @@ funcoes extras e relatorios adicionais. Este projeto atende a esses pontos:
 
 > Observacao sobre o escopo do alagamento: conforme orientacao do autor, caso o
 > tratamento de alagamento se mostrasse complexo demais, ele poderia ficar em
-> segundo plano. Neste projeto ele foi mantido de forma leve: o modelo de dados
-> e generico e ja representa o tipo `alagamento` (parametro `nivel_agua`) com
-> dado simulado e alerta associado, sem depender de uma API externa especifica.
+> segundo plano. Neste projeto ele foi mantido com fonte real: o modelo de dados
+> e generico e representa o tipo `alagamento` (com metricas de descarga fluvial e
+> alerta associado), alimentado pela Open-Meteo Flood API (base cientifica GloFAS)
+> por meio do endpoint `POST /api/v1/regioes/{id}/atualizar-alagamento` (ver
+> `03_fundamentos_tecnologias_moveis.md` e `06_relatorio_de_codigo.md`).

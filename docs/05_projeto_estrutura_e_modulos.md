@@ -35,12 +35,13 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
 │   │   ├── errors.py               # exception handlers globais (PT-BR)
 │   │   ├── seed.py                 # populacao inicial idempotente
 │   │   ├── services/
-│   │   │   ├── openmeteo.py        # integracao Open-Meteo (httpx)
-│   │   │   └── overpass.py         # integracao Overpass/OpenStreetMap (httpx)
+│   │   │   ├── openmeteo.py        # integracao Open-Meteo Air Quality (httpx)
+│   │   │   ├── overpass.py         # integracao Overpass/OpenStreetMap (httpx)
+│   │   │   └── flood.py            # integracao Open-Meteo Flood API / GloFAS (httpx)
 │   │   └── routers/
 │   │       ├── saude.py            # GET /api/v1/saude
 │   │       ├── regioes.py          # GET regioes (mapa) + helper 404
-│   │       ├── medicoes.py         # listar/filtrar + atualizar-ar + atualizar-transito
+│   │       ├── medicoes.py         # listar/filtrar + atualizar-ar/transito/alagamento
 │   │       ├── relatorios.py       # agregacoes por regiao
 │   │       └── alertas.py          # regras e avaliacao de alertas
 │   └── tests/                      # suite pytest
@@ -49,11 +50,13 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
 │       ├── test_regioes.py
 │       ├── test_medicoes.py
 │       ├── test_transito.py
+│       ├── test_alagamento.py
 │       ├── test_relatorios.py
 │       ├── test_alertas.py
 │       └── fixtures/
 │           ├── openmeteo_sample.json
-│           └── overpass_sample.json
+│           ├── overpass_sample.json
+│           └── flood_sample.json
 └── mobile/                         # CLIENTE MOVEL (React Native / Expo)
     ├── app.json                    # config Expo (nome "Monitor Ambiental Urbano")
     ├── package.json                # dependencias e scripts
@@ -102,8 +105,11 @@ Entidades:
 O enum `TipoMedicao` (em `models.py`) fixa os tres tipos suportados. Como o
 `parametro` e uma string, o mesmo tipo pode ter varios parametros (por exemplo,
 `qualidade_ar` com `pm2_5`, `pm10`, `carbon_monoxide`, `nitrogen_dioxide`,
-`ozone`). O campo `fonte` documenta, por linha, se o dado e real (Open-Meteo para
-qualidade do ar; Overpass/OpenStreetMap para transito) ou simulado (alagamento).
+`ozone`). O campo `fonte` documenta, por linha, a origem real do dado: Open-Meteo
+Air Quality API para qualidade do ar; Overpass/OpenStreetMap (ODbL) para transito;
+e Open-Meteo Flood API / GloFAS para alagamento. As medicoes criadas pelo seed sao
+apenas valores iniciais de exemplo, substituiveis pelas fontes reais por meio dos
+endpoints de atualizacao.
 
 ## 5.3 Modulos do back-end (`server/app/`)
 
@@ -140,18 +146,32 @@ qualidade do ar; Overpass/OpenStreetMap para transito) ou simulado (alagamento).
   `vias_principais`, `faixas_media` e `velocidade_maxima_media` a partir das tags
   das vias) e `buscar_transito` (faz o POST com httpx enviando o header
   `User-Agent` obrigatorio e converte qualquer falha em `OverpassError`).
+- **`services/flood.py`** - integracao com a Open-Meteo Flood API (fonte real de
+  alagamento, base cientifica GloFAS). Espelha o padrao dos outros servicos:
+  define a URL/endpoint (`https://flood-api.open-meteo.com/v1/flood`), os
+  parametros diarios (`river_discharge` e opcionalmente `river_discharge_mean`/
+  `river_discharge_max`), a funcao `mapear_payload` (que deriva `river_discharge`
+  atual, `river_discharge_media` e `river_discharge_maxima`, lendo a unidade de
+  `daily_units` com fallback `m3/s`) e `buscar_alagamento` (faz a chamada com
+  httpx e converte qualquer falha em `FloodError`).
 - **`seed.py`** - `executar_seed` popula o banco (se vazio) com 3 regioes reais
   (Sao Paulo/SP, Rio de Janeiro/RJ, Curitiba/PR) e, para cada uma, medicoes seed
-  dos tres tipos e duas regras de alerta (PM2.5 > 25 e nivel_agua > 0.5).
+  dos tres tipos e duas regras de alerta (PM2.5 > 25 e nivel_agua > 0.5). Os
+  valores de seed sao apenas exemplos iniciais: o campo `fonte` de cada um ja
+  aponta a fonte real substituivel (Open-Meteo Air Quality, Overpass/OpenStreetMap
+  e Open-Meteo Flood API / GloFAS), sem classificar nenhum tipo como dado
+  definitivo simulado.
 - **`routers/`** - endpoints agrupados por dominio (detalhados no capitulo 6):
   - `saude.py`: `GET /api/v1/saude`.
   - `regioes.py`: `GET /api/v1/regioes`, `GET /api/v1/regioes/{id}` e o helper
     `obter_regiao_ou_404` (reusado pelos demais routers).
   - `medicoes.py`: `GET /api/v1/medicoes` (filtros por regiao/tipo),
     `GET /api/v1/regioes/{id}/medicoes`, `POST /api/v1/regioes/{id}/atualizar-ar`
-    (qualidade do ar via Open-Meteo) e
+    (qualidade do ar via Open-Meteo),
     `POST /api/v1/regioes/{id}/atualizar-transito` (transito via Overpass/
-    OpenStreetMap).
+    OpenStreetMap) e
+    `POST /api/v1/regioes/{id}/atualizar-alagamento` (alagamento via Open-Meteo
+    Flood API / GloFAS).
   - `relatorios.py`: `GET /api/v1/relatorios/regiao/{id}` (agregacoes).
   - `alertas.py`: `GET /api/v1/alertas`, `POST /api/v1/alertas`,
     `GET /api/v1/alertas/avaliar/{regiao_id}`.

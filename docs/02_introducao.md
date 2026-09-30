@@ -40,7 +40,9 @@ Neste projeto:
 - O **cliente movel** roda no dispositivo do usuario (emulador ou aparelho).
 - O **servidor** (API REST) roda em outra maquina/processo e concentra a logica.
 - O **banco de dados** persiste o estado do sistema.
-- Um **servico externo** (Open-Meteo) fornece dados reais de qualidade do ar.
+- **Servicos externos** fornecem dados reais: Open-Meteo Air Quality API
+  (qualidade do ar), Overpass API do OpenStreetMap (transito) e Open-Meteo Flood
+  API / GloFAS (alagamento).
 
 A comunicacao entre cliente e servidor usa **HTTP com payloads JSON** seguindo o
 estilo **REST**. Cada parte pode evoluir e escalar de forma independente (por
@@ -57,10 +59,22 @@ do fluxo esta em `04_plano_de_desenvolvimento.md`.
   ([https://openaq.org](https://openaq.org)) agrega dados de estacoes oficiais,
   porem a versao atual da API exige chave de acesso (X-API-Key). Por isso NAO foi
   usada como fonte primaria, mas fica registrada como fonte relevante.
-- **Transito e alagamento:** representados no mesmo modelo de dados, com valores
-  simulados para fins academicos e o campo `fonte` indicando explicitamente que
-  sao dados simulados (nao ha uma API publica unica, gratuita e sem chave para
-  esses dados por regiao no escopo do trabalho).
+- **Transito (dados reais):** Overpass API do OpenStreetMap
+  ([https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API)),
+  gratuita e sem chave, de onde o servidor deriva metricas reais de
+  infraestrutura viaria (numero de vias principais, media de faixas e media de
+  velocidade maxima). Os dados do OpenStreetMap sao publicados sob a licenca ODbL
+  ([https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)).
+- **Alagamento (dados reais):** Open-Meteo Flood API
+  ([https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api)),
+  gratuita e sem chave, com base cientifica no GloFAS (Global Flood Awareness
+  System, do programa Copernicus). O servidor obtem a descarga fluvial
+  (`river_discharge`, em m3/s) da regiao e dela deriva metricas reais (descarga
+  atual, media e maxima do periodo), indicador reconhecido de risco de cheia.
+- Em todos os casos, o campo `fonte` de cada medicao registra explicitamente a
+  origem real do dado. As medicoes criadas pelo seed sao apenas valores iniciais
+  de exemplo, substituiveis pelas fontes reais por meio dos endpoints de
+  atualizacao (ver `05_projeto_estrutura_e_modulos.md` e `06_relatorio_de_codigo.md`).
 
 ## 2.5 Organizacao do restante do documento
 

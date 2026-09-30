@@ -37,9 +37,10 @@ de dados, caracterizando o sistema distribuido:
                                                                |  server/data/app.db       |
                                                                +---------------------------+
 
-O servidor tambem consome fontes externas reais de dados: a Open-Meteo Air
-Quality API (sem chave) para qualidade do ar, e a Overpass API do OpenStreetMap
-(sem chave, dados sob licenca ODbL) para transito.
+O servidor tambem consome fontes externas reais de dados (todas gratuitas e sem
+chave): a Open-Meteo Air Quality API para qualidade do ar, a Overpass API do
+OpenStreetMap (dados sob licenca ODbL) para transito e a Open-Meteo Flood API
+(base cientifica GloFAS) para alagamento.
 ```
 
 - Base da API: `http://HOST:8000`, prefixo `/api/v1`, corpo em JSON.
@@ -58,12 +59,20 @@ Quality API (sem chave) para qualidade do ar, e a Overpass API do OpenStreetMap
   ([openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)); o
   campo `fonte` de cada medicao cita a origem. A chamada exige o header
   `User-Agent` (a API responde HTTP 406 sem ele).
+- `POST /api/v1/regioes/{id}/atualizar-alagamento` - busca a descarga fluvial
+  real da regiao na **Open-Meteo Flood API** (sem chave, base cientifica
+  **GloFAS** - Global Flood Awareness System, do programa Copernicus) e persiste
+  metricas reais de alagamento como medicoes de `alagamento`: descarga fluvial
+  atual (`river_discharge`), media e maxima do periodo, em m3/s. A descarga
+  fluvial (vazao do rio) e um indicador reconhecido de risco de cheia; o campo
+  `fonte` de cada medicao cita a origem
+  ([open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api)).
 
-Ambos os endpoints retornam **HTTP 502** padronizado em PT-BR quando a fonte
+Os tres endpoints retornam **HTTP 502** padronizado em PT-BR quando a fonte
 externa falha. Exemplo:
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/regioes/1/atualizar-transito
+curl -X POST http://localhost:8000/api/v1/regioes/1/atualizar-alagamento
 ```
 
 ## Pre-requisitos
@@ -192,6 +201,11 @@ README.md      Este arquivo
   fonte real e gratuita (sem chave) de infraestrutura viaria (transito),
   consumida pelo servidor. Dados sob licenca
   [ODbL](https://www.openstreetmap.org/copyright).
+- [Open-Meteo Flood API](https://open-meteo.com/en/docs/flood-api) - fonte real e
+  gratuita (sem chave) de alagamento (descarga fluvial / `river_discharge`),
+  consumida pelo servidor. Tem base cientifica no
+  [GloFAS - Global Flood Awareness System](https://global-flood.emergency.copernicus.eu)
+  (Copernicus).
 
 Referencias adicionais, com indicacao de onde cada tecnologia foi aplicada,
 estao em [docs/08_bibliografia.md](docs/08_bibliografia.md).

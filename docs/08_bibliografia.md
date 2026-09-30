@@ -24,10 +24,10 @@ de 2026).
 - **Uvicorn** - servidor ASGI que executa a aplicacao.
   [https://www.uvicorn.org](https://www.uvicorn.org).
   Aplicado no comando de execucao do servidor (capitulo 7).
-- **httpx** - cliente HTTP usado para consumir a Open-Meteo e a Overpass API.
-  [https://www.python-httpx.org](https://www.python-httpx.org).
-  Aplicado em `server/app/services/openmeteo.py` e
-  `server/app/services/overpass.py`.
+- **httpx** - cliente HTTP usado para consumir a Open-Meteo, a Overpass API e a
+  Open-Meteo Flood API. [https://www.python-httpx.org](https://www.python-httpx.org).
+  Aplicado em `server/app/services/openmeteo.py`,
+  `server/app/services/overpass.py` e `server/app/services/flood.py`.
 - **pytest** - testes automatizados do back-end.
   [https://docs.pytest.org](https://docs.pytest.org).
   Aplicado em `server/tests/*`.
@@ -111,6 +111,14 @@ de 2026).
 - **ODbL (Open Database License)** - licenca sob a qual os dados do OpenStreetMap
   sao disponibilizados; citada no campo `fonte` das medicoes de transito.
   [https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright).
+- **Open-Meteo Flood API** - fonte real de alagamento (descarga fluvial /
+  river discharge), gratuita e sem chave. Documentacao:
+  [https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api).
+  Endpoint usado: `https://flood-api.open-meteo.com/v1/flood`.
+  Aplicado em `server/app/services/flood.py`.
+- **GloFAS - Global Flood Awareness System** - base cientifica da Open-Meteo Flood
+  API; sistema global de alerta de inundacoes do Copernicus Emergency Management
+  Service (CEMS). [https://global-flood.emergency.copernicus.eu](https://global-flood.emergency.copernicus.eu).
 
 ## 8.4 Conceitos e plataformas de referencia
 

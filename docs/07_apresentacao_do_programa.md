@@ -104,20 +104,28 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
 2. **Detalhe da regiao.** Veja as medicoes agrupadas por tipo (Qualidade do ar,
    Transito, Alagamento), com valor, unidade, data/hora e a fonte de cada dado.
 
-   > **Importante (limitacao dos dados):** apenas a **qualidade do ar** usa dados
-   > reais (Open-Meteo, ver capitulo 8). Os dados de **transito** e **alagamento**
-   > sao **SIMULADOS** (valores de exemplo gerados pelo seed), pois nao havia uma
-   > API publica, gratuita e sem chave que os unificasse no escopo deste trabalho.
-   > Essa condicao esta explicita em tempo de execucao no proprio campo `fonte` de
-   > cada medicao desses tipos (ex.: indica origem "simulada"), justamente para que
-   > o dado simulado nunca seja confundido com dado observado. A modelagem
-   > generica (uma tabela de medicao por tipo/parametro) permite substituir esses
-   > dados simulados por uma fonte real no futuro sem alterar a API nem o cliente.
+   > **Importante (origem dos dados):** os **tres tipos** de medicao tem fonte
+   > real, publica, gratuita e sem chave de API: a **qualidade do ar** usa a
+   > **Open-Meteo Air Quality API**, o **transito** usa a **Overpass API do
+   > OpenStreetMap** (dados sob licenca ODbL) e o **alagamento** usa a
+   > **Open-Meteo Flood API** (base cientifica **GloFAS**, do programa Copernicus),
+   > que fornece a descarga fluvial (`river_discharge`, em m3/s). Ver capitulo 8.
+   > As medicoes criadas pelo seed sao apenas **valores iniciais de exemplo**, e o
+   > proprio campo `fonte` de cada medicao registra, em tempo de execucao, a
+   > origem do dado (a fonte real substituivel), justamente para que o valor
+   > inicial nunca seja confundido com uma leitura observada. A modelagem generica
+   > (uma tabela de medicao por tipo/parametro) permite atualizar os tres tipos com
+   > dados reais sem alterar a API nem o cliente.
 
-3. **Atualizacao com dados reais (Open-Meteo).** Toque em "Atualizar qualidade do
-   ar". O app chama `POST /api/v1/regioes/{id}/atualizar-ar`; o servidor consulta a
-   Open-Meteo com a latitude/longitude da regiao, persiste as novas medicoes e as
-   retorna. A lista recarrega com os dados reais mais recentes (PM2.5, PM10, etc.).
+3. **Atualizacao com dados reais.** Toque em "Atualizar qualidade do ar". O app
+   chama `POST /api/v1/regioes/{id}/atualizar-ar`; o servidor consulta a Open-Meteo
+   com a latitude/longitude da regiao, persiste as novas medicoes e as retorna. A
+   lista recarrega com os dados reais mais recentes (PM2.5, PM10, etc.). De forma
+   analoga, o servidor tambem expoe `POST /api/v1/regioes/{id}/atualizar-transito`
+   (vias reais na Overpass API do OpenStreetMap) e
+   `POST /api/v1/regioes/{id}/atualizar-alagamento` (descarga fluvial real na
+   Open-Meteo Flood API / GloFAS), cada um persistindo as medicoes reais do seu
+   tipo e registrando a fonte no campo `fonte`.
 
 4. **Relatorios.** No detalhe, toque em "Ver relatorio" para abrir as agregacoes
    por parametro: media, minimo, maximo, contagem (amostras) e ultima leitura.
@@ -142,7 +150,8 @@ cd server
 ```
 
 A suite valida saude, regioes, medicoes, relatorios, alertas, tratamento de erros
-e o mapeamento do payload da Open-Meteo (com a chamada externa mockada).
+e o mapeamento dos payloads das fontes reais (Open-Meteo Air Quality, Overpass e
+Open-Meteo Flood API / GloFAS), sempre com a chamada externa mockada.
 
 ## 7.6 Checagem de tipos do cliente (opcional na apresentacao)
 

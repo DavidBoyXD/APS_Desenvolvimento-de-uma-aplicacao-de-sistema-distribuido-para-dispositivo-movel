@@ -82,3 +82,11 @@ def payload_overpass() -> dict:
     caminho = os.path.join(FIXTURES_DIR, "overpass_sample.json")
     with open(caminho, encoding="utf-8") as f:
         return json.load(f)
+
+
+@pytest.fixture()
+def payload_flood() -> dict:
+    """Carrega o fixture JSON de resposta da Open-Meteo Flood API (GloFAS)."""
+    caminho = os.path.join(FIXTURES_DIR, "flood_sample.json")
+    with open(caminho, encoding="utf-8") as f:
+        return json.load(f)

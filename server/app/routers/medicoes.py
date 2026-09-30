@@ -8,6 +8,9 @@
 - POST /api/v1/regioes/{id}/atualizar-transito -> busca vias reais na Overpass
   API do OpenStreetMap (dados ODbL), deriva metricas de infraestrutura viaria
   e persiste as medicoes de transito. Falha de rede tambem vira 502 em PT-BR.
+- POST /api/v1/regioes/{id}/atualizar-alagamento -> busca a descarga fluvial
+  real na Open-Meteo Flood API (base cientifica GloFAS), deriva metricas de
+  alagamento e persiste as medicoes. Falha de rede tambem vira 502 em PT-BR.
 """
 
 from datetime import datetime, timezone
@@ -23,6 +26,8 @@ from ..schemas import MedicaoRead
 from ..services.openmeteo import FONTE, OpenMeteoError, buscar_qualidade_ar
 from ..services.overpass import FONTE as FONTE_TRANSITO
 from ..services.overpass import OverpassError, buscar_transito
+from ..services.flood import FONTE as FONTE_ALAGAMENTO
+from ..services.flood import FloodError, buscar_alagamento
 from .regioes import obter_regiao_ou_404
 
 router = APIRouter(prefix="/api/v1", tags=["medicoes"])
@@ -92,6 +97,54 @@ def atualizar_qualidade_ar(
             unidade=leitura.unidade,
             timestamp=ts,
             fonte=FONTE,
+        )
+        db.add(medicao)
+        novas.append(medicao)
+
+    db.commit()
+    for medicao in novas:
+        db.refresh(medicao)
+    return novas
+
+
+@router.post(
+    "/regioes/{regiao_id}/atualizar-alagamento", response_model=list[MedicaoRead]
+)
+def atualizar_alagamento(
+    regiao_id: int, db: Session = Depends(get_db)
+) -> list[Medicao]:
+    """Busca a descarga fluvial real na Flood API e persiste as medicoes.
+
+    Deriva metricas reais de alagamento (descarga fluvial atual, media e maxima
+    do periodo) a partir da serie diaria do GloFAS ao redor da regiao. Em caso
+    de falha de rede/HTTP, retorna 502 padronizado (nunca 500 cru).
+    """
+    regiao = obter_regiao_ou_404(db, regiao_id)
+
+    try:
+        leituras = buscar_alagamento(regiao.latitude, regiao.longitude)
+    except FloodError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Nao foi possivel obter dados de alagamento: {exc}",
+        ) from exc
+
+    novas: list[Medicao] = []
+    for leitura in leituras:
+        try:
+            ts = datetime.fromisoformat(leitura.timestamp)
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+        except (TypeError, ValueError):
+            ts = datetime.now(timezone.utc)
+        medicao = Medicao(
+            regiao_id=regiao.id,
+            tipo=TipoMedicao.alagamento,
+            parametro=leitura.parametro,
+            valor=leitura.valor,
+            unidade=leitura.unidade,
+            timestamp=ts,
+            fonte=FONTE_ALAGAMENTO,
         )
         db.add(medicao)
         novas.append(medicao)

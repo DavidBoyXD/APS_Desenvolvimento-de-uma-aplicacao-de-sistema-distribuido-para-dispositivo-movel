@@ -11,8 +11,10 @@ medicao registra a ``fonte`` do dado:
   de infraestrutura viaria da Overpass API do OpenStreetMap via
   POST /api/v1/regioes/{id}/atualizar-transito. Fonte real (licenca ODbL):
   https://overpass-api.de/api/interpreter e https://www.openstreetmap.org/copyright
-- alagamento: DADOS SIMULADOS para fins academicos (nao ha API publica
-  gratuita e sem chave unificada para esse dado). A fonte deixa isso explicito.
+- alagamento: valor inicial de exemplo, substituivel por dados REAIS de
+  descarga fluvial (river discharge) da Open-Meteo Flood API via
+  POST /api/v1/regioes/{id}/atualizar-alagamento. Fonte real (base cientifica
+  GloFAS - Global Flood Awareness System): https://open-meteo.com/en/docs/flood-api
 
 Coordenadas (fonte: IBGE / Wikipedia dos municipios):
 - Sao Paulo/SP: -23.55, -46.63
@@ -32,7 +34,10 @@ FONTE_TRANSITO = (
     "Valor inicial de exemplo; atualizavel com dados reais via Overpass API do "
     "OpenStreetMap (POST /api/v1/regioes/{id}/atualizar-transito)"
 )
-FONTE_ALAGAMENTO = "Dado simulado (academico) - nao ha API publica gratuita sem chave"
+FONTE_ALAGAMENTO = (
+    "Valor inicial de exemplo; atualizavel com dados reais via Open-Meteo Flood "
+    "API / GloFAS (POST /api/v1/regioes/{id}/atualizar-alagamento)"
+)
 
 # Regioes brasileiras reais com coordenadas para o mapa.
 REGIOES_SEED = [

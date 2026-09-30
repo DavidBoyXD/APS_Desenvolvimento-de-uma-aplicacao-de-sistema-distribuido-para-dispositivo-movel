@@ -207,6 +207,28 @@ export function atualizarAr(regiaoId: number): Promise<Medicao[]> {
   });
 }
 
+/**
+ * POST /api/v1/regioes/{id}/atualizar-transito -> busca vias reais na Overpass
+ * API (OpenStreetMap, dados ODbL), persiste e retorna as novas medicoes de
+ * transito. Sem corpo na request.
+ */
+export function atualizarTransito(regiaoId: number): Promise<Medicao[]> {
+  return requisitar<Medicao[]>(`/regioes/${regiaoId}/atualizar-transito`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * POST /api/v1/regioes/{id}/atualizar-alagamento -> busca a descarga fluvial
+ * real na Open-Meteo Flood API (base cientifica GloFAS), persiste e retorna as
+ * novas medicoes de alagamento. Sem corpo na request.
+ */
+export function atualizarAlagamento(regiaoId: number): Promise<Medicao[]> {
+  return requisitar<Medicao[]>(`/regioes/${regiaoId}/atualizar-alagamento`, {
+    method: 'POST',
+  });
+}
+
 /** GET /api/v1/relatorios/regiao/{id} -> relatorio agregado da regiao. */
 export function getRelatorio(regiaoId: number): Promise<RelatorioRegiao> {
   return requisitar<RelatorioRegiao>(`/relatorios/regiao/${regiaoId}`);

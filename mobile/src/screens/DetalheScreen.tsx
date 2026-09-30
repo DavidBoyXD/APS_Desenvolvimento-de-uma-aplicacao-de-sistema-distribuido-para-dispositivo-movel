@@ -1,13 +1,21 @@
 /**
  * Tela de detalhe da regiao: mostra as medicoes agrupadas por tipo
- * (qualidade do ar, transito, alagamento). Oferece o botao "Atualizar qualidade
- * do ar", que chama POST /api/v1/regioes/{id}/atualizar-ar (dados reais da
- * Open-Meteo) e recarrega a lista. Tambem leva ao relatorio da regiao.
+ * (qualidade do ar, transito, alagamento). Oferece um botao de atualizacao por
+ * tipo, que chama o respectivo endpoint POST de fonte real e recarrega a lista:
+ *   - qualidade do ar -> POST /api/v1/regioes/{id}/atualizar-ar (Open-Meteo);
+ *   - transito -> POST /api/v1/regioes/{id}/atualizar-transito (Overpass/OSM);
+ *   - alagamento -> POST /api/v1/regioes/{id}/atualizar-alagamento (Open-Meteo
+ *     Flood API / GloFAS).
+ * Assim as fontes reais alimentam a lista da tela, o relatorio e os alertas.
+ * Tambem leva ao relatorio da regiao.
  *
  * Referencias:
  *   - SectionList: https://reactnative.dev/docs/sectionlist
  *   - Fonte de dados reais de ar: Open-Meteo Air Quality API
  *     https://open-meteo.com/en/docs/air-quality-api
+ *   - Fonte de dados reais de transito: Overpass API / OpenStreetMap (ODbL)
+ *   - Fonte de dados reais de alagamento: Open-Meteo Flood API / GloFAS
+ *     https://open-meteo.com/en/docs/flood-api
  *
  * Onde e aplicado: rota "Detalhe" em App.tsx.
  */
@@ -23,7 +31,13 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { getMedicoes, atualizarAr, ApiError } from '../api/client';
+import {
+  getMedicoes,
+  atualizarAr,
+  atualizarTransito,
+  atualizarAlagamento,
+  ApiError,
+} from '../api/client';
 import { Medicao, TipoMedicao } from '../types';
 import { RootStackParamList } from '../navigation';
 import { EstadoCarregando, EstadoErro } from '../ui/estados';
@@ -44,7 +58,10 @@ export default function DetalheScreen({ route, navigation }: Props) {
   const [medicoes, setMedicoes] = useState<Medicao[]>([]);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [atualizando, setAtualizando] = useState<boolean>(false);
+  // Tipo em atualizacao (null quando ocioso), para desabilitar so o botao ativo.
+  const [atualizandoTipo, setAtualizandoTipo] = useState<TipoMedicao | null>(
+    null,
+  );
   const [aviso, setAviso] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
@@ -68,23 +85,63 @@ export default function DetalheScreen({ route, navigation }: Props) {
     carregar();
   }, [carregar]);
 
-  const onAtualizarAr = useCallback(async () => {
-    setAtualizando(true);
-    setAviso(null);
-    try {
-      await atualizarAr(regiaoId);
-      setAviso('Qualidade do ar atualizada com dados da Open-Meteo.');
-      await carregar();
-    } catch (e) {
-      const msg =
-        e instanceof ApiError
-          ? e.mensagem
-          : 'Nao foi possivel atualizar a qualidade do ar agora.';
-      setAviso(msg);
-    } finally {
-      setAtualizando(false);
-    }
-  }, [regiaoId, carregar]);
+  const atualizar = useCallback(
+    async (
+      tipo: TipoMedicao,
+      chamada: (id: number) => Promise<Medicao[]>,
+      mensagemSucesso: string,
+      mensagemErro: string,
+    ) => {
+      setAtualizandoTipo(tipo);
+      setAviso(null);
+      try {
+        await chamada(regiaoId);
+        setAviso(mensagemSucesso);
+        await carregar();
+      } catch (e) {
+        const msg = e instanceof ApiError ? e.mensagem : mensagemErro;
+        setAviso(msg);
+      } finally {
+        setAtualizandoTipo(null);
+      }
+    },
+    [regiaoId, carregar],
+  );
+
+  const onAtualizarAr = useCallback(
+    () =>
+      atualizar(
+        'qualidade_ar',
+        atualizarAr,
+        'Qualidade do ar atualizada com dados da Open-Meteo.',
+        'Nao foi possivel atualizar a qualidade do ar agora.',
+      ),
+    [atualizar],
+  );
+
+  const onAtualizarTransito = useCallback(
+    () =>
+      atualizar(
+        'transito',
+        atualizarTransito,
+        'Transito atualizado com dados do OpenStreetMap (Overpass).',
+        'Nao foi possivel atualizar o transito agora.',
+      ),
+    [atualizar],
+  );
+
+  const onAtualizarAlagamento = useCallback(
+    () =>
+      atualizar(
+        'alagamento',
+        atualizarAlagamento,
+        'Alagamento atualizado com dados da Open-Meteo Flood API (GloFAS).',
+        'Nao foi possivel atualizar o alagamento agora.',
+      ),
+    [atualizar],
+  );
+
+  const algumAtualizando = atualizandoTipo !== null;
 
   const secoes = useMemo<Secao[]>(() => {
     return ORDEM_TIPOS.map((tipo) => ({
@@ -106,17 +163,52 @@ export default function DetalheScreen({ route, navigation }: Props) {
     <View style={styles.container}>
       <View style={styles.barraAcoes}>
         <Pressable
-          style={[styles.botao, atualizando && styles.botaoDesabilitado]}
+          style={[
+            styles.botao,
+            algumAtualizando && styles.botaoDesabilitado,
+          ]}
           onPress={onAtualizarAr}
-          disabled={atualizando}
+          disabled={algumAtualizando}
           accessibilityRole="button"
         >
-          {atualizando ? (
+          {atualizandoTipo === 'qualidade_ar' ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.botaoTexto}>Atualizar qualidade do ar</Text>
+            <Text style={styles.botaoTexto}>Atualizar ar</Text>
           )}
         </Pressable>
+        <Pressable
+          style={[
+            styles.botao,
+            algumAtualizando && styles.botaoDesabilitado,
+          ]}
+          onPress={onAtualizarTransito}
+          disabled={algumAtualizando}
+          accessibilityRole="button"
+        >
+          {atualizandoTipo === 'transito' ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.botaoTexto}>Atualizar transito</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={[
+            styles.botao,
+            algumAtualizando && styles.botaoDesabilitado,
+          ]}
+          onPress={onAtualizarAlagamento}
+          disabled={algumAtualizando}
+          accessibilityRole="button"
+        >
+          {atualizandoTipo === 'alagamento' ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.botaoTexto}>Atualizar alagamento</Text>
+          )}
+        </Pressable>
+      </View>
+      <View style={styles.barraAcoesSecundaria}>
         <Pressable
           style={styles.botaoSecundario}
           onPress={() =>
@@ -133,8 +225,9 @@ export default function DetalheScreen({ route, navigation }: Props) {
       {secoes.length === 0 ? (
         <View style={styles.vazio}>
           <Text style={styles.vazioTexto}>
-            Ainda nao ha medicoes para esta regiao. Use "Atualizar qualidade do
-            ar" para buscar dados reais.
+            Ainda nao ha medicoes para esta regiao. Use os botoes acima
+            ("Atualizar ar", "Atualizar transito" ou "Atualizar alagamento")
+            para buscar dados reais.
           </Text>
         </View>
       ) : (
@@ -172,13 +265,21 @@ const styles = StyleSheet.create({
   },
   barraAcoes: {
     flexDirection: 'row',
-    gap: 10,
-    padding: 16,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  barraAcoesSecundaria: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   botao: {
     flex: 1,
     backgroundColor: '#0B6E4F',
     paddingVertical: 12,
+    paddingHorizontal: 6,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -192,6 +293,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   botaoSecundario: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#0B6E4F',
@@ -200,6 +302,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 44,
   },
   botaoSecundarioTexto: {
     color: '#0B6E4F',

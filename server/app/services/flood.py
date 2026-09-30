@@ -78,11 +78,18 @@ def mapear_payload(payload: dict) -> list[LeituraAlagamento]:
 
     - ``river_discharge``: valor NAO-NULO mais recente da serie (descarga atual),
       com o timestamp correspondente de ``daily.time``;
-    - ``river_discharge_media``: media do periodo, a partir de
-      ``river_discharge_mean`` quando presente, senao a media dos valores
-      nao-nulos de ``river_discharge``;
+    - ``river_discharge_media``: media das medias diarias do periodo, a partir
+      da serie ``river_discharge_mean`` (que ja e a media diaria calculada pelo
+      GloFAS) quando presente, senao a media aritmetica dos valores nao-nulos de
+      ``river_discharge``;
     - ``river_discharge_maxima``: maxima do periodo, a partir de
       ``river_discharge_max`` quando presente, senao o maximo dos valores.
+
+    Os dois agregados (``river_discharge_media`` e ``river_discharge_maxima``)
+    resumem TODO o periodo consultado; por isso o ``timestamp`` deles fica
+    ``None`` (o campo e ``Optional``), evitando carimba-los com um dia especifico
+    como se fossem a leitura daquela data. Apenas ``river_discharge`` (a descarga
+    atual) carrega o timestamp do dia correspondente.
 
     A unidade e lida do bloco ``daily_units`` (com fallback ``UNIDADE_PADRAO``),
     NUNCA hardcodada (issue de review anterior da Open-Meteo).
@@ -158,8 +165,11 @@ def mapear_payload(payload: dict) -> list[LeituraAlagamento]:
                 parametro="river_discharge_media",
                 valor=round(media_valor, 2),
                 unidade=unidade_media,
-                timestamp=timestamp_atual,
-                detalhe="Media da descarga fluvial no periodo consultado.",
+                timestamp=None,  # agregado do periodo: sem dia especifico
+                detalhe=(
+                    "Media das medias diarias de descarga fluvial no periodo "
+                    "consultado (serie river_discharge_mean do GloFAS)."
+                ),
             )
         )
 
@@ -179,7 +189,7 @@ def mapear_payload(payload: dict) -> list[LeituraAlagamento]:
                 parametro="river_discharge_maxima",
                 valor=round(max_valor, 2),
                 unidade=unidade_max,
-                timestamp=timestamp_atual,
+                timestamp=None,  # agregado do periodo: sem dia especifico
                 detalhe="Maxima da descarga fluvial no periodo consultado.",
             )
         )

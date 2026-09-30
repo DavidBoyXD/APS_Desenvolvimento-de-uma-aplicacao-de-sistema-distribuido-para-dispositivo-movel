@@ -2,8 +2,10 @@
 
 O modelo e generico e centrado no conceito de "medicao ambiental por tipo",
 permitindo representar os varios assuntos exigidos pela APS com o mesmo
-esquema: qualidade do ar (nucleo, com dados reais da Open-Meteo), transito e
-alagamento (dados simulados com o campo ``fonte`` indicando a origem).
+esquema. Os tres tipos usam fontes reais e verificaveis, com o campo ``fonte``
+indicando a origem: qualidade do ar (Open-Meteo Air Quality API), transito
+(Overpass API / OpenStreetMap) e alagamento (Open-Meteo Flood API, base
+cientifica GloFAS).
 
 Entidades
 ---------

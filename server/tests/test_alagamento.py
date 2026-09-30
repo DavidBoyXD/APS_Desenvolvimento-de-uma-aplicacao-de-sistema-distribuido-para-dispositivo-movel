@@ -30,9 +30,52 @@ def test_mapear_payload_flood(payload_flood) -> None:
 
     assert por_parametro["river_discharge_media"].valor == 76.62
     assert por_parametro["river_discharge_media"].unidade == "m3/s"
+    # Agregados do periodo nao carregam um dia especifico (timestamp None).
+    assert por_parametro["river_discharge_media"].timestamp is None
 
     assert por_parametro["river_discharge_maxima"].valor == 99.5
     assert por_parametro["river_discharge_maxima"].unidade == "m3/s"
+    assert por_parametro["river_discharge_maxima"].timestamp is None
+
+
+def test_mapear_payload_flood_fallback_sem_series_dedicadas() -> None:
+    """Sem river_discharge_mean/max, a media/maxima vem da serie river_discharge.
+
+    Cobre o ramo de fallback do mapear_payload: quando a API nao devolve as
+    series dedicadas, a media e a media aritmetica dos valores nao-nulos de
+    river_discharge e a maxima e o maximo deles. Os agregados seguem sem
+    timestamp (resumem o periodo).
+    """
+    payload = {
+        "daily_units": {"time": "iso8601", "river_discharge": "m3/s"},
+        "daily": {
+            "time": ["2026-09-28", "2026-09-29", "2026-09-30"],
+            "river_discharge": [10.0, None, 20.0],
+        },
+    }
+    por_parametro = {l.parametro: l for l in flood.mapear_payload(payload)}
+
+    # Descarga atual: valor nao-nulo mais recente (20.0 em 2026-09-30).
+    assert por_parametro["river_discharge"].valor == 20.0
+    assert por_parametro["river_discharge"].timestamp == "2026-09-30"
+    # Media dos validos [10.0, 20.0] = 15.0; maxima = 20.0; ambos sem timestamp.
+    assert por_parametro["river_discharge_media"].valor == 15.0
+    assert por_parametro["river_discharge_media"].timestamp is None
+    assert por_parametro["river_discharge_maxima"].valor == 20.0
+    assert por_parametro["river_discharge_maxima"].timestamp is None
+
+
+def test_mapear_payload_flood_sem_valores_validos() -> None:
+    """Serie so com nulos (nenhuma leitura valida) levanta FloodError."""
+    payload = {
+        "daily_units": {"time": "iso8601", "river_discharge": "m3/s"},
+        "daily": {
+            "time": ["2026-09-28", "2026-09-29"],
+            "river_discharge": [None, None],
+        },
+    }
+    with pytest.raises(FloodError):
+        flood.mapear_payload(payload)
 
 
 def test_mapear_payload_flood_invalido() -> None:

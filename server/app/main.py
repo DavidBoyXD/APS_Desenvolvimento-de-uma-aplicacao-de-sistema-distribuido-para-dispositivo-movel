@@ -58,6 +58,10 @@ app = FastAPI(
 )
 
 # CORS liberado para o app Expo (em dev, o cliente roda em host/porta variavel).
+# ATENCAO (producao): allow_origins=["*"] e proposital apenas para o contexto de
+# desenvolvimento/APS, em que o endereco do cliente muda (emulador, dispositivo
+# fisico, web). Em producao, restrinja allow_origins a lista de dominios/hosts
+# confiaveis do app. Ver: https://fastapi.tiangolo.com/tutorial/cors/
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

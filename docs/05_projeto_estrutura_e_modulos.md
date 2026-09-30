@@ -107,7 +107,12 @@ simulado (transito/alagamento).
 - **`main.py`** - cria a aplicacao FastAPI (titulo/descricao em PT-BR, visiveis no
   Swagger em `/docs`), habilita CORS (para o app Expo consumir), registra os
   exception handlers e os routers, e no `lifespan` de startup cria as tabelas e
-  executa o seed idempotente. Mantem `GET /health`.
+  executa o seed idempotente. Mantem `GET /health`. **Nota de seguranca (CORS):**
+  o CORS esta configurado com `allow_origins=["*"]` de forma proposital apenas
+  para o contexto de desenvolvimento/APS, em que o endereco do cliente varia
+  (emulador Android, dispositivo fisico, web). Em um cenario de producao, essa
+  lista deve ser restringida aos dominios/hosts confiaveis do aplicativo. O
+  proprio `main.py` traz esse aviso em comentario no ponto da configuracao.
 - **`database.py`** - configura o engine SQLAlchemy 2.x apontando para o SQLite em
   `server/data/app.db` (cria o diretorio se preciso), a `SessionLocal`, a `Base`
   declarativa e a dependencia `get_db` (uma sessao por requisicao). Documenta no

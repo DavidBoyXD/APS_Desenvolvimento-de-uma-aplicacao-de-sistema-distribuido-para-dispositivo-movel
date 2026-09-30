@@ -104,6 +104,16 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
 2. **Detalhe da regiao.** Veja as medicoes agrupadas por tipo (Qualidade do ar,
    Transito, Alagamento), com valor, unidade, data/hora e a fonte de cada dado.
 
+   > **Importante (limitacao dos dados):** apenas a **qualidade do ar** usa dados
+   > reais (Open-Meteo, ver capitulo 8). Os dados de **transito** e **alagamento**
+   > sao **SIMULADOS** (valores de exemplo gerados pelo seed), pois nao havia uma
+   > API publica, gratuita e sem chave que os unificasse no escopo deste trabalho.
+   > Essa condicao esta explicita em tempo de execucao no proprio campo `fonte` de
+   > cada medicao desses tipos (ex.: indica origem "simulada"), justamente para que
+   > o dado simulado nunca seja confundido com dado observado. A modelagem
+   > generica (uma tabela de medicao por tipo/parametro) permite substituir esses
+   > dados simulados por uma fonte real no futuro sem alterar a API nem o cliente.
+
 3. **Atualizacao com dados reais (Open-Meteo).** Toque em "Atualizar qualidade do
    ar". O app chama `POST /api/v1/regioes/{id}/atualizar-ar`; o servidor consulta a
    Open-Meteo com a latitude/longitude da regiao, persiste as novas medicoes e as

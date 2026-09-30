@@ -78,7 +78,23 @@ def test_mapear_payload_openmeteo(payload_openmeteo) -> None:
     assert por_parametro["pm10"].valor == 25.8
     assert por_parametro["ozone"].valor == 45.9
     assert por_parametro["pm2_5"].timestamp == "2026-09-30T12:00"
-    assert por_parametro["pm2_5"].unidade == "ug/m3"
+    # A unidade e lida do bloco 'hourly_units' do payload (nao mais hardcoded).
+    assert por_parametro["pm2_5"].unidade == "\u00b5g/m\u00b3"
+    assert por_parametro["ozone"].unidade == "\u00b5g/m\u00b3"
+
+
+def test_mapear_payload_sem_hourly_units_usa_fallback() -> None:
+    """Sem 'hourly_units', o mapeamento cai no fallback de unidade padrao."""
+    payload = {
+        "hourly": {
+            "time": ["2026-09-30T10:00", "2026-09-30T11:00"],
+            "pm2_5": [10.0, 12.5],
+        }
+    }
+    leituras = openmeteo.mapear_payload(payload)
+    assert leituras[0].parametro == "pm2_5"
+    assert leituras[0].valor == 12.5
+    assert leituras[0].unidade == openmeteo.UNIDADE_PADRAO
 
 
 def test_mapear_payload_invalido() -> None:

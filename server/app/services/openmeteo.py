@@ -34,13 +34,17 @@ OPEN_METEO_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
 # Poluentes horarios solicitados. A ordem/nomes seguem a doc da Open-Meteo.
 HOURLY_PARAMS = "pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,ozone"
 
-# Unidades por parametro (conforme documentacao da Open-Meteo).
+# Unidade padrao (fallback) por parametro. A unidade real e lida do bloco
+# 'hourly_units' do payload da Open-Meteo (ver mapear_payload); este mapa so e
+# usado quando o payload nao traz a unidade do parametro.
+UNIDADE_PADRAO = "ug/m3"
+
 UNIDADES = {
-    "pm2_5": "ug/m3",
-    "pm10": "ug/m3",
-    "carbon_monoxide": "ug/m3",
-    "nitrogen_dioxide": "ug/m3",
-    "ozone": "ug/m3",
+    "pm2_5": UNIDADE_PADRAO,
+    "pm10": UNIDADE_PADRAO,
+    "carbon_monoxide": UNIDADE_PADRAO,
+    "nitrogen_dioxide": UNIDADE_PADRAO,
+    "ozone": UNIDADE_PADRAO,
 }
 
 FONTE = "Open-Meteo Air Quality API (https://open-meteo.com/en/docs/air-quality-api)"
@@ -79,11 +83,19 @@ def mapear_payload(payload: dict) -> list[LeituraAr]:
     if not tempos:
         raise OpenMeteoError("Resposta da Open-Meteo sem series temporais.")
 
+    # A unidade de cada parametro vem no bloco 'hourly_units' do payload (ex.:
+    # microgramas por metro cubico com simbolos Unicode). Lemos de la para nao
+    # depender de valores fixos; se o bloco/parametro faltar, usamos o fallback.
+    hourly_units = payload.get("hourly_units")
+    if not isinstance(hourly_units, dict):
+        hourly_units = {}
+
     leituras: list[LeituraAr] = []
     for parametro in ("pm2_5", "pm10", "carbon_monoxide", "nitrogen_dioxide", "ozone"):
         valores = hourly.get(parametro)
         if not valores:
             continue
+        unidade = hourly_units.get(parametro) or UNIDADES.get(parametro, UNIDADE_PADRAO)
         # Percorre de tras para frente ate achar o valor nao-nulo mais recente.
         for indice in range(len(valores) - 1, -1, -1):
             valor = valores[indice]
@@ -93,7 +105,7 @@ def mapear_payload(payload: dict) -> list[LeituraAr]:
                 LeituraAr(
                     parametro=parametro,
                     valor=float(valor),
-                    unidade=UNIDADES.get(parametro, ""),
+                    unidade=unidade,
                     timestamp=tempos[indice] if indice < len(tempos) else tempos[-1],
                 )
             )

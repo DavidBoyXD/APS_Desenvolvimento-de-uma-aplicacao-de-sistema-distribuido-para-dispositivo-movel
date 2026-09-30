@@ -4,6 +4,7 @@ A rede e SEMPRE mockada (monkeypatch): os testes nunca chamam a Overpass real.
 Espelham o padrao dos testes da integracao Open-Meteo em test_medicoes.py.
 """
 
+import httpx
 import pytest
 
 from app.services import overpass
@@ -85,3 +86,62 @@ def test_atualizar_transito_falha_rede_tratada(client, monkeypatch) -> None:
     corpo = resp.json()
     assert corpo["codigo"] == 502
     assert "transito" in corpo["mensagem"].lower()
+
+
+def test_buscar_transito_camada_http_envia_user_agent(payload_overpass) -> None:
+    """Testa a camada HTTP de buscar_transito com um cliente httpx mockado.
+
+    Usa ``httpx.MockTransport`` para NAO tocar a rede real. Captura a requisicao
+    enviada e garante que:
+
+    - o header ``User-Agent`` foi enviado e e igual a ``overpass.USER_AGENT``
+      (remover o header quebraria este teste, cobrindo a lacuna da revisao);
+    - o corpo (form) contem o parametro ``data`` com a query Overpass QL;
+    - a resposta valida e mapeada para as ``LeituraTransito`` derivadas.
+    """
+    requisicoes: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requisicoes.append(request)
+        return httpx.Response(200, json=payload_overpass)
+
+    transporte = httpx.MockTransport(handler)
+    with httpx.Client(transport=transporte) as cliente_mock:
+        leituras = overpass.buscar_transito(
+            -23.561, -46.656, client=cliente_mock
+        )
+
+    # A requisicao HTTP foi de fato disparada e capturada.
+    assert len(requisicoes) == 1
+    requisicao = requisicoes[0]
+
+    # O header obrigatorio foi enviado com o valor esperado.
+    assert requisicao.headers.get("User-Agent") == overpass.USER_AGENT
+
+    # O corpo (form url-encoded) carrega o parametro 'data' com a query.
+    corpo = requisicao.content.decode("utf-8")
+    assert corpo.startswith("data=")
+    assert "way" in corpo  # trecho da query Overpass QL
+
+    # A resposta valida vira as metricas derivadas (mesmo mapeamento da fixture).
+    por_parametro = {l.parametro: l for l in leituras}
+    assert por_parametro["vias_principais"].valor == 4.0
+    assert por_parametro["faixas_media"].valor == 3.0
+    assert por_parametro["velocidade_maxima_media"].valor == 49.57
+
+
+@pytest.mark.parametrize("status_http", [406, 500])
+def test_buscar_transito_camada_http_erro_vira_overpass_error(status_http) -> None:
+    """Erro HTTP na camada de rede e mapeado para ``OverpassError``.
+
+    Cobre o mapeamento de ``httpx.HTTPError`` -> ``OverpassError`` para status
+    de erro tipicos da Overpass (406 quando falta o User-Agent, 500 generico).
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_http)
+
+    transporte = httpx.MockTransport(handler)
+    with httpx.Client(transport=transporte) as cliente_mock:
+        with pytest.raises(OverpassError):
+            overpass.buscar_transito(-23.561, -46.656, client=cliente_mock)

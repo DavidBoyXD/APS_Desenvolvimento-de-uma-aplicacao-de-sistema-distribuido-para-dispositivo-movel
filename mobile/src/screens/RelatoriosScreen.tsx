@@ -147,7 +147,12 @@ function GraficoMedias({
     return null;
   }
 
-  const labels = resumos.map((item) => item.parametro);
+  // Compoe o rotulo com o tipo alem do parametro. O relatorio agrega por
+  // (tipo, parametro), entao parametros de mesmo nome em tipos diferentes
+  // gerariam rotulos duplicados no eixo X se usassemos apenas o parametro.
+  const labels = resumos.map(
+    (item) => `${rotuloTipo(item.tipo)} - ${item.parametro}`,
+  );
   const valores = resumos.map((item) =>
     Number.isFinite(item.media) ? item.media : 0,
   );

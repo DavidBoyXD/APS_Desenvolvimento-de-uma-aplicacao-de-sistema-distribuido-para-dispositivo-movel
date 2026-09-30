@@ -1,0 +1,44 @@
+# ===========================================================================
+# .gitignore do monorepo APS - Sistema Distribuido Ambiental
+# Cobre artefatos do back-end (Python/FastAPI) e do cliente movel (Expo/RN).
+# Referencia dos padroes:
+#  - Python: https://github.com/github/gitignore/blob/main/Python.gitignore
+#  - Node:   https://github.com/github/gitignore/blob/main/Node.gitignore
+#  - Expo:   https://docs.expo.dev/guides/typescript/ (arquivos .expo/)
+# ===========================================================================
+
+# --- Python / back-end (server/) ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+server/.venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Banco de dados SQLite gerado em runtime (NAO versionar)
+server/data/*.db
+server/data/*.sqlite3
+
+# --- Node / cliente movel (mobile/) ---
+mobile/node_modules/
+node_modules/
+mobile/.expo/
+.expo/
+mobile/dist/
+mobile/web-build/
+
+# --- Variaveis de ambiente e segredos ---
+.env
+*.env
+.env.local
+
+# --- Artefatos gerais de build / editor ---
+*.log
+.DS_Store
+build/
+dist/
+
+# Observacao: o documento de requisitos APS_7_8_CC_2025_DSD.docx NAO e ignorado
+# (faz parte do material da APS e deve permanecer versionado).

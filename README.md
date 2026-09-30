@@ -147,6 +147,13 @@ aparecer em cinza. O aplicativo mantem uma lista de regioes clicavel como
 alternativa. O passo a passo detalhado esta em
 [docs/07_apresentacao_do_programa.md](docs/07_apresentacao_do_programa.md).
 
+Nota sobre o grafico dos relatorios: a tela de Relatorios exibe, alem da lista de
+cards, um grafico de barras ("Medias por parametro") desenhado com a biblioteca
+`react-native-chart-kit` (que depende de `react-native-svg`). Essas dependencias
+ja estao no `package.json` e sao instaladas com o `npm install`. Caso precise
+reinstala-las de forma compativel com o SDK, use o gerenciador do Expo:
+`cd mobile && npx expo install react-native-chart-kit react-native-svg`.
+
 ## Documentacao
 
 A documentacao academica completa em Portugues-BR, seguindo a estrutura exigida
@@ -174,6 +181,10 @@ README.md      Este arquivo
   (back-end).
 - [Expo](https://docs.expo.dev) - plataforma e ferramentas do cliente movel.
 - [React Native](https://reactnative.dev) - framework do aplicativo movel.
+- [react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit) -
+  biblioteca de graficos usada no grafico de barras da tela de Relatorios
+  (`mobile/src/screens/RelatoriosScreen.tsx`); depende de
+  [react-native-svg](https://github.com/software-mansion/react-native-svg).
 - [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) -
   fonte real e gratuita (sem chave) de dados de qualidade do ar, consumida pelo
   servidor.

@@ -179,7 +179,15 @@ qualidade do ar; Overpass/OpenStreetMap para transito) ou simulado (alagamento).
   uma `SectionList`, com botao "Atualizar qualidade do ar" (chama `atualizarAr`) e
   acesso ao relatorio.
 - **`src/screens/RelatoriosScreen.tsx`** - consome o relatorio agregado e mostra
-  media, minimo, maximo, contagem e ultima leitura por parametro.
+  media, minimo, maximo, contagem e ultima leitura por parametro em uma lista de
+  cards. Alem da exibicao tabular, apresenta no topo um **grafico de barras**
+  ("Medias por parametro") que resume visualmente as medias de cada par
+  tipo/parametro. O grafico usa o componente `BarChart` da biblioteca
+  **react-native-chart-kit** (que depende de **react-native-svg**) e a largura e
+  calculada com `useWindowDimensions`. O grafico e renderizado como
+  `ListHeaderComponent` da `FlatList`, preservando o conteudo tabular. Quando nao
+  ha resumos, o grafico simplesmente nao e renderizado (tratamento de dataset
+  vazio).
 - **`src/screens/AlertasScreen.tsx`** - lista regras, formulario para criar uma
   regra (regiao, tipo, parametro, condicao, limiar, mensagem) e botao para avaliar
   os alertas de uma regiao, exibindo os disparados.

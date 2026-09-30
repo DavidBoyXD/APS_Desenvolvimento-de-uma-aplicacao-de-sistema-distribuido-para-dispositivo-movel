@@ -430,7 +430,78 @@ Pontos-chave:
 - Aciona o endpoint que busca dados reais na Open-Meteo e recarrega a lista.
 - Erros sao mostrados como aviso amigavel, sem interromper a tela.
 
-### 6.2.4 Navegacao - `mobile/App.tsx`
+### 6.2.4 Relatorio com grafico de barras - `mobile/src/screens/RelatoriosScreen.tsx`
+
+Alem da lista tabular (cards com media/minimo/maximo/amostras por parametro), a
+tela agora resume os dados agregados em um **grafico de barras** com a media de
+cada par tipo/parametro. Usa o componente `BarChart` da biblioteca
+**react-native-chart-kit** (que desenha via **react-native-svg**) e mede a largura
+disponivel com `useWindowDimensions`:
+
+```tsx
+import { BarChart } from 'react-native-chart-kit';
+import { useWindowDimensions } from 'react-native';
+
+function GraficoMedias({ resumos, larguraJanela }) {
+  if (resumos.length === 0) {
+    return null; // trata dataset vazio: nao renderiza o grafico
+  }
+  const labels = resumos.map((item) => item.parametro);
+  const valores = resumos.map((item) =>
+    Number.isFinite(item.media) ? item.media : 0,
+  );
+  const larguraGrafico = Math.max(larguraJanela - 32, 0);
+  return (
+    <View style={styles.graficoCartao}>
+      <Text style={styles.graficoTitulo}>Medias por parametro</Text>
+      <BarChart
+        data={{ labels, datasets: [{ data: valores }] }}
+        width={larguraGrafico}
+        height={220}
+        yAxisLabel=""
+        yAxisSuffix=""
+        fromZero
+        showValuesOnTopOfBars
+        verticalLabelRotation={30}
+        chartConfig={chartConfig}
+      />
+    </View>
+  );
+}
+```
+
+O grafico e injetado como `ListHeaderComponent` da `FlatList`, mantendo a lista
+tabular intacta:
+
+```tsx
+<FlatList
+  data={relatorio.resumos}
+  keyExtractor={(item) => `${item.tipo}-${item.parametro}`}
+  ListHeaderComponent={cabecalho}
+  renderItem={renderItem}
+/>
+```
+
+Pontos-chave:
+
+- **Biblioteca e justificativa:** react-native-chart-kit (7.0.4) foi escolhida por
+  ser compativel com o stack atual (Expo SDK 57, React 19.2.3, React Native
+  0.86.3) e por ter como unica dependencia nativa o react-native-svg (15.15.4),
+  modulo suportado pelo Expo. Instalada com
+  `npx expo install react-native-chart-kit react-native-svg`. Alternativas
+  (react-native-gifted-charts, victory-native) foram descartadas por exigirem
+  dependencias nativas adicionais. Referencias:
+  [react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit)
+  e [npm](https://www.npmjs.com/package/react-native-chart-kit).
+- **Tratamento de dataset vazio:** se `resumos` estiver vazio, o grafico nao e
+  renderizado, evitando quebra em runtime. (A propria tela ja exibe um estado
+  vazio quando o relatorio nao tem resumos.)
+- **Complementar, nao substitutivo:** o grafico soma-se a exibicao tabular
+  existente; nenhuma outra tela (Mapa, Detalhe, Alertas) foi alterada.
+- Textos/legendas do grafico em PT-BR ("Medias por parametro"); identificadores em
+  ingles conforme a convencao do codigo.
+
+### 6.2.5 Navegacao - `mobile/App.tsx`
 
 Registra as quatro telas em um stack nativo do React Navigation, com titulos em
 PT-BR e o tema visual do app. Referencia:

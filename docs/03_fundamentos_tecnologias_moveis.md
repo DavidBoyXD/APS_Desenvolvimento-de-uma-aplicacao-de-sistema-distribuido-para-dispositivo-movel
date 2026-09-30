@@ -75,6 +75,24 @@ refinamento e a demonstrabilidade exigidos pela APS com esforco controlado.
 - **react-native-screens** (4.26.2) e **react-native-safe-area-context** (5.7.0) -
   dependencias nativas exigidas pelo React Navigation (telas nativas e areas
   seguras). Aplicado em: `mobile/App.tsx` (envolvido por `SafeAreaProvider`).
+- **react-native-chart-kit** (7.0.4) - biblioteca de graficos para React Native
+  (grafico de barras, linhas, pizza etc.). Referencia:
+  [https://github.com/indiespirit/react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit)
+  e [https://www.npmjs.com/package/react-native-chart-kit](https://www.npmjs.com/package/react-native-chart-kit).
+  Aplicado em: `mobile/src/screens/RelatoriosScreen.tsx`, onde um `BarChart`
+  resume visualmente as **medias por parametro** do relatorio da regiao, acima da
+  lista tabular ja existente. Depende de **react-native-svg** (15.15.4) para
+  desenhar as barras. Referencia:
+  [https://github.com/software-mansion/react-native-svg](https://github.com/software-mansion/react-native-svg).
+  Justificativa da escolha: e compativel com o stack atual (Expo SDK 57, React
+  19.2.3 e React Native 0.86.3) e sua unica dependencia nativa e o
+  react-native-svg, que e um modulo suportado pelo Expo (instalado via
+  `npx expo install`). As alternativas **react-native-gifted-charts** (exige
+  react-native-linear-gradient nativo alem do svg) e **victory-native** (peer
+  dependencies mais pesadas) foram descartadas por adicionarem dependencias
+  nativas extras. Instalado com
+  `npx expo install react-native-chart-kit react-native-svg` para resolver as
+  versoes compativeis com o SDK.
 
 ### Alternativas de plataforma movel (registro)
 

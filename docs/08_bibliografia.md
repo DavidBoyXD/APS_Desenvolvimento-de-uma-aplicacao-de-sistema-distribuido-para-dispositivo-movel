@@ -66,6 +66,18 @@ de 2026).
 - **react-native-safe-area-context** - areas seguras da tela.
   [https://github.com/th3rdwave/react-native-safe-area-context](https://github.com/th3rdwave/react-native-safe-area-context).
   Aplicado em `mobile/App.tsx`.
+- **react-native-chart-kit** - biblioteca de graficos usada no relatorio.
+  npm: [https://www.npmjs.com/package/react-native-chart-kit](https://www.npmjs.com/package/react-native-chart-kit).
+  GitHub: [https://github.com/indiespirit/react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit).
+  Aplicado em `mobile/src/screens/RelatoriosScreen.tsx` (grafico de barras
+  "Medias por parametro"). Escolhida por ser compativel com o Expo SDK 57 / React
+  19 / React Native 0.86 e depender apenas do react-native-svg.
+- **react-native-svg** - renderizacao vetorial (SVG) exigida pelo
+  react-native-chart-kit para desenhar os graficos.
+  [https://github.com/software-mansion/react-native-svg](https://github.com/software-mansion/react-native-svg).
+  Aplicado (indiretamente) em `mobile/src/screens/RelatoriosScreen.tsx`.
+  - `useWindowDimensions` (React Native) - usado para dimensionar a largura do
+    grafico: [https://reactnative.dev/docs/usewindowdimensions](https://reactnative.dev/docs/usewindowdimensions).
 - **TypeScript** - linguagem/tipagem do cliente.
   [https://www.typescriptlang.org](https://www.typescriptlang.org).
 - **MDN - Fetch API** - API de requisicoes HTTP usada no cliente.

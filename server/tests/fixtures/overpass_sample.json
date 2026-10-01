@@ -1,0 +1,59 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-30T12:00:00Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "way",
+      "id": 1001,
+      "tags": {
+        "name": "Avenida Paulista",
+        "highway": "primary",
+        "lanes": "2",
+        "maxspeed": "50",
+        "oneway": "yes"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1002,
+      "tags": {
+        "name": "Rua da Consolacao",
+        "highway": "secondary",
+        "lanes": "3",
+        "maxspeed": "60",
+        "oneway": "no"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1003,
+      "tags": {
+        "name": "Avenida Nove de Julho",
+        "highway": "trunk",
+        "lanes": "2;4",
+        "maxspeed": "40"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1004,
+      "tags": {
+        "name": "Marginal Pinheiros",
+        "highway": "motorway",
+        "maxspeed": "30 mph"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1005,
+      "tags": {
+        "highway": "primary",
+        "lanes": "5"
+      }
+    }
+  ]
+}

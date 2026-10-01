@@ -1,0 +1,23 @@
+# ===========================================================================
+# Dependencias do back-end (FastAPI + SQLite) - compativeis com Python 3.9
+# Versoes fixadas para garantir builds reprodutiveis (baseline verde).
+# ===========================================================================
+
+# Framework web ASGI para a API REST. Doc: https://fastapi.tiangolo.com/
+fastapi==0.115.6
+
+# Servidor ASGI de producao/dev usado para subir a API. Doc: https://www.uvicorn.org/
+uvicorn[standard]==0.32.1
+
+# ORM para persistencia no SQLite. Doc: https://docs.sqlalchemy.org/en/20/
+sqlalchemy==2.0.36
+
+# Validacao e serializacao de dados (schemas). Doc: https://docs.pydantic.dev/
+pydantic==2.10.4
+
+# Cliente HTTP assincrono para consumir a Open-Meteo Air Quality API.
+# Doc: https://www.python-httpx.org/
+httpx==0.28.1
+
+# Framework de testes automatizados. Doc: https://docs.pytest.org/
+pytest==8.3.4

@@ -2,8 +2,10 @@
 
 Esta declaracao segue a norma indicada pelo autor sobre uso de Inteligencia
 Artificial Generativa em trabalhos academicos (Portaria CNPq no 2.664/2026,
-conforme material fornecido pelo autor). Em caso de qualquer duvida quanto a
-numeracao ou data da portaria, considere a expressao "conforme material fornecido".
+**conforme material fornecido pelo autor**). A numeracao e a data da portaria sao
+tratadas como material fornecido pelo autor e nao como fato verificado de forma
+independente nesta documentacao; em caso de qualquer duvida quanto a numeracao ou
+data, considere a expressao "conforme material fornecido pelo autor".
 
 A declaracao indica, conforme o modelo do material: qual ferramenta de IA foi
 usada, em qual etapa da pesquisa e a finalidade do uso.
@@ -25,17 +27,20 @@ finalidade e etapa.
 
 > Declaro que ferramentas de Inteligencia Artificial Generativa foram utilizadas
 > neste trabalho nas seguintes etapas: o assistente de IA (Kiro) foi utilizado
-> para apoio a implementacao do codigo do back-end (FastAPI) e do app movel
-> (React Native/Expo) e a redacao da documentacao tecnica, na etapa de
-> desenvolvimento e documentacao da aplicacao. Todo o conteudo gerado foi revisado
-> criticamente e validado pelo autor, que assume integral responsabilidade pela
-> originalidade e veracidade do texto final.
+> para apoio a implementacao do codigo do back-end (FastAPI), do app movel
+> (React Native/Expo) e das integracoes com as fontes oficiais de Sao Paulo
+> (SPTrans Olho Vivo, para transporte publico, e IBGE, para a base geografica),
+> alem da redacao da documentacao tecnica, na etapa de desenvolvimento e
+> documentacao da aplicacao. Todo o conteudo gerado foi revisado criticamente e
+> validado pelo autor, que assume integral responsabilidade pela originalidade e
+> veracidade do texto final.
 
 Detalhamento (para transparencia), conforme os tres eixos pedidos pela norma:
 
 - **Ferramenta:** assistente de IA (Kiro).
-- **Finalidade:** apoio a implementacao do codigo do back-end (FastAPI) e do app
-  movel (React Native/Expo) e a redacao da documentacao tecnica.
+- **Finalidade:** apoio a implementacao do codigo do back-end (FastAPI), do app
+  movel (React Native/Expo) e das integracoes com as fontes oficiais de Sao Paulo
+  (SPTrans Olho Vivo e IBGE), alem da redacao da documentacao tecnica.
 - **Etapa da pesquisa:** desenvolvimento e documentacao da aplicacao.
 
 O autor revisou criticamente todo o conteudo, validou o funcionamento do sistema

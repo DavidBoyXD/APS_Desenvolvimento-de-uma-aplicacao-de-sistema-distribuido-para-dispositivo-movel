@@ -12,25 +12,27 @@ def test_criar_alerta_e_avaliar_dispara(client) -> None:
     """Criar alerta com limiar baixo e avaliar deve disparar o alerta."""
     regiao_id = client.get("/api/v1/regioes").json()[0]["id"]
 
-    # A medicao seed de pm2_5 vale 12.5; limiar 5 com '>' deve disparar.
+    # A medicao seed de veiculos_em_operacao vale 250; limiar 100 com '>' deve
+    # disparar.
     nova = {
         "regiao_id": regiao_id,
-        "tipo": "qualidade_ar",
-        "parametro": "pm2_5",
-        "limiar": 5.0,
+        "tipo": "transporte_publico",
+        "parametro": "veiculos_em_operacao",
+        "limiar": 100.0,
         "condicao": ">",
         "ativo": True,
-        "mensagem": "Teste: PM2.5 acima do limiar.",
+        "mensagem": "Teste: veiculos em operacao acima do limiar.",
     }
     criar = client.post("/api/v1/alertas", json=nova)
     assert criar.status_code == 201
-    assert criar.json()["parametro"] == "pm2_5"
+    assert criar.json()["parametro"] == "veiculos_em_operacao"
 
     avaliar = client.get(f"/api/v1/alertas/avaliar/{regiao_id}")
     assert avaliar.status_code == 200
     disparados = avaliar.json()
     assert any(
-        d["parametro"] == "pm2_5" and d["valor_observado"] > d["limiar"]
+        d["parametro"] == "veiculos_em_operacao"
+        and d["valor_observado"] > d["limiar"]
         for d in disparados
     )
 
@@ -40,8 +42,8 @@ def test_criar_alerta_validacao_422(client) -> None:
     regiao_id = client.get("/api/v1/regioes").json()[0]["id"]
     invalido = {
         "regiao_id": regiao_id,
-        "tipo": "qualidade_ar",
-        "parametro": "pm2_5",
+        "tipo": "transporte_publico",
+        "parametro": "veiculos_em_operacao",
         "limiar": 5.0,
         "condicao": "!!",  # invalido: nao casa com ^[<>]$
     }
@@ -56,8 +58,8 @@ def test_criar_alerta_regiao_inexistente_404(client) -> None:
     """Criar alerta para regiao inexistente retorna 404."""
     invalido = {
         "regiao_id": 99999,
-        "tipo": "qualidade_ar",
-        "parametro": "pm2_5",
+        "tipo": "transporte_publico",
+        "parametro": "veiculos_em_operacao",
         "limiar": 5.0,
         "condicao": ">",
     }

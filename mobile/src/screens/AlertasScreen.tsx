@@ -43,7 +43,7 @@ import { formatarNumero, rotuloTipo } from '../ui/rotulos';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Alertas'>;
 
-const TIPOS: TipoMedicao[] = ['qualidade_ar', 'transito', 'alagamento'];
+const TIPOS: TipoMedicao[] = ['transporte_publico'];
 const CONDICOES: CondicaoAlerta[] = ['>', '<'];
 
 export default function AlertasScreen(_props: Props) {
@@ -54,9 +54,9 @@ export default function AlertasScreen(_props: Props) {
 
   // Estado do formulario de criacao.
   const [regiaoId, setRegiaoId] = useState<number | null>(null);
-  const [tipo, setTipo] = useState<TipoMedicao>('qualidade_ar');
-  const [parametro, setParametro] = useState<string>('pm2_5');
-  const [limiar, setLimiar] = useState<string>('25');
+  const [tipo, setTipo] = useState<TipoMedicao>('transporte_publico');
+  const [parametro, setParametro] = useState<string>('veiculos_em_operacao');
+  const [limiar, setLimiar] = useState<string>('100');
   const [condicao, setCondicao] = useState<CondicaoAlerta>('>');
   const [mensagem, setMensagem] = useState<string>('');
   const [salvando, setSalvando] = useState<boolean>(false);
@@ -107,7 +107,9 @@ export default function AlertasScreen(_props: Props) {
       return;
     }
     if (parametro.trim().length === 0) {
-      setFeedbackForm('Informe o parametro (ex.: pm2_5, nivel_agua).');
+      setFeedbackForm(
+        'Informe o parametro (ex.: veiculos_em_operacao, linhas_monitoradas).',
+      );
       return;
     }
     const payload: AlertaCreate = {
@@ -231,7 +233,7 @@ export default function AlertasScreen(_props: Props) {
         style={styles.input}
         value={parametro}
         onChangeText={setParametro}
-        placeholder="ex.: pm2_5, nivel_agua, nivel_congestionamento"
+        placeholder="ex.: veiculos_em_operacao, linhas_monitoradas"
         autoCapitalize="none"
       />
 
@@ -252,7 +254,7 @@ export default function AlertasScreen(_props: Props) {
         style={styles.input}
         value={limiar}
         onChangeText={setLimiar}
-        placeholder="ex.: 25"
+        placeholder="ex.: 100"
         keyboardType="numeric"
       />
 

@@ -2,31 +2,31 @@
 
 ## 2.1 O problema
 
-As grandes cidades brasileiras convivem com problemas ambientais urbanos que se
-sobrepoem: a **poluicao do ar** (material particulado como PM2.5 e PM10, alem de
-gases como monoxido de carbono, dioxido de nitrogenio e ozonio), os
-**congestionamentos de transito** e os **alagamentos** em periodos de chuva. Essas
-informacoes existem, mas costumam estar dispersas em diferentes portais, formatos
-e escalas, o que dificulta o acesso rapido pelo cidadao comum, especialmente em
-mobilidade.
+A cidade de Sao Paulo (SP) possui uma das maiores redes de transporte publico por
+onibus do pais, operada pela SPTrans. Informacoes sobre a operacao da frota (linhas
+monitoradas e veiculos em circulacao) existem e sao disponibilizadas oficialmente,
+mas costumam exigir integracao tecnica e autenticacao, o que dificulta o acesso
+rapido pelo cidadao comum, especialmente em mobilidade.
 
 ## 2.2 A proposta
 
-Este trabalho propoe o **Monitor Ambiental Urbano**, um aplicativo movel que reune
-essas informacoes por regiao, apoiado por um servidor central que integra dados
-reais e organiza consultas, relatorios e alertas. A ideia e oferecer, em uma unica
-tela inicial (um mapa com as regioes), o ponto de partida para explorar cada
-regiao em detalhe.
+Este trabalho propoe o **Monitor de Transporte Publico** com recorte em Sao Paulo,
+um aplicativo movel que reune informacoes da frota de onibus por regiao, apoiado
+por um servidor central que integra os dados da fonte oficial e organiza consultas,
+relatorios e alertas. A ideia e oferecer, em uma unica tela inicial (um mapa
+enquadrado na cidade de Sao Paulo), o ponto de partida para explorar cada regiao em
+detalhe.
 
 O fluxo basico de uso e:
 
-1. O usuario abre o app e ve um **mapa** com as regioes monitoradas (marcadores
-   por latitude/longitude). Uma lista clicavel acompanha o mapa como alternativa.
-2. Ao escolher uma regiao, ele ve as **medicoes** agrupadas por tipo (qualidade
-   do ar, transito, alagamento) e pode acionar a **atualizacao da qualidade do ar**
-   com dados reais da Open-Meteo.
+1. O usuario abre o app e ve um **mapa** enquadrado em Sao Paulo com as regioes
+   monitoradas (marcadores por latitude/longitude). Uma lista clicavel acompanha o
+   mapa como alternativa.
+2. Ao escolher uma regiao, ele ve as **medicoes** de transporte publico e pode
+   acionar a atualizacao com dados da fonte (SPTrans Olho Vivo).
 3. A partir da regiao, ele acessa um **relatorio** com agregacoes (media, minimo,
-   maximo, contagem, ultima leitura) por parametro.
+   maximo, contagem, ultima leitura) por parametro, resumidas em um grafico de
+   barras.
 4. Em uma tela dedicada, ele consulta e cria **regras de alerta** por limiar e
    avalia quais alertas disparam para uma regiao.
 
@@ -40,41 +40,37 @@ Neste projeto:
 - O **cliente movel** roda no dispositivo do usuario (emulador ou aparelho).
 - O **servidor** (API REST) roda em outra maquina/processo e concentra a logica.
 - O **banco de dados** persiste o estado do sistema.
-- **Servicos externos** fornecem dados reais: Open-Meteo Air Quality API
-  (qualidade do ar), Overpass API do OpenStreetMap (transito) e Open-Meteo Flood
-  API / GloFAS (alagamento).
+- **Servicos externos** fornecem dados: SPTrans Olho Vivo (transporte publico) e
+  IBGE (base geografica).
 
 A comunicacao entre cliente e servidor usa **HTTP com payloads JSON** seguindo o
-estilo **REST**. Cada parte pode evoluir e escalar de forma independente (por
-exemplo, trocar SQLite por PostgreSQL sem alterar o cliente). O diagrama textual
-do fluxo esta em `04_plano_de_desenvolvimento.md`.
+estilo **REST**. O servidor, por sua vez, autentica e consome o servico externo da
+SPTrans, que exige **token**. Cada parte pode evoluir e escalar de forma
+independente (por exemplo, trocar SQLite por PostgreSQL sem alterar o cliente). O
+diagrama textual do fluxo esta em `04_plano_de_desenvolvimento.md`.
 
-## 2.4 Fontes de dados
+## 2.4 Fontes de dados e autoridades oficiais de Sao Paulo
 
-- **Qualidade do ar (dados reais):** Open-Meteo Air Quality API
-  ([https://open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api)),
-  publica, gratuita e sem chave de API, baseada em modelos de qualidade do ar do
-  programa Copernicus/CAMS. Foi escolhida por ser comprovavel e de facil acesso.
-- **Alternativa considerada (OpenAQ):**
-  ([https://openaq.org](https://openaq.org)) agrega dados de estacoes oficiais,
-  porem a versao atual da API exige chave de acesso (X-API-Key). Por isso NAO foi
-  usada como fonte primaria, mas fica registrada como fonte relevante.
-- **Transito (dados reais):** Overpass API do OpenStreetMap
-  ([https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API)),
-  gratuita e sem chave, de onde o servidor deriva metricas reais de
-  infraestrutura viaria (numero de vias principais, media de faixas e media de
-  velocidade maxima). Os dados do OpenStreetMap sao publicados sob a licenca ODbL
-  ([https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)).
-- **Alagamento (dados reais):** Open-Meteo Flood API
-  ([https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api)),
-  gratuita e sem chave, com base cientifica no GloFAS (Global Flood Awareness
-  System, do programa Copernicus). O servidor obtem a descarga fluvial
-  (`river_discharge`, em m3/s) da regiao e dela deriva metricas reais (descarga
-  atual, media e maxima do periodo), indicador reconhecido de risco de cheia.
+O sistema usa fontes OFICIAIS do territorio nacional/paulistano, de onde os valores
+sao efetivamente consumidos em runtime:
+
+- **Transporte publico (fonte OFICIAL de SP, consumida):** SPTrans Olho Vivo
+  ([https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/)).
+  E a API oficial de monitoramento da frota de onibus da capital, operada pela
+  SPTrans (Sao Paulo Transporte S/A, da Prefeitura de SP). Exige um **token
+  gratuito** (ver `07_apresentacao_do_programa.md`). Com token, o servidor deriva
+  metricas em tempo real (linhas monitoradas e veiculos em operacao); sem token,
+  usa um fallback de exemplo (conjunto estatico de linhas de SP, no espirito dos
+  dados GTFS da propria SPTrans), claramente rotulado como NAO tempo real.
+- **Base geografica (fonte OFICIAL, consumida):** API de Localidades do **IBGE**
+  ([https://servicodados.ibge.gov.br/api/v1/localidades](https://servicodados.ibge.gov.br/api/v1/localidades)),
+  oficial, nacional e sem chave. O codigo da UF 35 identifica Sao Paulo; o
+  endpoint lista os municipios de SP com `id` e `nome`, usados para validar o
+  recorte geografico do sistema. As coordenadas dos distritos da capital vem de
+  fontes oficiais da Prefeitura de Sao Paulo (GeoSampa/PMSP), nunca inventadas.
 - Em todos os casos, o campo `fonte` de cada medicao registra explicitamente a
-  origem real do dado. As medicoes criadas pelo seed sao apenas valores iniciais
-  de exemplo, substituiveis pelas fontes reais por meio dos endpoints de
-  atualizacao (ver `05_projeto_estrutura_e_modulos.md` e `06_relatorio_de_codigo.md`).
+  origem do dado (ver `05_projeto_estrutura_e_modulos.md` e
+  `06_relatorio_de_codigo.md`).
 
 ## 2.5 Organizacao do restante do documento
 
@@ -82,6 +78,7 @@ Os capitulos seguintes apresentam os fundamentos das tecnologias moveis
 escolhidas (capitulo 3), o plano de desenvolvimento com ferramentas, versoes e o
 diagrama do sistema distribuido (capitulo 4), o projeto com a estrutura de
 diretorios e os modulos reais (capitulo 5), o relatorio comentando as linhas de
-codigo mais relevantes (capitulo 6), o roteiro de apresentacao do programa em
-funcionamento (capitulo 7), a bibliografia (capitulo 8) e a declaracao de uso de
+codigo mais relevantes e o mapeamento fonte -> arquivo/funcao (capitulo 6), o
+roteiro de apresentacao do programa em funcionamento, incluindo o passo a passo do
+token da SPTrans (capitulo 7), a bibliografia (capitulo 8) e a declaracao de uso de
 IA (capitulo 9).

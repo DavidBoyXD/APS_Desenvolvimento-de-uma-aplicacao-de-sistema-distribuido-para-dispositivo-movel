@@ -1,8 +1,8 @@
 # 8. Bibliografia
 
 Todas as referencias abaixo foram efetivamente utilizadas no projeto. Cada item
-indica onde foi aplicado. Os links foram acessados durante o desenvolvimento (ano
-de 2026).
+indica onde foi aplicado (arquivo/funcao). Os links foram acessados durante o
+desenvolvimento (ano de 2026).
 
 ## 8.1 Back-end (Python / API REST)
 
@@ -24,13 +24,12 @@ de 2026).
 - **Uvicorn** - servidor ASGI que executa a aplicacao.
   [https://www.uvicorn.org](https://www.uvicorn.org).
   Aplicado no comando de execucao do servidor (capitulo 7).
-- **httpx** - cliente HTTP usado para consumir a Open-Meteo, a Overpass API e a
-  Open-Meteo Flood API. [https://www.python-httpx.org](https://www.python-httpx.org).
-  Aplicado em `server/app/services/openmeteo.py`,
-  `server/app/services/overpass.py` e `server/app/services/flood.py`.
+- **httpx** - cliente HTTP usado para consumir a SPTrans Olho Vivo e o IBGE.
+  [https://www.python-httpx.org](https://www.python-httpx.org).
+  Aplicado em `server/app/services/sptrans.py` e `server/app/services/ibge.py`.
 - **pytest** - testes automatizados do back-end.
   [https://docs.pytest.org](https://docs.pytest.org).
-  Aplicado em `server/tests/*`.
+  Aplicado em `server/tests/*` (rede e token sempre mockados).
 - **Python** - linguagem do back-end.
   [https://www.python.org](https://www.python.org).
 - **SQLite** - banco de dados padrao (arquivo).
@@ -52,32 +51,31 @@ de 2026).
   Aplicado em todas as telas e componentes de `mobile/src/*`.
   - FlatList: [https://reactnative.dev/docs/flatlist](https://reactnative.dev/docs/flatlist)
   - SectionList: [https://reactnative.dev/docs/sectionlist](https://reactnative.dev/docs/sectionlist)
-  - TextInput: [https://reactnative.dev/docs/textinput](https://reactnative.dev/docs/textinput)
-- **React Navigation** - navegacao entre telas.
+  - useWindowDimensions: [https://reactnative.dev/docs/usewindowdimensions](https://reactnative.dev/docs/usewindowdimensions)
+- **React** - biblioteca base dos componentes.
+  [https://react.dev](https://react.dev).
+- **React Navigation** - navegacao entre telas (nao Expo Router).
   [https://reactnavigation.org](https://reactnavigation.org).
   Aplicado em `mobile/App.tsx` e `mobile/src/navigation.ts`.
   - Native Stack Navigator:
     [https://reactnavigation.org/docs/native-stack-navigator](https://reactnavigation.org/docs/native-stack-navigator)
-- **react-native-maps** - mapa nativo (MapView e Marker).
+- **react-native-maps** - mapa nativo (MapView e Marker), enquadrado em Sao Paulo.
   [https://github.com/react-native-maps/react-native-maps](https://github.com/react-native-maps/react-native-maps).
   Aplicado em `mobile/src/screens/MapaScreen.tsx`.
+- **react-native-chart-kit** - biblioteca de graficos usada no relatorio.
+  npm: [https://www.npmjs.com/package/react-native-chart-kit](https://www.npmjs.com/package/react-native-chart-kit).
+  GitHub: [https://github.com/indiespirit/react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit).
+  Aplicado em `mobile/src/screens/RelatoriosScreen.tsx` (grafico de barras
+  "Medias por parametro").
+- **react-native-svg** - renderizacao vetorial (SVG) exigida pelo
+  react-native-chart-kit.
+  [https://github.com/software-mansion/react-native-svg](https://github.com/software-mansion/react-native-svg).
+  Aplicado (indiretamente) em `mobile/src/screens/RelatoriosScreen.tsx`.
 - **react-native-screens** - telas nativas exigidas pela navegacao.
   [https://github.com/software-mansion/react-native-screens](https://github.com/software-mansion/react-native-screens).
 - **react-native-safe-area-context** - areas seguras da tela.
   [https://github.com/th3rdwave/react-native-safe-area-context](https://github.com/th3rdwave/react-native-safe-area-context).
   Aplicado em `mobile/App.tsx`.
-- **react-native-chart-kit** - biblioteca de graficos usada no relatorio.
-  npm: [https://www.npmjs.com/package/react-native-chart-kit](https://www.npmjs.com/package/react-native-chart-kit).
-  GitHub: [https://github.com/indiespirit/react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit).
-  Aplicado em `mobile/src/screens/RelatoriosScreen.tsx` (grafico de barras
-  "Medias por parametro"). Escolhida por ser compativel com o Expo SDK 57 / React
-  19 / React Native 0.86 e depender apenas do react-native-svg.
-- **react-native-svg** - renderizacao vetorial (SVG) exigida pelo
-  react-native-chart-kit para desenhar os graficos.
-  [https://github.com/software-mansion/react-native-svg](https://github.com/software-mansion/react-native-svg).
-  Aplicado (indiretamente) em `mobile/src/screens/RelatoriosScreen.tsx`.
-  - `useWindowDimensions` (React Native) - usado para dimensionar a largura do
-    grafico: [https://reactnative.dev/docs/usewindowdimensions](https://reactnative.dev/docs/usewindowdimensions).
 - **TypeScript** - linguagem/tipagem do cliente.
   [https://www.typescriptlang.org](https://www.typescriptlang.org).
 - **MDN - Fetch API** - API de requisicoes HTTP usada no cliente.
@@ -85,40 +83,42 @@ de 2026).
   Aplicado em `mobile/src/api/client.ts`.
 - **MDN - AbortController** - cancelamento/timeout de requisicao.
   [https://developer.mozilla.org/pt-BR/docs/Web/API/AbortController](https://developer.mozilla.org/pt-BR/docs/Web/API/AbortController).
+  Aplicado em `mobile/src/api/client.ts`.
 
-## 8.3 Fontes de dados ambientais
+## 8.3 Fontes de dados oficiais de Sao Paulo
 
-- **Open-Meteo Air Quality API** - fonte real de qualidade do ar (sem chave).
-  Documentacao:
-  [https://open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api).
-  Endpoint usado:
-  `https://air-quality-api.open-meteo.com/v1/air-quality`.
-  Aplicado em `server/app/services/openmeteo.py`.
-- **OpenAQ** - agregador de dados oficiais de qualidade do ar.
-  [https://openaq.org](https://openaq.org).
-  Registrado como alternativa relevante; **nao** usado como fonte primaria porque
-  a versao atual da API exige chave de acesso (X-API-Key).
-- **Copernicus Atmosphere Monitoring Service (CAMS)** - base dos modelos de
-  qualidade do ar servidos pela Open-Meteo.
-  [https://atmosphere.copernicus.eu](https://atmosphere.copernicus.eu).
-- **Overpass API do OpenStreetMap** - fonte real de infraestrutura viaria
-  (transito), gratuita e sem chave. Documentacao:
-  [https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API).
-  Endpoint usado: `https://overpass-api.de/api/interpreter`.
-  Aplicado em `server/app/services/overpass.py`.
-- **OpenStreetMap** - projeto colaborativo de dados geograficos que alimenta a
-  Overpass API. [https://www.openstreetmap.org](https://www.openstreetmap.org).
-- **ODbL (Open Database License)** - licenca sob a qual os dados do OpenStreetMap
-  sao disponibilizados; citada no campo `fonte` das medicoes de transito.
-  [https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright).
-- **Open-Meteo Flood API** - fonte real de alagamento (descarga fluvial /
-  river discharge), gratuita e sem chave. Documentacao:
-  [https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api).
-  Endpoint usado: `https://flood-api.open-meteo.com/v1/flood`.
-  Aplicado em `server/app/services/flood.py`.
-- **GloFAS - Global Flood Awareness System** - base cientifica da Open-Meteo Flood
-  API; sistema global de alerta de inundacoes do Copernicus Emergency Management
-  Service (CEMS). [https://global-flood.emergency.copernicus.eu](https://global-flood.emergency.copernicus.eu).
+### 8.3.1 Transporte publico (fonte OFICIAL de SP)
+
+- **SPTrans Olho Vivo** - API oficial de monitoramento da frota de onibus da
+  capital, operada pela SPTrans (Sao Paulo Transporte S/A, da Prefeitura de SP).
+  Portal do desenvolvedor (cadastro e token gratuitos):
+  [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
+  Endpoint base usado: `https://api.olhovivo.sptrans.com.br/v2.1`
+  (`/Login/Autenticar`, `/Posicao`). Aplicado em `server/app/services/sptrans.py`,
+  consumido por `POST /api/v1/regioes/{id}/atualizar-transporte`. Token lido de
+  `SPTRANS_TOKEN` (nunca hardcode).
+- **GTFS da SPTrans** - dados estaticos (sem token) disponibilizados na mesma secao
+  de desenvolvedores do portal da SPTrans
+  ([https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/)),
+  citados como base/espirito do conjunto de linhas de EXEMPLO do fallback em
+  `server/app/services/sptrans.py` (`LINHAS_EXEMPLO`).
+
+### 8.3.2 Base geografica oficial e dados abertos da PMSP
+
+- **IBGE - API de Localidades** - fonte OFICIAL e nacional dos municipios
+  brasileiros (sem chave). Documentacao:
+  [https://servicodados.ibge.gov.br/api/docs/localidades](https://servicodados.ibge.gov.br/api/docs/localidades).
+  Endpoint usado (UF 35 = Sao Paulo):
+  [https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios](https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios).
+  Base de referencia geral:
+  [https://servicodados.ibge.gov.br/api/v1/localidades](https://servicodados.ibge.gov.br/api/v1/localidades).
+  Aplicado em `server/app/services/ibge.py`, consumido por
+  `GET /api/v1/localidades/sp`.
+- **Prefeitura de Sao Paulo - Dados Abertos (CKAN) / GeoSampa** - origem das
+  coordenadas dos distritos da capital usadas no seed (nao inventadas).
+  Portal de dados abertos: [http://dados.prefeitura.sp.gov.br/](http://dados.prefeitura.sp.gov.br/).
+  GeoSampa: [https://geosampa.prefeitura.sp.gov.br/](https://geosampa.prefeitura.sp.gov.br/).
+  Referenciado na docstring de `server/app/seed.py` (`REGIOES_SEED`).
 
 ## 8.4 Conceitos e plataformas de referencia
 

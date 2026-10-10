@@ -1,20 +1,20 @@
-"""Modelos ORM (SQLAlchemy 2.x) do dominio ambiental urbano.
+"""Modelos ORM (SQLAlchemy 2.x) do dominio de transporte publico urbano de SP.
 
-O modelo e generico e centrado no conceito de "medicao ambiental por tipo",
-permitindo representar os varios assuntos exigidos pela APS com o mesmo
-esquema. Os tres tipos usam fontes reais e verificaveis, com o campo ``fonte``
-indicando a origem: qualidade do ar (Open-Meteo Air Quality API), transito
-(Overpass API / OpenStreetMap) e alagamento (Open-Meteo Flood API, base
-cientifica GloFAS).
+O modelo e generico e centrado no conceito de "medicao por tipo", permitindo
+representar as metricas exigidas pela APS com o mesmo esquema. O tipo suportado
+usa fonte real e verificavel, com o campo ``fonte`` indicando a origem:
+transporte publico (SPTrans Olho Vivo, frota de onibus de Sao Paulo em tempo
+real). A base geografica (municipio/UF) e validavel pela API de Localidades do
+IBGE.
 
 Entidades
 ---------
 - Regiao: local monitorado, com latitude/longitude para posicionar no mapa
   do app movel.
-- Medicao: um valor observado (ex.: PM2.5 = 12.3 ug/m3) de um ``tipo`` e
-  ``parametro``, ligado a uma regiao, com data/hora e a fonte do dado.
-- Alerta: regra de limiar (ex.: PM2.5 > 25) que, quando violada por uma
-  medicao recente, dispara um alerta com mensagem em PT-BR.
+- Medicao: um valor observado (ex.: veiculos_em_operacao = 318 veiculos) de um
+  ``tipo`` e ``parametro``, ligado a uma regiao, com data/hora e a fonte do dado.
+- Alerta: regra de limiar (ex.: veiculos_em_operacao > 300) que, quando violada
+  por uma medicao recente, dispara um alerta com mensagem em PT-BR.
 
 Referencia SQLAlchemy 2.0 (Mapped/mapped_column): 
 https://docs.sqlalchemy.org/en/20/orm/quickstart.html
@@ -30,11 +30,11 @@ from .database import Base
 
 
 class TipoMedicao(str, enum.Enum):
-    """Tipos de informacao ambiental urbana suportados pelo sistema."""
+    """Tipos de informacao urbana suportados pelo sistema."""
 
-    qualidade_ar = "qualidade_ar"
-    transito = "transito"
-    alagamento = "alagamento"
+    # Transporte publico oficial de Sao Paulo (SPTrans Olho Vivo, tempo real da
+    # frota de onibus; com fallback de exemplo/GTFS estatico quando sem token).
+    transporte_publico = "transporte_publico"
 
 
 def _agora_utc() -> datetime:
@@ -75,22 +75,25 @@ class Medicao(Base):
     tipo: Mapped[TipoMedicao] = mapped_column(
         Enum(TipoMedicao, native_enum=False), nullable=False, index=True
     )
-    # Parametro observado, ex.: 'pm2_5', 'pm10', 'nivel_congestionamento',
-    # 'nivel_agua'. Mantido como string para o modelo permanecer generico.
+    # Parametro observado, ex.: 'linhas_monitoradas', 'veiculos_em_operacao'.
+    # Mantido como string para o modelo permanecer generico.
     parametro: Mapped[str] = mapped_column(String(60), nullable=False)
     valor: Mapped[float] = mapped_column(Float, nullable=False)
     unidade: Mapped[str] = mapped_column(String(30), nullable=False, default="")
     timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_agora_utc
     )
-    # Origem do dado (link/descricao). Ex.: 'Open-Meteo Air Quality API'.
+    # Origem do dado (link/descricao). Ex.: 'SPTrans Olho Vivo'.
     fonte: Mapped[str] = mapped_column(String(255), nullable=False, default="")
 
     regiao: Mapped["Regiao"] = relationship(back_populates="medicoes")
 
 
 class Alerta(Base):
-    """Regra de limiar que dispara um alerta quando violada."""
+    """Regra de limiar que dispara um alerta quando violada.
+
+    Ex.: parametro='veiculos_em_operacao', limiar=300, condicao='>'.
+    """
 
     __tablename__ = "alertas"
 

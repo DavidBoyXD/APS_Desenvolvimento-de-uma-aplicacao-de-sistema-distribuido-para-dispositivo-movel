@@ -1,11 +1,17 @@
-# Documentacao da APS - Monitor Ambiental Urbano
+# Documentacao da APS - Monitor de Transporte Publico de Sao Paulo (SP)
 
 Atividades Praticas Supervisionadas (APS) da disciplina **Sistemas Distribuidos (SD)**,
 7o/8o semestre do curso de Ciencia da Computacao (CC) - Universidade Paulista (UNIP).
 
 Tema: **Desenvolvimento de uma aplicacao de sistema distribuido para dispositivo movel**,
-com foco no gerenciamento de informacoes ambientais urbanas (qualidade do ar,
-transito e alagamento).
+com foco no monitoramento do **transporte publico** (frota de onibus) da cidade de
+**Sao Paulo (SP)**.
+
+O trabalho se apoia em fontes e autoridades OFICIAIS, com recorte em Sao Paulo:
+
+- **Transporte publico:** SPTrans Olho Vivo (fonte OFICIAL da Prefeitura de SP,
+  tempo real da frota de onibus), com fallback de exemplo quando nao ha token.
+- **Base geografica:** API oficial de Localidades do **IBGE** (codigo da UF 35 = SP).
 
 Toda a documentacao esta em Portugues-Brasil. O codigo-fonte permanece em ingles
 (convencao tecnica), com comentarios em Portugues.
@@ -34,8 +40,18 @@ A tabela abaixo mapeia o item da APS ao arquivo correspondente.
 
 Por decisao do autor do trabalho, **todo artefato, tecnologia, biblioteca ou API
 citado nesta documentacao traz a referencia/link real da fonte, o que foi
-utilizado e onde foi aplicado no projeto**. Os links oficiais estao distribuidos
-em cada documento e consolidados em `08_bibliografia.md`.
+utilizado e onde foi aplicado no projeto** (arquivo e funcao). Os links oficiais
+estao distribuidos em cada documento e consolidados em `08_bibliografia.md`. O
+mapeamento fonte -> arquivo/funcao esta detalhado em `06_relatorio_de_codigo.md`.
+
+## Fontes e autoridades oficiais de Sao Paulo (resumo)
+
+- **SPTrans Olho Vivo** (transporte publico, tempo real da frota de onibus):
+  [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
+  Aplicada em `server/app/services/sptrans.py`.
+- **IBGE - API de Localidades** (base geografica oficial, UF 35 = SP):
+  [https://servicodados.ibge.gov.br/api/v1/localidades](https://servicodados.ibge.gov.br/api/v1/localidades).
+  Aplicada em `server/app/services/ibge.py`.
 
 ## Dados a serem preenchidos pelo autor
 
@@ -52,10 +68,13 @@ foram inventados. Estao marcados como `[preencher pelo autor]` no arquivo
 
 - **Back-end (servidor):** API REST em Python com FastAPI, ORM SQLAlchemy 2.x e
   banco SQLite (migravel para PostgreSQL). Codigo em `server/`.
-- **Cliente movel:** aplicativo React Native com Expo (TypeScript), com mapa,
-  detalhe por regiao, relatorios e alertas. Codigo em `mobile/`.
-- **Fonte de dados reais:** Open-Meteo Air Quality API
-  ([https://open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api)),
-  publica e sem chave, usada para a qualidade do ar.
+- **Cliente movel:** aplicativo React Native com Expo (TypeScript), com mapa
+  enquadrado em Sao Paulo, detalhe por regiao, relatorios (com grafico de barras)
+  e alertas. Codigo em `mobile/`.
+- **Token da SPTrans:** o transporte publico em tempo real usa um token gratuito
+  lido da variavel de ambiente `SPTRANS_TOKEN` (nunca escrito no codigo). Sem o
+  token, o sistema usa um fallback de exemplo claramente rotulado, de modo que o
+  app funciona de ponta a ponta. O passo a passo de cadastro do token esta em
+  `07_apresentacao_do_programa.md`.
 
 Para rodar e demonstrar o sistema, siga o roteiro em `07_apresentacao_do_programa.md`.

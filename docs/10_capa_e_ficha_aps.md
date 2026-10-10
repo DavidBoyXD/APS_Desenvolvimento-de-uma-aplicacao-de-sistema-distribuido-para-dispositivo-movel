@@ -16,8 +16,7 @@ Atividades Praticas Supervisionadas (APS)
 
 Titulo do trabalho:
 Desenvolvimento de uma aplicacao de sistema distribuido para dispositivo movel
-- Monitor Ambiental Urbano de Sao Paulo (qualidade do ar, alagamento e
-  transporte publico)
+- Monitor de Transporte Publico de Sao Paulo (SPTrans Olho Vivo)
 
 Aluno(s) e RA:
 - [preencher pelo autor: Nome completo] - RA: [preencher pelo autor]
@@ -41,7 +40,7 @@ oficial fornecido pela instituicao:
 - Disciplina: Sistemas Distribuidos
 - Semestre/Turma: [preencher pelo autor]
 - Titulo da APS: Desenvolvimento de uma aplicacao de sistema distribuido para
-  dispositivo movel (Monitor Ambiental Urbano de Sao Paulo)
+  dispositivo movel (Monitor de Transporte Publico de Sao Paulo)
 - Integrantes do grupo (nome e RA): [preencher pelo autor]
 - Professor(a): [preencher pelo autor]
 - Data de entrega: [preencher pelo autor]
@@ -53,17 +52,13 @@ oficial fornecido pela instituicao:
 
 ## 10.3 Resumo do trabalho (para a capa/apresentacao)
 
-Aplicacao de sistema distribuido para dispositivo movel voltada ao gerenciamento
-de informacoes ambientais urbanas da cidade de Sao Paulo (SP). E composta por um
-cliente movel (React Native/Expo), um servidor de API REST (FastAPI/Python) e um
-banco de dados (SQLite, migravel para PostgreSQL). Reune tres assuntos ancorados
-em fontes e autoridades oficiais: **transporte publico** com a SPTrans Olho Vivo
-(fonte OFICIAL da Prefeitura de SP, tempo real com token gratuito e fallback de
-exemplo sem token); **qualidade do ar** com a Open-Meteo Air Quality API (dado
-operacional) tendo a CETESB/QUALAR como autoridade oficial de referencia; e
-**alagamento** com a Open-Meteo Flood API / GloFAS (dado operacional) tendo o
-CGE-SP como autoridade oficial de referencia. A base geografica usa a API oficial
-do IBGE (UF 35 = SP). Oferece consulta por regiao ligada a um mapa enquadrado em
-Sao Paulo, relatorios agregados (com grafico de barras), alertas por limiar e
-tratamento de erros padronizado. A documentacao completa esta nos arquivos
-numerados desta pasta `docs/` (ver `00_LEIA-ME.md`).
+Aplicacao de sistema distribuido para dispositivo movel voltada ao monitoramento
+do transporte publico (frota de onibus) da cidade de Sao Paulo (SP). E composta
+por um cliente movel (React Native/Expo), um servidor de API REST (FastAPI/Python)
+e um banco de dados (SQLite, migravel para PostgreSQL). Apoia-se em fontes
+OFICIAIS: **transporte publico** com a SPTrans Olho Vivo (fonte OFICIAL da
+Prefeitura de SP, tempo real com token gratuito e fallback de exemplo sem token) e
+**base geografica** com a API oficial do IBGE (UF 35 = SP). Oferece consulta por
+regiao ligada a um mapa enquadrado em Sao Paulo, relatorios agregados (com grafico
+de barras), alertas por limiar e tratamento de erros padronizado. A documentacao
+completa esta nos arquivos numerados desta pasta `docs/` (ver `00_LEIA-ME.md`).

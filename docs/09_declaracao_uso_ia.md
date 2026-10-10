@@ -28,19 +28,19 @@ finalidade e etapa.
 > Declaro que ferramentas de Inteligencia Artificial Generativa foram utilizadas
 > neste trabalho nas seguintes etapas: o assistente de IA (Kiro) foi utilizado
 > para apoio a implementacao do codigo do back-end (FastAPI), do app movel
-> (React Native/Expo) e das integracoes com fontes oficiais de Sao Paulo (SPTrans
-> Olho Vivo, Open-Meteo com referencia a CETESB/QUALAR e ao CGE-SP, e IBGE), alem
-> da redacao da documentacao tecnica, na etapa de desenvolvimento e documentacao
-> da aplicacao. Todo o conteudo gerado foi revisado criticamente e validado pelo
-> autor, que assume integral responsabilidade pela originalidade e veracidade do
-> texto final.
+> (React Native/Expo) e das integracoes com as fontes oficiais de Sao Paulo
+> (SPTrans Olho Vivo, para transporte publico, e IBGE, para a base geografica),
+> alem da redacao da documentacao tecnica, na etapa de desenvolvimento e
+> documentacao da aplicacao. Todo o conteudo gerado foi revisado criticamente e
+> validado pelo autor, que assume integral responsabilidade pela originalidade e
+> veracidade do texto final.
 
 Detalhamento (para transparencia), conforme os tres eixos pedidos pela norma:
 
 - **Ferramenta:** assistente de IA (Kiro).
 - **Finalidade:** apoio a implementacao do codigo do back-end (FastAPI), do app
-  movel (React Native/Expo) e das integracoes com as fontes oficiais de Sao Paulo,
-  alem da redacao da documentacao tecnica.
+  movel (React Native/Expo) e das integracoes com as fontes oficiais de Sao Paulo
+  (SPTrans Olho Vivo e IBGE), alem da redacao da documentacao tecnica.
 - **Etapa da pesquisa:** desenvolvimento e documentacao da aplicacao.
 
 O autor revisou criticamente todo o conteudo, validou o funcionamento do sistema

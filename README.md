@@ -1,4 +1,4 @@
-# Monitor Ambiental Urbano de Sao Paulo (SP)
+# Monitor de Transporte Publico de Sao Paulo (SP)
 
 APS do 7o/8o semestre de Ciencia da Computacao (CC) na Universidade Paulista (UNIP).
 
@@ -8,12 +8,14 @@ aplicacao de sistema distribuido para dispositivo movel".
 ## Descricao do projeto e tema
 
 Este repositorio implementa uma aplicacao de sistema distribuido para dispositivo
-movel voltada ao monitoramento de informacoes ambientais e urbanas da cidade de
-**Sao Paulo (SP)**. O foco esta em tres eixos:
+movel voltada ao monitoramento do **transporte publico** da cidade de **Sao Paulo
+(SP)**, usando a frota de onibus da capital como informacao urbana principal. O
+sistema se apoia em duas fontes OFICIAIS:
 
-- **Qualidade do ar** (poluicao: PM2.5, PM10 e correlatos).
-- **Alagamento / chuva** (indicador de descarga fluvial, risco de cheia).
-- **Transporte publico** (frota de onibus da capital, via SPTrans Olho Vivo).
+- **Transporte publico** (frota de onibus da capital), via **SPTrans Olho Vivo**,
+  a API oficial da Prefeitura de Sao Paulo.
+- **Base geografica** (municipio/UF), via **API de Localidades do IBGE** (codigo
+  da UF 35 = Sao Paulo).
 
 A consulta e feita por regiao da capital (distritos reais de Sao Paulo), ligada a
 um mapa, e o sistema oferece relatorios agregados, alertas por limiar e tratamento
@@ -47,10 +49,9 @@ de dados, caracterizando o sistema distribuido:
 ```
 
 O servidor consome fontes externas reais, com recorte em Sao Paulo. Para
-transporte publico usa a fonte OFICIAL da Prefeitura (SPTrans Olho Vivo, que
-exige token gratuito, com fallback funcional sem token). Para qualidade do ar e
-alagamento usa APIs operacionais gratuitas (sem chave), citando as autoridades
-oficiais de SP como referencia. A base geografica vem da API oficial do IBGE.
+transporte publico usa a fonte OFICIAL da Prefeitura (SPTrans Olho Vivo, que exige
+token gratuito, com fallback funcional sem token). A base geografica vem da API
+oficial do IBGE.
 
 - Base da API: `http://HOST:8000`, prefixo `/api/v1`, corpo em JSON.
 - Documentacao interativa (Swagger) em `http://HOST:8000/docs`.
@@ -58,54 +59,34 @@ oficiais de SP como referencia. A base geografica vem da API oficial do IBGE.
 
 ## Fontes de dados (recorte Sao Paulo)
 
-| Eixo | Fonte usada no codigo | Autoridade oficial de SP (referencia) | Token |
+| Area | Fonte usada no codigo | Token | Onde foi aplicada |
 | --- | --- | --- | --- |
-| Transporte publico | SPTrans Olho Vivo (OFICIAL, tempo real) + GTFS estatico (fallback) | SPTrans / Prefeitura de SP | Sim (gratuito) |
-| Qualidade do ar | Open-Meteo Air Quality API (operacional) | CETESB / QUALAR | Nao |
-| Alagamento | Open-Meteo Flood API / GloFAS (operacional) | CGE-SP | Nao |
-| Base geografica | API de Localidades do IBGE (codigo UF 35 = SP) | IBGE | Nao |
+| Transporte publico | SPTrans Olho Vivo (OFICIAL, tempo real) + exemplo/GTFS (fallback) | Sim (gratuito) | `server/app/services/sptrans.py` |
+| Base geografica | API de Localidades do IBGE (codigo UF 35 = SP) | Nao | `server/app/services/ibge.py` |
 
 Links reais:
 
 - **SPTrans Olho Vivo** (fonte OFICIAL da Prefeitura de Sao Paulo, tempo real da
-  frota de onibus; a mesma secao disponibiliza o GTFS estatico usado como
+  frota de onibus; a mesma secao disponibiliza o GTFS estatico usado como base do
   fallback): [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
-  Aplicada em `server/app/services/sptrans.py`.
-- **Open-Meteo Air Quality API** (gratuita, sem chave), com a **CETESB/QUALAR**
-  como autoridade oficial de qualidade do ar em SP:
-  [https://open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api),
-  [https://cetesb.sp.gov.br/ar/](https://cetesb.sp.gov.br/ar/) e
-  [https://qualar.cetesb.sp.gov.br](https://qualar.cetesb.sp.gov.br).
-  Aplicada em `server/app/services/openmeteo.py`.
-- **Open-Meteo Flood API** (gratuita, sem chave, base cientifica GloFAS do
-  programa Copernicus), com o **CGE-SP** como autoridade oficial de alagamentos
-  em SP: [https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api),
-  [https://global-flood.emergency.copernicus.eu](https://global-flood.emergency.copernicus.eu)
-  e [https://www.cgesp.org/](https://www.cgesp.org/).
-  Aplicada em `server/app/services/flood.py`.
+  Aplicada em `server/app/services/sptrans.py`, consumida por
+  `POST /api/v1/regioes/{id}/atualizar-transporte`.
 - **IBGE - API de Localidades** (oficial, nacional, sem chave; codigo da UF 35 =
   Sao Paulo): [https://servicodados.ibge.gov.br/api/v1/localidades](https://servicodados.ibge.gov.br/api/v1/localidades).
-  Aplicada em `server/app/services/ibge.py`.
+  Aplicada em `server/app/services/ibge.py`, consumida por
+  `GET /api/v1/localidades/sp`.
 
-## Endpoints de atualizacao com fontes reais
+## Endpoints da API
 
-Todos os endpoints de atualizacao sao `POST` por regiao, persistem as medicoes
-derivadas e, em caso de falha da fonte externa, retornam **HTTP 502** padronizado
-em Portugues-BR (schema `ErroResposta` com `codigo`, `mensagem` e `detalhe`, nunca
-um erro 500 cru).
+Todos sob o prefixo `/api/v1`, corpo em JSON. Em caso de falha da fonte externa, o
+servidor retorna **HTTP 502** padronizado em Portugues-BR (schema `ErroResposta`
+com `codigo`, `mensagem` e `detalhe`, nunca um erro 500 cru).
 
-- `POST /api/v1/regioes/{id}/atualizar-ar` - busca a qualidade do ar atual na
-  **Open-Meteo Air Quality API** (sem chave) e persiste medicoes de
-  `qualidade_ar` (ex.: PM2.5 e PM10). Referencia oficial de SP: CETESB/QUALAR.
-- `POST /api/v1/regioes/{id}/atualizar-transito` - busca as vias reais ao redor
-  da regiao na **Overpass API do OpenStreetMap** (dados sob licenca
-  [ODbL](https://www.openstreetmap.org/copyright)) e persiste metricas de
-  infraestrutura viaria como medicoes de `transito`. A chamada exige o header
-  `User-Agent` (a API responde HTTP 406 sem ele).
-- `POST /api/v1/regioes/{id}/atualizar-alagamento` - busca a descarga fluvial
-  real na **Open-Meteo Flood API** (base cientifica GloFAS) e persiste metricas
-  de `alagamento` (descarga fluvial atual, media e maxima do periodo, em m3/s).
-  Referencia oficial de SP: CGE-SP.
+- `GET /health` - verificacao de saude (`{"status":"ok"}`).
+- `GET /api/v1/regioes` - lista de regioes de SP (para o mapa, com lat/lon).
+- `GET /api/v1/regioes/{id}` - detalhe de uma regiao.
+- `GET /api/v1/medicoes` - lista de medicoes (filtros por regiao/tipo).
+- `GET /api/v1/regioes/{id}/medicoes` - medicoes de uma regiao.
 - `POST /api/v1/regioes/{id}/atualizar-transporte` - busca a frota de onibus na
   **SPTrans Olho Vivo** e persiste metricas de `transporte_publico`. Com o token
   `SPTRANS_TOKEN` definido, deriva metricas REAIS em tempo real (linhas
@@ -113,11 +94,18 @@ um erro 500 cru).
   claramente rotulado (nao e tempo real), para o app funcionar de ponta a ponta.
   Veja a secao "Configuracao do token da SPTrans" abaixo.
   **Semantica (metrica por cidade, nao por regiao):** o endpoint recebe
-  `regiao_id` por uniformidade com os demais `atualizar-*`, mas o `/Posicao` da
-  SPTrans devolve a frota de Sao Paulo inteira e ignora o lat/lon da regiao.
-  Portanto `linhas_monitoradas` e `veiculos_em_operacao` sao metricas da cidade
-  de Sao Paulo como um todo (frota do Olho Vivo), nao geofiltradas por regiao:
-  atualizar regioes diferentes no mesmo instante grava os mesmos valores.
+  `regiao_id` por uniformidade, mas o `/Posicao` da SPTrans devolve a frota de
+  Sao Paulo inteira e ignora o lat/lon da regiao. Portanto `linhas_monitoradas` e
+  `veiculos_em_operacao` sao metricas da cidade de Sao Paulo como um todo (frota
+  do Olho Vivo), nao geofiltradas por regiao: atualizar regioes diferentes no
+  mesmo instante grava os mesmos valores.
+- `GET /api/v1/localidades/sp` - municipios de SP validados na API oficial do
+  IBGE (codigo da UF 35).
+- `GET /api/v1/relatorios/regiao/{id}` - agregacoes (media, minimo, maximo,
+  contagem e ultima leitura) por parametro.
+- `GET /api/v1/alertas`, `POST /api/v1/alertas`,
+  `GET /api/v1/alertas/avaliar/{regiao_id}` - regras de alerta por limiar e
+  avaliacao.
 
 Exemplo de chamada:
 
@@ -282,8 +270,6 @@ bibliografia, capa e ficha), esta na pasta [docs/](docs/):
 server/        Back-end FastAPI (API REST) + SQLite
   app/main.py  Entrypoint da aplicacao FastAPI
   app/services/sptrans.py   Integracao SPTrans Olho Vivo (token + fallback)
-  app/services/openmeteo.py Qualidade do ar (CETESB/QUALAR como referencia)
-  app/services/flood.py     Alagamento (CGE-SP como referencia)
   app/services/ibge.py      Base geografica oficial (IBGE, UF 35)
 mobile/        Cliente movel Expo / React Native (TypeScript)
 docs/          Documentacao academica em Portugues-BR
@@ -294,7 +280,15 @@ README.md      Este arquivo
 ## Referencias
 
 - [FastAPI](https://fastapi.tiangolo.com) - framework do servidor de API REST
-  (back-end).
+  (back-end), em `server/app/main.py` e `server/app/routers/*`.
+- [SQLAlchemy](https://www.sqlalchemy.org) - ORM de persistencia, em
+  `server/app/database.py` e `server/app/models.py`.
+- [Pydantic](https://docs.pydantic.dev) - validacao e serializacao dos schemas,
+  em `server/app/schemas.py`.
+- [httpx](https://www.python-httpx.org) - cliente HTTP do servidor para consumir
+  as fontes externas, em `server/app/services/*`.
+- [pytest](https://docs.pytest.org) - testes automatizados do back-end, em
+  `server/tests/*`.
 - [Expo](https://docs.expo.dev) - plataforma e ferramentas do cliente movel.
 - [React Native](https://reactnative.dev) - framework do aplicativo movel.
 - [react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit) -
@@ -305,19 +299,7 @@ README.md      Este arquivo
   da Prefeitura de Sao Paulo para transporte publico (tempo real da frota de
   onibus; token gratuito), consumida pelo servidor em
   `server/app/services/sptrans.py`. A mesma secao disponibiliza o GTFS estatico
-  usado como fallback.
-- [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) -
-  fonte operacional e gratuita (sem chave) de qualidade do ar, consumida pelo
-  servidor; [CETESB/QUALAR](https://qualar.cetesb.sp.gov.br) e a autoridade
-  oficial de referencia em SP.
-- [Open-Meteo Flood API](https://open-meteo.com/en/docs/flood-api) - fonte
-  operacional e gratuita (sem chave) de alagamento (descarga fluvial), com base
-  cientifica no [GloFAS](https://global-flood.emergency.copernicus.eu)
-  (Copernicus); [CGE-SP](https://www.cgesp.org/) e a autoridade oficial de
-  referencia em SP.
-- [Overpass API do OpenStreetMap](https://wiki.openstreetmap.org/wiki/Overpass_API) -
-  fonte gratuita (sem chave) de infraestrutura viaria (transito), consumida pelo
-  servidor. Dados sob licenca [ODbL](https://www.openstreetmap.org/copyright).
+  usado como base do fallback.
 - [IBGE - API de Localidades](https://servicodados.ibge.gov.br/api/v1/localidades) -
   base geografica oficial (codigo da UF 35 = Sao Paulo), consumida pelo servidor
   em `server/app/services/ibge.py`.

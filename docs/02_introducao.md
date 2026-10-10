@@ -2,30 +2,28 @@
 
 ## 2.1 O problema
 
-A cidade de Sao Paulo (SP) convive com problemas ambientais urbanos que se
-sobrepoem: a **poluicao do ar** (material particulado como PM2.5 e PM10, alem de
-gases como monoxido de carbono, dioxido de nitrogenio e ozonio), os **alagamentos**
-em periodos de chuva e a complexidade do **transporte publico** por onibus. Essas
-informacoes existem e muitas sao divulgadas por orgaos oficiais, mas costumam
-estar dispersas em diferentes portais, formatos e escalas, o que dificulta o
-acesso rapido pelo cidadao comum, especialmente em mobilidade.
+A cidade de Sao Paulo (SP) possui uma das maiores redes de transporte publico por
+onibus do pais, operada pela SPTrans. Informacoes sobre a operacao da frota (linhas
+monitoradas e veiculos em circulacao) existem e sao disponibilizadas oficialmente,
+mas costumam exigir integracao tecnica e autenticacao, o que dificulta o acesso
+rapido pelo cidadao comum, especialmente em mobilidade.
 
 ## 2.2 A proposta
 
-Este trabalho propoe o **Monitor Ambiental Urbano** com recorte em Sao Paulo, um
-aplicativo movel que reune essas informacoes por regiao, apoiado por um servidor
-central que integra dados de fontes oficiais e organiza consultas, relatorios e
-alertas. A ideia e oferecer, em uma unica tela inicial (um mapa enquadrado na
-cidade de Sao Paulo), o ponto de partida para explorar cada regiao em detalhe.
+Este trabalho propoe o **Monitor de Transporte Publico** com recorte em Sao Paulo,
+um aplicativo movel que reune informacoes da frota de onibus por regiao, apoiado
+por um servidor central que integra os dados da fonte oficial e organiza consultas,
+relatorios e alertas. A ideia e oferecer, em uma unica tela inicial (um mapa
+enquadrado na cidade de Sao Paulo), o ponto de partida para explorar cada regiao em
+detalhe.
 
 O fluxo basico de uso e:
 
 1. O usuario abre o app e ve um **mapa** enquadrado em Sao Paulo com as regioes
    monitoradas (marcadores por latitude/longitude). Uma lista clicavel acompanha o
    mapa como alternativa.
-2. Ao escolher uma regiao, ele ve as **medicoes** agrupadas por tipo (qualidade do
-   ar, alagamento, transporte publico) e pode acionar as atualizacoes com dados
-   das fontes.
+2. Ao escolher uma regiao, ele ve as **medicoes** de transporte publico e pode
+   acionar a atualizacao com dados da fonte (SPTrans Olho Vivo).
 3. A partir da regiao, ele acessa um **relatorio** com agregacoes (media, minimo,
    maximo, contagem, ultima leitura) por parametro, resumidas em um grafico de
    barras.
@@ -42,21 +40,19 @@ Neste projeto:
 - O **cliente movel** roda no dispositivo do usuario (emulador ou aparelho).
 - O **servidor** (API REST) roda em outra maquina/processo e concentra a logica.
 - O **banco de dados** persiste o estado do sistema.
-- **Servicos externos** fornecem dados: SPTrans Olho Vivo (transporte publico),
-  Open-Meteo Air Quality API (qualidade do ar), Open-Meteo Flood API / GloFAS
-  (alagamento) e IBGE (base geografica).
+- **Servicos externos** fornecem dados: SPTrans Olho Vivo (transporte publico) e
+  IBGE (base geografica).
 
 A comunicacao entre cliente e servidor usa **HTTP com payloads JSON** seguindo o
-estilo **REST**. O servidor, por sua vez, autentica e consome servicos externos
-(inclusive um que exige **token**, a SPTrans). Cada parte pode evoluir e escalar
-de forma independente (por exemplo, trocar SQLite por PostgreSQL sem alterar o
-cliente). O diagrama textual do fluxo esta em `04_plano_de_desenvolvimento.md`.
+estilo **REST**. O servidor, por sua vez, autentica e consome o servico externo da
+SPTrans, que exige **token**. Cada parte pode evoluir e escalar de forma
+independente (por exemplo, trocar SQLite por PostgreSQL sem alterar o cliente). O
+diagrama textual do fluxo esta em `04_plano_de_desenvolvimento.md`.
 
 ## 2.4 Fontes de dados e autoridades oficiais de Sao Paulo
 
-O sistema distingue duas camadas: **fontes operacionais** (de onde os valores sao
-efetivamente consumidos em runtime) e **autoridades oficiais de referencia** (os
-orgaos que exercem a competencia oficial sobre o tema em SP e sao citados).
+O sistema usa fontes OFICIAIS do territorio nacional/paulistano, de onde os valores
+sao efetivamente consumidos em runtime:
 
 - **Transporte publico (fonte OFICIAL de SP, consumida):** SPTrans Olho Vivo
   ([https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/)).
@@ -66,27 +62,6 @@ orgaos que exercem a competencia oficial sobre o tema em SP e sao citados).
   metricas em tempo real (linhas monitoradas e veiculos em operacao); sem token,
   usa um fallback de exemplo (conjunto estatico de linhas de SP, no espirito dos
   dados GTFS da propria SPTrans), claramente rotulado como NAO tempo real.
-- **Qualidade do ar (fonte operacional):** Open-Meteo Air Quality API
-  ([https://open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api)),
-  publica, gratuita e sem chave, baseada em modelos de qualidade do ar do programa
-  Copernicus/CAMS. **Autoridade oficial de referencia em SP:** a **CETESB** e o
-  sistema **QUALAR** ([https://cetesb.sp.gov.br/ar/](https://cetesb.sp.gov.br/ar/)
-  e [https://qualar.cetesb.sp.gov.br](https://qualar.cetesb.sp.gov.br)). A CETESB
-  opera a rede oficial de monitoramento da qualidade do ar no Estado de SP (indice
-  IQAr), mas nao expoe uma API REST aberta e estavel para consumo direto; por isso
-  e citada como referencia enquanto a Open-Meteo fornece os valores operacionais.
-- **Alagamento (fonte operacional):** Open-Meteo Flood API
-  ([https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api)),
-  gratuita e sem chave, com base cientifica no **GloFAS** (Global Flood Awareness
-  System, do programa Copernicus). O servidor obtem a descarga fluvial
-  (`river_discharge`, em m3/s) da regiao e dela deriva metricas (descarga atual,
-  media e maxima do periodo), indicador reconhecido de risco de cheia.
-  **Autoridade oficial de referencia em SP:** o **CGE-SP** (Centro de
-  Gerenciamento de Emergencias Climaticas da Prefeitura de Sao Paulo,
-  [https://www.cgesp.org/](https://www.cgesp.org/)), orgao que monitora e divulga
-  os pontos de alagamento da cidade. Como o CGE-SP nao expoe um endpoint JSON
-  estavel e sem chave, e citado como referencia enquanto a Open-Meteo Flood/GloFAS
-  fornece os valores operacionais.
 - **Base geografica (fonte OFICIAL, consumida):** API de Localidades do **IBGE**
   ([https://servicodados.ibge.gov.br/api/v1/localidades](https://servicodados.ibge.gov.br/api/v1/localidades)),
   oficial, nacional e sem chave. O codigo da UF 35 identifica Sao Paulo; o

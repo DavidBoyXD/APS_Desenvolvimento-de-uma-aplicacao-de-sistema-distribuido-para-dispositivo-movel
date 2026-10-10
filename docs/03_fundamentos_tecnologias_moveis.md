@@ -110,9 +110,10 @@ esforco controlado.
 - **FastAPI** (0.115.6) - framework web ASGI para APIs REST em Python, com
   validacao automatica e documentacao interativa (Swagger em `/docs`).
   Referencia: [https://fastapi.tiangolo.com](https://fastapi.tiangolo.com).
-  Aplicado em: `server/app/main.py` (aplicacao, titulo "API Ambiental Urbana -
-  APS SD", rotas) e `server/app/routers/*` (endpoints por dominio) e
-  `server/app/errors.py` (tratamento de erros).
+  Aplicado em: `server/app/main.py` (aplicacao, titulo "API Transporte Publico SP
+  - APS SD", rotas),
+  `server/app/routers/*` (endpoints por dominio) e `server/app/errors.py`
+  (tratamento de erros).
 - **Uvicorn** (0.32.1) - servidor ASGI usado para executar a aplicacao FastAPI.
   Referencia: [https://www.uvicorn.org](https://www.uvicorn.org).
   Aplicado em: comando de execucao do servidor (ver capitulo 7).
@@ -155,18 +156,16 @@ producao (PostgreSQL) sem reescrever a aplicacao.
   fontes externas de dados. Referencia:
   [https://www.python-httpx.org](https://www.python-httpx.org).
   Aplicado em: `server/app/services/sptrans.py` (transporte publico, inclusive a
-  sessao autenticada por cookie), `server/app/services/openmeteo.py` (qualidade do
-  ar), `server/app/services/flood.py` (alagamento), `server/app/services/ibge.py`
-  (base geografica) e `server/app/services/overpass.py` (transito legado).
+  sessao autenticada por cookie) e `server/app/services/ibge.py` (base
+  geografica).
 - **Fetch API** - usada pelo cliente movel para chamar a API REST. Referencia:
   [https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API](https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API).
   Aplicado em: `mobile/src/api/client.ts`.
 
-## 3.7 Fontes de dados e autoridades oficiais de Sao Paulo
+## 3.7 Fontes de dados oficiais de Sao Paulo
 
-O sistema prioriza fontes OFICIAIS do territorio nacional/paulistano e, quando a
-autoridade oficial nao expoe uma API aberta e estavel, usa uma fonte operacional
-publica e cita o orgao oficial como referencia.
+O sistema usa fontes OFICIAIS do territorio nacional/paulistano, de onde os valores
+sao efetivamente consumidos em runtime.
 
 ### 3.7.1 Transporte publico - SPTrans Olho Vivo (fonte OFICIAL de SP)
 
@@ -193,47 +192,9 @@ publica e cita o orgao oficial como referencia.
   de ponta a ponta mesmo sem o token.
 - **GTFS da SPTrans:** a mesma secao de desenvolvedores do portal da SPTrans
   tambem disponibiliza os dados em formato **GTFS estatico** (sem token), citados
-  como complemento/base do fallback.
+  como base/espirito do conjunto de linhas de exemplo do fallback.
 
-### 3.7.2 Qualidade do ar - Open-Meteo (operacional) e CETESB/QUALAR (oficial)
-
-- **Open-Meteo Air Quality API** - fonte operacional de qualidade do ar, publica,
-  gratuita e sem chave. Referencia:
-  [https://open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api).
-  Endpoint: `https://air-quality-api.open-meteo.com/v1/air-quality`. Base
-  cientifica: modelos CAMS/Copernicus. Aplicado em:
-  `server/app/services/openmeteo.py`, consumido pelo endpoint
-  `POST /api/v1/regioes/{id}/atualizar-ar`. As unidades (ug/m3) sao lidas do bloco
-  `hourly_units` do payload.
-- **CETESB / QUALAR** - autoridade OFICIAL de qualidade do ar no Estado de Sao
-  Paulo (opera a rede oficial e publica o indice IQAr). Referencias:
-  [https://cetesb.sp.gov.br/ar/](https://cetesb.sp.gov.br/ar/) e
-  [https://qualar.cetesb.sp.gov.br](https://qualar.cetesb.sp.gov.br). Como nao
-  expoe uma API REST aberta e estavel, e **citada como referencia oficial** no
-  campo `fonte` das medicoes de ar (constante `FONTE` em
-  `server/app/services/openmeteo.py`), enquanto a Open-Meteo fornece os valores.
-
-### 3.7.3 Alagamento - Open-Meteo Flood/GloFAS (operacional) e CGE-SP (oficial)
-
-- **Open-Meteo Flood API** - fonte operacional de alagamento (risco de cheia),
-  gratuita e sem chave. Referencia:
-  [https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api).
-  Endpoint: `https://flood-api.open-meteo.com/v1/flood`. Base cientifica: **GloFAS
-  (Global Flood Awareness System)**, do programa Copernicus. Aplicado em:
-  `server/app/services/flood.py`, consumido pelo endpoint
-  `POST /api/v1/regioes/{id}/atualizar-alagamento`. A metrica principal e a
-  **descarga fluvial** (`river_discharge`, em m3/s): da serie diaria retornada
-  para a lat/lon da regiao, o servico deriva descarga atual, media e maxima do
-  periodo. A unidade e lida do bloco `daily_units`, com fallback `m3/s`.
-- **CGE-SP** - Centro de Gerenciamento de Emergencias Climaticas da Prefeitura de
-  Sao Paulo, autoridade OFICIAL que monitora e divulga os pontos de alagamento da
-  cidade. Referencia: [https://www.cgesp.org/](https://www.cgesp.org/). Como nao
-  expoe um endpoint JSON estavel e sem chave, e **citado como referencia oficial**
-  no campo `fonte` das medicoes de alagamento (constante `FONTE` em
-  `server/app/services/flood.py`), enquanto a Open-Meteo Flood/GloFAS fornece os
-  valores.
-
-### 3.7.4 Base geografica - IBGE (fonte OFICIAL, nacional)
+### 3.7.2 Base geografica - IBGE (fonte OFICIAL, nacional)
 
 - **IBGE - API de Localidades** - fonte OFICIAL, nacional e sem chave, dos nomes e
   codigos dos municipios brasileiros. Referencia:
@@ -248,23 +209,13 @@ publica e cita o orgao oficial como referencia.
   [http://dados.prefeitura.sp.gov.br/](http://dados.prefeitura.sp.gov.br/)), nunca
   inventadas.
 
-### 3.7.5 Transito (LEGADO) - Overpass API do OpenStreetMap
-
-- **Overpass API do OpenStreetMap** - fonte de infraestrutura viaria mantida como
-  LEGADO (o tipo `transito` permanece no modelo generico). Referencia da API:
-  [https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API).
-  Endpoint: `https://overpass-api.de/api/interpreter`. Dados sob licenca **ODbL**
-  ([https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)).
-  Aplicado em: `server/app/services/overpass.py`, consumido pelo endpoint
-  `POST /api/v1/regioes/{id}/atualizar-transito`. Exige o header `User-Agent`.
-
 ## 3.8 Testes
 
 - **pytest** (8.3.4) - framework de testes do back-end.
   Referencia: [https://docs.pytest.org](https://docs.pytest.org).
   Aplicado em: `server/tests/*`, usando o `TestClient` do FastAPI/Starlette. A
-  rede e o token sao SEMPRE mockados nos testes (nenhum teste toca a SPTrans real
-  nem usa token real); ver `06_relatorio_de_codigo.md`.
+  rede e o token sao SEMPRE mockados nos testes (nenhum teste toca a SPTrans ou o
+  IBGE reais, nem usa token real); ver `06_relatorio_de_codigo.md`.
 - **TypeScript** - checagem estatica de tipos no cliente
   ([https://www.typescriptlang.org](https://www.typescriptlang.org)), validada com
   `npx tsc --noEmit`. Aplicado em: todo o codigo em `mobile/src/*` e `mobile/App.tsx`.

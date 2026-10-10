@@ -2,8 +2,7 @@
 
 Este relatorio comenta os trechos de codigo mais relevantes do projeto, indicando
 o arquivo, a funcao e a tecnologia/fonte aplicada em cada ponto. Nao repete todo o
-codigo; destaca os nucleos. Os caminhos apontam para o codigo real do repositorio
-(versao reorientada a Sao Paulo).
+codigo; destaca os nucleos. Os caminhos apontam para o codigo real do repositorio.
 
 ## 6.0 Mapa de rastreabilidade (fonte -> arquivo/funcao)
 
@@ -11,14 +10,9 @@ codigo; destaca os nucleos. Os caminhos apontam para o codigo real do repositori
 | --- | --- | --- | --- | --- |
 | **SPTrans Olho Vivo** (OFICIAL SP, token) | Transporte publico, tempo real | `server/app/services/sptrans.py` | `obter_token`, `_autenticar`, `mapear_payload`, `buscar_transporte_publico`; constantes `FONTE`/`FONTE_FALLBACK` | `POST /api/v1/regioes/{id}/atualizar-transporte` |
 | **SPTrans GTFS / exemplo** (fallback) | Transporte sem token | `server/app/services/sptrans.py` | `_leituras_fallback` (`LINHAS_EXEMPLO`) | idem (quando `SPTRANS_TOKEN` ausente) |
-| **Open-Meteo Air Quality** (operacional) | Qualidade do ar | `server/app/services/openmeteo.py` | `mapear_payload`, `buscar_qualidade_ar` | `POST /api/v1/regioes/{id}/atualizar-ar` |
-| **CETESB / QUALAR** (autoridade oficial SP) | Referencia de qualidade do ar | `server/app/services/openmeteo.py` | constante `FONTE` (citacao) | idem (gravado no campo `fonte`) |
-| **Open-Meteo Flood / GloFAS** (operacional) | Alagamento (descarga fluvial) | `server/app/services/flood.py` | `mapear_payload`, `buscar_alagamento` | `POST /api/v1/regioes/{id}/atualizar-alagamento` |
-| **CGE-SP** (autoridade oficial SP) | Referencia de alagamentos | `server/app/services/flood.py` | constante `FONTE` (citacao) | idem (gravado no campo `fonte`) |
 | **IBGE Localidades** (OFICIAL, UF 35) | Base geografica de SP | `server/app/services/ibge.py` | `mapear_payload`, `buscar_municipios_sp` | `GET /api/v1/localidades/sp` |
 | **PMSP / GeoSampa** | Coordenadas dos distritos | `server/app/seed.py` | `REGIOES_SEED` (citacao na docstring) | seed de startup |
-| **Overpass / OpenStreetMap** (LEGADO, ODbL) | Transito viario | `server/app/services/overpass.py` | `mapear_payload`, `buscar_transito` | `POST /api/v1/regioes/{id}/atualizar-transito` |
-| **httpx** | Cliente HTTP do servidor | `server/app/services/*` | chamadas `client.get/post` | todos os servicos |
+| **httpx** | Cliente HTTP do servidor | `server/app/services/*` | chamadas `client.get/post` | servicos sptrans e ibge |
 | **react-native-maps** | Mapa de SP | `mobile/src/screens/MapaScreen.tsx` | `MapView`/`Marker`, `REGIAO_INICIAL` | tela Mapa |
 | **react-native-chart-kit** | Grafico de barras | `mobile/src/screens/RelatoriosScreen.tsx` | `GraficoMedias` (`BarChart`) | tela Relatorios |
 | **Fetch API** | Cliente HTTP do app | `mobile/src/api/client.ts` | `requisitar`, `atualizarTransporte` etc. | todas as telas |
@@ -39,27 +33,24 @@ Configura o ORM SQLAlchemy 2.x e o banco SQLite. Pontos-chave:
 
 ### 6.1.2 Modelo generico - `server/app/models.py`
 
-O enum e a tabela `Medicao` sao o coracao do modelo generico. Nesta versao, o enum
-ganhou o valor `transporte_publico`:
+O enum e a tabela `Medicao` sao o coracao do modelo generico. O enum define o
+unico tipo suportado nesta aplicacao:
 
 ```python
 class TipoMedicao(str, enum.Enum):
-    qualidade_ar = "qualidade_ar"
-    transito = "transito"            # LEGADO (Overpass/OpenStreetMap)
-    alagamento = "alagamento"
     transporte_publico = "transporte_publico"  # SPTrans Olho Vivo
 ```
 
 Pontos-chave:
 
-- Um unico esquema representa qualquer assunto ambiental via `tipo` + `parametro`,
-  o que permitiu adicionar `transporte_publico` sem alterar tabelas.
+- Um unico esquema representa a observacao urbana via `tipo` + `parametro`, o que
+  mantem o modelo aberto a extensoes sem alterar tabelas.
 - `native_enum=False` armazena o enum como texto (portavel entre SQLite e outros).
 - `fonte` guarda a origem do dado, sustentando a rastreabilidade em runtime.
 
 ### 6.1.3 Transporte publico OFICIAL de SP - `server/app/services/sptrans.py`
 
-Esta e a integracao central desta versao: a **SPTrans Olho Vivo**, fonte OFICIAL
+Esta e a integracao central da aplicacao: a **SPTrans Olho Vivo**, fonte OFICIAL
 da Prefeitura de Sao Paulo para a frota de onibus. O token e lido somente da
 variavel de ambiente, nunca do codigo:
 
@@ -126,13 +117,13 @@ def mapear_payload(payload):
 ```
 
 **Semantica das metricas (por cidade, nao por regiao).** O endpoint recebe
-`regiao_id` e repassa o lat/lon da regiao por uniformidade com os demais
-`atualizar-*`, mas o `/Posicao` do Olho Vivo retorna a frota de Sao Paulo como
-um todo e nao aceita filtro geografico. Assim, `linhas_monitoradas` e
-`veiculos_em_operacao` sao metricas da cidade inteira (frota do Olho Vivo), nao
-geofiltradas por regiao: chamar `atualizar-transporte` para regioes diferentes
-no mesmo instante persiste os mesmos valores. O comportamento e intencional e
-esta documentado nas docstrings do servico e do router.
+`regiao_id` e repassa o lat/lon da regiao por uniformidade, mas o `/Posicao` do
+Olho Vivo retorna a frota de Sao Paulo como um todo e nao aceita filtro
+geografico. Assim, `linhas_monitoradas` e `veiculos_em_operacao` sao metricas da
+cidade inteira (frota do Olho Vivo), nao geofiltradas por regiao: chamar
+`atualizar-transporte` para regioes diferentes no mesmo instante persiste os
+mesmos valores. O comportamento e intencional e esta documentado nas docstrings do
+servico e do router.
 
 E o fallback (sem token) usa um conjunto estatico de linhas de EXEMPLO,
 explicitamente rotulado:
@@ -185,81 +176,7 @@ Pontos-chave:
   cru), atendendo ao requisito de tratamento de erros.
 - Persiste as medicoes com `tipo=transporte_publico`.
 
-### 6.1.5 Qualidade do ar (Open-Meteo + CETESB) - `server/app/services/openmeteo.py`
-
-Consome a Open-Meteo Air Quality API (dado operacional) e cita a CETESB/QUALAR
-como autoridade oficial de SP no campo `fonte`:
-
-```python
-OPEN_METEO_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
-HOURLY_PARAMS = "pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,ozone"
-
-FONTE = ("Open-Meteo Air Quality API (dado operacional, ...); "
-         "referencia oficial de SP: CETESB/QUALAR "
-         "(https://qualar.cetesb.sp.gov.br, https://cetesb.sp.gov.br/ar/)")
-
-def buscar_qualidade_ar(latitude, longitude, client=None):
-    params = {"latitude": latitude, "longitude": longitude, "hourly": HOURLY_PARAMS}
-    ...
-    try:
-        resposta = client.get(OPEN_METEO_URL, params=params)
-        resposta.raise_for_status()
-        payload = resposta.json()
-    except httpx.HTTPError as exc:
-        raise OpenMeteoError(f"Falha ao consultar a Open-Meteo: {exc}") from exc
-    return mapear_payload(payload)
-```
-
-Pontos-chave:
-
-- Fonte operacional:
-  [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api).
-  Autoridade oficial de SP citada no `fonte`:
-  [CETESB/QUALAR](https://qualar.cetesb.sp.gov.br).
-- A unidade (ug/m3) e lida do bloco `hourly_units` do payload, com fallback.
-- `mapear_payload` pega o valor horario nao-nulo mais recente por parametro.
-- O endpoint `POST /api/v1/regioes/{id}/atualizar-ar` persiste com
-  `tipo=qualidade_ar` e `fonte=FONTE`, convertendo falha em 502 padronizado.
-
-### 6.1.6 Alagamento (Open-Meteo Flood/GloFAS + CGE-SP) - `server/app/services/flood.py`
-
-Consome a Open-Meteo Flood API (base GloFAS) e cita o CGE-SP como autoridade
-oficial de SP no campo `fonte`:
-
-```python
-FLOOD_API_URL = "https://flood-api.open-meteo.com/v1/flood"
-DAILY_PARAMS = "river_discharge,river_discharge_mean,river_discharge_max"
-UNIDADE_PADRAO = "m3/s"  # fallback; a unidade real vem de daily_units
-
-FONTE = ("Open-Meteo Flood API / GloFAS (dado operacional, ...); "
-         "referencia oficial de SP: CGE-SP (https://www.cgesp.org/)")
-```
-
-O `mapear_payload` deriva descarga atual, media e maxima do periodo, lendo a
-unidade de `daily_units`:
-
-```python
-def mapear_payload(payload):
-    if payload.get("error"):
-        raise FloodError(f"Erro retornado pela Open-Meteo Flood API: {payload.get('reason')}")
-    daily = payload.get("daily")
-    ...
-    unidade_descarga = daily_units.get("river_discharge") or UNIDADE_PADRAO
-    # river_discharge (atual), river_discharge_media, river_discharge_maxima
-```
-
-Pontos-chave:
-
-- Fonte operacional:
-  [Open-Meteo Flood API](https://open-meteo.com/en/docs/flood-api); base cientifica
-  [GloFAS](https://global-flood.emergency.copernicus.eu). Autoridade oficial de SP
-  citada no `fonte`: [CGE-SP](https://www.cgesp.org/).
-- A descarga fluvial (`river_discharge`, em m3/s) e indicador de risco de cheia.
-- A unidade e lida de `daily_units` com fallback `m3/s`, nunca hardcodada.
-- O endpoint `POST /api/v1/regioes/{id}/atualizar-alagamento` persiste com
-  `tipo=alagamento` e `fonte=FONTE`, convertendo falha em 502 padronizado.
-
-### 6.1.7 Base geografica OFICIAL (IBGE) - `server/app/services/ibge.py`
+### 6.1.5 Base geografica OFICIAL (IBGE) - `server/app/services/ibge.py`
 
 Consome a API de Localidades do IBGE (UF 35 = Sao Paulo), fonte OFICIAL e nacional
 sem chave:
@@ -293,17 +210,7 @@ Pontos-chave:
 - Exposta por `GET /api/v1/localidades/sp` (`routers/localidades.py`), que
   converte `IbgeError` em 502 padronizado.
 
-### 6.1.8 Transito LEGADO (Overpass) - `server/app/services/overpass.py`
-
-Mantido do projeto anterior como tipo `transito`. Consome a Overpass API do
-OpenStreetMap (dados ODbL), exige o header `User-Agent` (`APS-UNIP-SD/1.0`, sem o
-qual a API responde HTTP 406) e deriva metricas de infraestrutura viaria em
-`mapear_payload`. Qualquer `httpx.HTTPError` vira `OverpassError`. Consumido por
-`POST /api/v1/regioes/{id}/atualizar-transito`. Fonte:
-[Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API); licenca
-[ODbL](https://www.openstreetmap.org/copyright).
-
-### 6.1.9 Consulta por regiao e helper 404 - `server/app/routers/regioes.py`
+### 6.1.6 Consulta por regiao e helper 404 - `server/app/routers/regioes.py`
 
 ```python
 def obter_regiao_ou_404(db, regiao_id):
@@ -319,20 +226,20 @@ Pontos-chave:
 - O helper e reutilizado por medicoes, relatorios e alertas, padronizando a
   resposta 404 em PT-BR.
 
-### 6.1.10 Relatorios agregados - `server/app/routers/relatorios.py`
+### 6.1.7 Relatorios agregados - `server/app/routers/relatorios.py`
 
 Agrupa as medicoes por `(tipo, parametro)` e calcula media, minimo, maximo,
-contagem e ultima leitura. Como a agregacao e generica, o novo tipo
-`transporte_publico` entra automaticamente no relatorio quando ha medicoes. Cobre
+contagem e ultima leitura. Como a agregacao e generica, os parametros de
+`transporte_publico` entram automaticamente no relatorio quando ha medicoes. Cobre
 o requisito de "relatorios adicionais" da APS.
 
-### 6.1.11 Alertas por limiar - `server/app/routers/alertas.py`
+### 6.1.8 Alertas por limiar - `server/app/routers/alertas.py`
 
 Compara a medicao mais recente de cada `(tipo, parametro)` com as regras ativas
 (`>` ou `<`), retornando os alertas disparados com o valor observado e a mensagem
 em PT-BR. Regras sao criadas por `POST /api/v1/alertas` (validadas por Pydantic).
 
-### 6.1.12 Tratamento de erros global - `server/app/errors.py`
+### 6.1.9 Tratamento de erros global - `server/app/errors.py`
 
 Instala handlers para `HTTPException` (ex.: 404 e 502), `RequestValidationError`
 (422) e um generico para `Exception` (500 tratado), todos no schema `ErroResposta`
@@ -340,24 +247,26 @@ Instala handlers para `HTTPException` (ex.: 404 e 502), `RequestValidationError`
 stack trace cru. Referencia:
 [FastAPI - Handling Errors](https://fastapi.tiangolo.com/tutorial/handling-errors/).
 
-### 6.1.13 Inicializacao e seed de SP - `server/app/main.py` e `server/app/seed.py`
+### 6.1.10 Inicializacao e seed de SP - `server/app/main.py` e `server/app/seed.py`
 
 No `main.py`, o `lifespan` cria as tabelas e roda o seed idempotente no startup; o
 CORS e liberado para o app Expo consumir a API; o titulo do Swagger e "API
-Ambiental Urbana - APS SD".
+Transporte Publico SP - APS SD".
 
 O `seed.py` cria 5 regioes reais de Sao Paulo/SP (distritos da capital: Se,
 Pinheiros, Mooca, Santana, Itaquera) com coordenadas de fontes oficiais da PMSP
 (GeoSampa) citadas na docstring, e nome validavel pelo IBGE (codigo 35 /
-3550308). As medicoes de seed sao apenas valores iniciais de exemplo (o campo
-`fonte` aponta a fonte real substituivel). O seed e idempotente.
+3550308). Para cada regiao gera uma medicao-semente de transporte publico de
+EXEMPLO (`veiculos_em_operacao`) e uma regra de alerta
+(`veiculos_em_operacao > 300`). As medicoes de seed sao apenas valores iniciais de
+exemplo (o campo `fonte` aponta a fonte real substituivel). O seed e idempotente.
 
 ## 6.2 Cliente movel
 
 ### 6.2.1 Cliente HTTP tipado - `mobile/src/api/client.ts`
 
 Base da URL adaptavel ao ambiente, classe de erro amigavel e timeout por
-`AbortController`. A funcao de transporte publico mapeia o novo endpoint:
+`AbortController`. A funcao de transporte publico mapeia o endpoint:
 
 ```typescript
 export function atualizarTransporte(regiaoId: number): Promise<Medicao[]> {
@@ -375,8 +284,8 @@ Pontos-chave:
   por `EXPO_PUBLIC_API_BASE_URL`.
 - Toda falha (rede, timeout, HTTP, JSON) vira `ApiError` com mensagem PT-BR; as
   telas exibem `e.mensagem` sem crashar.
-- As funcoes mapeiam 1:1 os endpoints da API (`atualizarAr`, `atualizarAlagamento`,
-  `atualizarTransporte`, `atualizarTransito`, etc.). Usa a
+- As funcoes mapeiam 1:1 os endpoints da API (`getRegioes`, `getMedicoes`,
+  `atualizarTransporte`, `getRelatorio`, `getAlertas`, etc.). Usa a
   [Fetch API](https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API).
 
 ### 6.2.2 Mapa de Sao Paulo com fallback - `mobile/src/screens/MapaScreen.tsx`
@@ -401,7 +310,16 @@ Pontos-chave:
   Maps API key). Referencia:
   [react-native-maps](https://github.com/react-native-maps/react-native-maps).
 
-### 6.2.3 Relatorio com grafico de barras - `mobile/src/screens/RelatoriosScreen.tsx`
+### 6.2.3 Detalhe da regiao - `mobile/src/screens/DetalheScreen.tsx`
+
+Lista as medicoes de transporte publico da regiao e oferece um unico botao de
+atualizacao, **"Atualizar transporte"**, que chama `atualizarTransporte(regiaoId)`
+(endpoint `POST /api/v1/regioes/{id}/atualizar-transporte`). Apos a atualizacao, a
+lista recarrega com as novas medicoes e cada item mostra valor, unidade, data/hora
+e a `fonte` (tempo real com token ou exemplo no fallback). Tambem da acesso a tela
+de relatorio da regiao.
+
+### 6.2.4 Relatorio com grafico de barras - `mobile/src/screens/RelatoriosScreen.tsx`
 
 Alem da lista tabular, a tela resume as medias por par tipo/parametro num grafico
 de barras com `BarChart` do **react-native-chart-kit** (desenha via
@@ -438,30 +356,33 @@ Pontos-chave:
   [react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit)
   e [npm](https://www.npmjs.com/package/react-native-chart-kit).
 - O rotulo das barras combina **tipo + parametro**, usando `rotuloTipo`/
-  `rotuloParametro` de `src/ui/rotulos.ts`; assim o novo tipo
-  `transporte_publico` ("Transporte publico (SPTrans)") aparece com rotulo PT-BR.
+  `rotuloParametro` de `src/ui/rotulos.ts`; assim o tipo `transporte_publico`
+  ("Transporte publico (SPTrans)") aparece com rotulo PT-BR.
 - Trata dataset vazio (nao renderiza o grafico) e e injetado como
   `ListHeaderComponent` da `FlatList`, preservando a lista tabular.
 
-### 6.2.4 Rotulos PT-BR - `mobile/src/ui/rotulos.ts`
+### 6.2.5 Rotulos PT-BR - `mobile/src/ui/rotulos.ts`
 
-Mapeia os tipos e parametros tecnicos para texto PT-BR. O novo tipo e seus
-parametros da SPTrans estao mapeados:
+Mapeia o tipo e os parametros tecnicos para texto PT-BR:
 
 ```typescript
 const ROTULOS_TIPO = {
-  qualidade_ar: 'Qualidade do ar',
-  transito: 'Transito',
-  alagamento: 'Alagamento',
   transporte_publico: 'Transporte publico (SPTrans)',
 };
 const ROTULOS_PARAMETRO = {
   linhas_monitoradas: 'Linhas monitoradas',
   veiculos_em_operacao: 'Veiculos em operacao',
+  linhas_exemplo: 'Linhas (exemplo, sem token)',
 };
 ```
 
-### 6.2.5 Navegacao - `mobile/App.tsx`
+### 6.2.6 Alertas - `mobile/src/screens/AlertasScreen.tsx`
+
+Lista as regras cadastradas, oferece um formulario para criar uma regra (com o
+tipo `transporte_publico`, parametro, condicao `>`/`<` e limiar) e um botao para
+avaliar os alertas de uma regiao selecionada, destacando os alertas disparados.
+
+### 6.2.7 Navegacao - `mobile/App.tsx`
 
 Registra as telas em um stack nativo do React Navigation
 (`@react-navigation/native-stack`), com titulos em PT-BR. Referencia:
@@ -471,8 +392,8 @@ Registra as telas em um stack nativo do React Navigation
 
 A suite pytest usa o `TestClient` do FastAPI e um banco SQLite em memoria isolado
 (configurado em `server/conftest.py`), sem tocar o banco real. **A rede e o token
-sao SEMPRE mockados** (nenhum teste acessa a SPTrans, a Open-Meteo, o IBGE ou a
-Overpass reais, nem usa token real).
+sao SEMPRE mockados** (nenhum teste acessa a SPTrans ou o IBGE reais, nem usa token
+real).
 
 - **Transporte publico** (`server/tests/test_transporte.py`): valida o mapeamento
   do payload do `/Posicao` a partir do fixture
@@ -486,15 +407,7 @@ Overpass reais, nem usa token real).
   `server/tests/fixtures/ibge_municipios_sample.json` e o endpoint
   `GET /api/v1/localidades/sp`, com a rede mockada; ramos de erro levantam
   `IbgeError`.
-- **Qualidade do ar** (`server/tests/test_medicoes.py`): mapeamento do payload da
-  Open-Meteo a partir de `openmeteo_sample.json`, com a chamada mockada.
-- **Alagamento** (`server/tests/test_alagamento.py`): mapeamento do payload da
-  Flood API a partir de `flood_sample.json`, ramos de erro (`FloodError`) e o
-  endpoint `atualizar-alagamento` (200 e 502), inclusive a camada HTTP com
-  `httpx.MockTransport`.
-- **Transito LEGADO** (`server/tests/test_transito.py`): mapeamento do payload da
-  Overpass a partir de `overpass_sample.json` e o endpoint `atualizar-transito`
-  (200 e 502), com a rede mockada.
-- **Demais** (`test_health.py`, `test_regioes.py`, `test_relatorios.py`,
-  `test_alertas.py`): saude, regioes (404 no schema de erro), agregacao do
-  relatorio, criacao/avaliacao de alertas e validacao invalida (422).
+- **Demais** (`test_health.py`, `test_regioes.py`, `test_medicoes.py`,
+  `test_relatorios.py`, `test_alertas.py`): saude, regioes (404 no schema de
+  erro), listagem/filtro de medicoes, agregacao do relatorio, criacao/avaliacao
+  de alertas e validacao invalida (422).

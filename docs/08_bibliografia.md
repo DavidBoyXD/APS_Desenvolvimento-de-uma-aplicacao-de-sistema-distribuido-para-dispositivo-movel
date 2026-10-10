@@ -24,12 +24,9 @@ desenvolvimento (ano de 2026).
 - **Uvicorn** - servidor ASGI que executa a aplicacao.
   [https://www.uvicorn.org](https://www.uvicorn.org).
   Aplicado no comando de execucao do servidor (capitulo 7).
-- **httpx** - cliente HTTP usado para consumir a SPTrans Olho Vivo, a Open-Meteo
-  (Air Quality e Flood), o IBGE e a Overpass.
+- **httpx** - cliente HTTP usado para consumir a SPTrans Olho Vivo e o IBGE.
   [https://www.python-httpx.org](https://www.python-httpx.org).
-  Aplicado em `server/app/services/sptrans.py`, `server/app/services/openmeteo.py`,
-  `server/app/services/flood.py`, `server/app/services/ibge.py` e
-  `server/app/services/overpass.py`.
+  Aplicado em `server/app/services/sptrans.py` e `server/app/services/ibge.py`.
 - **pytest** - testes automatizados do back-end.
   [https://docs.pytest.org](https://docs.pytest.org).
   Aplicado em `server/tests/*` (rede e token sempre mockados).
@@ -88,7 +85,7 @@ desenvolvimento (ano de 2026).
   [https://developer.mozilla.org/pt-BR/docs/Web/API/AbortController](https://developer.mozilla.org/pt-BR/docs/Web/API/AbortController).
   Aplicado em `mobile/src/api/client.ts`.
 
-## 8.3 Fontes de dados e autoridades oficiais de Sao Paulo
+## 8.3 Fontes de dados oficiais de Sao Paulo
 
 ### 8.3.1 Transporte publico (fonte OFICIAL de SP)
 
@@ -106,40 +103,7 @@ desenvolvimento (ano de 2026).
   citados como base/espirito do conjunto de linhas de EXEMPLO do fallback em
   `server/app/services/sptrans.py` (`LINHAS_EXEMPLO`).
 
-### 8.3.2 Qualidade do ar (operacional + autoridade oficial de SP)
-
-- **Open-Meteo Air Quality API** - fonte operacional de qualidade do ar (sem
-  chave). Documentacao:
-  [https://open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api).
-  Endpoint usado: `https://air-quality-api.open-meteo.com/v1/air-quality`.
-  Aplicado em `server/app/services/openmeteo.py`.
-- **CETESB - Companhia Ambiental do Estado de Sao Paulo** - autoridade OFICIAL de
-  qualidade do ar em SP. [https://cetesb.sp.gov.br/ar/](https://cetesb.sp.gov.br/ar/).
-  Citada no campo `fonte` das medicoes de ar (constante `FONTE` em
-  `server/app/services/openmeteo.py`).
-- **QUALAR - Sistema de Informacoes da Qualidade do Ar (CETESB)** -
-  [https://qualar.cetesb.sp.gov.br](https://qualar.cetesb.sp.gov.br). Citado junto
-  a CETESB como referencia oficial de SP.
-- **Copernicus Atmosphere Monitoring Service (CAMS)** - base dos modelos de
-  qualidade do ar servidos pela Open-Meteo.
-  [https://atmosphere.copernicus.eu](https://atmosphere.copernicus.eu).
-
-### 8.3.3 Alagamento (operacional + autoridade oficial de SP)
-
-- **Open-Meteo Flood API** - fonte operacional de alagamento (descarga fluvial /
-  river discharge), gratuita e sem chave. Documentacao:
-  [https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api).
-  Endpoint usado: `https://flood-api.open-meteo.com/v1/flood`.
-  Aplicado em `server/app/services/flood.py`.
-- **GloFAS - Global Flood Awareness System** - base cientifica da Open-Meteo Flood
-  API; sistema global de alerta de inundacoes do Copernicus Emergency Management
-  Service (CEMS). [https://global-flood.emergency.copernicus.eu](https://global-flood.emergency.copernicus.eu).
-- **CGE-SP - Centro de Gerenciamento de Emergencias Climaticas da Prefeitura de
-  Sao Paulo** - autoridade OFICIAL de alagamentos na cidade de Sao Paulo.
-  [https://www.cgesp.org/](https://www.cgesp.org/). Citado no campo `fonte` das
-  medicoes de alagamento (constante `FONTE` em `server/app/services/flood.py`).
-
-### 8.3.4 Base geografica oficial e dados abertos da PMSP
+### 8.3.2 Base geografica oficial e dados abertos da PMSP
 
 - **IBGE - API de Localidades** - fonte OFICIAL e nacional dos municipios
   brasileiros (sem chave). Documentacao:
@@ -155,19 +119,6 @@ desenvolvimento (ano de 2026).
   Portal de dados abertos: [http://dados.prefeitura.sp.gov.br/](http://dados.prefeitura.sp.gov.br/).
   GeoSampa: [https://geosampa.prefeitura.sp.gov.br/](https://geosampa.prefeitura.sp.gov.br/).
   Referenciado na docstring de `server/app/seed.py` (`REGIOES_SEED`).
-
-### 8.3.5 Transito (LEGADO)
-
-- **Overpass API do OpenStreetMap** - fonte de infraestrutura viaria mantida como
-  LEGADO (tipo `transito`), gratuita e sem chave. Documentacao:
-  [https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API).
-  Endpoint usado: `https://overpass-api.de/api/interpreter`.
-  Aplicado em `server/app/services/overpass.py`.
-- **OpenStreetMap** - projeto colaborativo que alimenta a Overpass API.
-  [https://www.openstreetmap.org](https://www.openstreetmap.org).
-- **ODbL (Open Database License)** - licenca dos dados do OpenStreetMap, citada no
-  campo `fonte` das medicoes de transito.
-  [https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright).
 
 ## 8.4 Conceitos e plataformas de referencia
 

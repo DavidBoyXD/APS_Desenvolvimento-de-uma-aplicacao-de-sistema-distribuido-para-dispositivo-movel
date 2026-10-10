@@ -40,8 +40,8 @@ Verificacoes rapidas (em outro terminal ou no navegador):
 - `http://localhost:8000/health` -> `{"status":"ok"}`.
 - `http://localhost:8000/api/v1/regioes` -> lista de regioes de SP (JSON).
 - `http://localhost:8000/api/v1/localidades/sp` -> municipios de SP via IBGE.
-- `http://localhost:8000/docs` -> documentacao interativa Swagger ("API Ambiental
-  Urbana - APS SD").
+- `http://localhost:8000/docs` -> documentacao interativa Swagger ("API Transporte
+  Publico SP - APS SD").
 
 ## 7.3 Passo 2 - Configurar o token da SPTrans (transporte publico em tempo real)
 
@@ -152,36 +152,26 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    monitoradas em Sao Paulo"). Toque em um marcador (callout) ou em um item da
    lista para abrir o detalhe.
 
-2. **Detalhe da regiao.** Veja as medicoes agrupadas por tipo (Qualidade do ar,
-   Alagamento, Transporte publico (SPTrans)), com valor, unidade, data/hora e a
-   fonte de cada dado.
+2. **Detalhe da regiao.** Veja as medicoes de **Transporte publico (SPTrans)**,
+   com valor, unidade, data/hora e a fonte de cada dado.
 
-   > **Origem dos dados (fontes e autoridades oficiais de SP):**
+   > **Origem dos dados (fonte oficial de SP):**
    > - **Transporte publico:** SPTrans Olho Vivo (fonte OFICIAL da Prefeitura de
    >   SP). Com `SPTRANS_TOKEN`, os valores sao em tempo real; sem token, o campo
    >   `fonte` indica explicitamente dado de EXEMPLO (fallback, NAO tempo real).
-   > - **Qualidade do ar:** Open-Meteo Air Quality API (dado operacional), tendo a
-   >   **CETESB/QUALAR** como autoridade oficial de referencia em SP (citada no
-   >   campo `fonte`).
-   > - **Alagamento:** Open-Meteo Flood API / GloFAS (dado operacional), tendo o
-   >   **CGE-SP** como autoridade oficial de referencia em SP (citado no `fonte`).
    > As medicoes criadas pelo seed sao apenas **valores iniciais de exemplo**, e o
    > proprio campo `fonte` registra a origem em tempo de execucao.
 
-3. **Atualizacao com dados das fontes.** Acione as atualizacoes do detalhe:
-   - **Transporte publico:** chama `POST /api/v1/regioes/{id}/atualizar-transporte`.
-     Com token, o servidor autentica no Olho Vivo, le o `/Posicao` e persiste
-     `linhas_monitoradas` e `veiculos_em_operacao` (tempo real). Sem token,
-     persiste `linhas_exemplo` (fallback rotulado). Observacao de semantica:
-     essas metricas sao da cidade de Sao Paulo como um todo (o `/Posicao`
-     devolve a frota inteira e ignora o lat/lon da regiao), nao geofiltradas por
-     regiao; por isso regioes diferentes atualizadas no mesmo instante recebem
-     os mesmos valores.
-   - **Qualidade do ar:** `POST /api/v1/regioes/{id}/atualizar-ar` (Open-Meteo).
-   - **Alagamento:** `POST /api/v1/regioes/{id}/atualizar-alagamento` (Open-Meteo
-     Flood/GloFAS).
-   Em cada caso, a lista recarrega com as medicoes atualizadas e o campo `fonte`
-   registra a origem.
+3. **Atualizacao com dados da fonte.** No detalhe, toque no botao **"Atualizar
+   transporte"**, que chama `POST /api/v1/regioes/{id}/atualizar-transporte`.
+   Com token, o servidor autentica no Olho Vivo, le o `/Posicao` e persiste
+   `linhas_monitoradas` e `veiculos_em_operacao` (tempo real). Sem token,
+   persiste `linhas_exemplo` (fallback rotulado). Observacao de semantica: essas
+   metricas sao da cidade de Sao Paulo como um todo (o `/Posicao` devolve a frota
+   inteira e ignora o lat/lon da regiao), nao geofiltradas por regiao; por isso
+   regioes diferentes atualizadas no mesmo instante recebem os mesmos valores.
+   Apos a atualizacao, a lista recarrega com as medicoes e o campo `fonte` registra
+   a origem.
 
 4. **Relatorios.** No detalhe, toque em "Ver relatorio" para abrir as agregacoes
    por parametro: media, minimo, maximo, contagem (amostras) e ultima leitura. No
@@ -191,8 +181,8 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
 5. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
    regra (escolha regiao, tipo, parametro, condicao `>`/`<` e limiar) e toque em
    "Avaliar regiao selecionada". Os alertas disparados aparecem destacados com o
-   valor observado. Dica: crie uma regra com limiar baixo (ex.: PM2.5 > 1) para
-   forcar um disparo.
+   valor observado. Dica: crie uma regra com limiar baixo (ex.: veiculos em
+   operacao > 1) para forcar um disparo.
 
 6. **Tratamento de erros (demonstracao).** Pare o servidor (encerre o uvicorn) e
    tente recarregar uma tela no app: em vez de travar, o app exibe uma mensagem
@@ -209,9 +199,9 @@ cd server
 ```
 
 A suite valida saude, regioes, medicoes, relatorios, alertas, tratamento de erros,
-a base geografica do IBGE e o transporte publico da SPTrans (com token e fallback),
-alem do mapeamento dos payloads das demais fontes. A rede e o token sao SEMPRE
-mockados: nenhum teste acessa a SPTrans real nem usa token real.
+a base geografica do IBGE e o transporte publico da SPTrans (com token e
+fallback). A rede e o token sao SEMPRE mockados: nenhum teste acessa a SPTrans ou o
+IBGE reais nem usa token real.
 
 ## 7.7 Checagem de tipos do cliente (opcional na apresentacao)
 

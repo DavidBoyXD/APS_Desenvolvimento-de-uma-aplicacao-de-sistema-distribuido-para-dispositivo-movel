@@ -1,21 +1,16 @@
-# Documentacao da APS - Monitor Ambiental Urbano de Sao Paulo (SP)
+# Documentacao da APS - Monitor de Transporte Publico de Sao Paulo (SP)
 
 Atividades Praticas Supervisionadas (APS) da disciplina **Sistemas Distribuidos (SD)**,
 7o/8o semestre do curso de Ciencia da Computacao (CC) - Universidade Paulista (UNIP).
 
 Tema: **Desenvolvimento de uma aplicacao de sistema distribuido para dispositivo movel**,
-com foco no gerenciamento de informacoes ambientais urbanas da cidade de **Sao Paulo (SP)**:
-**qualidade do ar**, **alagamento/chuva** e **transporte publico** (frota de onibus).
+com foco no monitoramento do **transporte publico** (frota de onibus) da cidade de
+**Sao Paulo (SP)**.
 
-Esta versao do trabalho foi reorientada para fontes e autoridades OFICIAIS do
-territorio nacional, com recorte em Sao Paulo:
+O trabalho se apoia em fontes e autoridades OFICIAIS, com recorte em Sao Paulo:
 
 - **Transporte publico:** SPTrans Olho Vivo (fonte OFICIAL da Prefeitura de SP,
   tempo real da frota de onibus), com fallback de exemplo quando nao ha token.
-- **Qualidade do ar:** Open-Meteo Air Quality API (dado operacional) tendo a
-  **CETESB/QUALAR** como autoridade oficial de referencia em SP.
-- **Alagamento:** Open-Meteo Flood API / GloFAS (dado operacional) tendo o
-  **CGE-SP** como autoridade oficial de referencia em SP.
 - **Base geografica:** API oficial de Localidades do **IBGE** (codigo da UF 35 = SP).
 
 Toda a documentacao esta em Portugues-Brasil. O codigo-fonte permanece em ingles
@@ -54,13 +49,6 @@ mapeamento fonte -> arquivo/funcao esta detalhado em `06_relatorio_de_codigo.md`
 - **SPTrans Olho Vivo** (transporte publico, tempo real da frota de onibus):
   [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
   Aplicada em `server/app/services/sptrans.py`.
-- **CETESB / QUALAR** (autoridade oficial de qualidade do ar em SP):
-  [https://cetesb.sp.gov.br/ar/](https://cetesb.sp.gov.br/ar/) e
-  [https://qualar.cetesb.sp.gov.br](https://qualar.cetesb.sp.gov.br).
-  Citada em `server/app/services/openmeteo.py`.
-- **CGE-SP** (autoridade oficial de alagamentos em SP):
-  [https://www.cgesp.org/](https://www.cgesp.org/).
-  Citada em `server/app/services/flood.py`.
 - **IBGE - API de Localidades** (base geografica oficial, UF 35 = SP):
   [https://servicodados.ibge.gov.br/api/v1/localidades](https://servicodados.ibge.gov.br/api/v1/localidades).
   Aplicada em `server/app/services/ibge.py`.

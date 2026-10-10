@@ -16,7 +16,8 @@ Atividades Praticas Supervisionadas (APS)
 
 Titulo do trabalho:
 Desenvolvimento de uma aplicacao de sistema distribuido para dispositivo movel
-- Monitor Ambiental Urbano (qualidade do ar, transito e alagamento)
+- Monitor Ambiental Urbano de Sao Paulo (qualidade do ar, alagamento e
+  transporte publico)
 
 Aluno(s) e RA:
 - [preencher pelo autor: Nome completo] - RA: [preencher pelo autor]
@@ -40,7 +41,7 @@ oficial fornecido pela instituicao:
 - Disciplina: Sistemas Distribuidos
 - Semestre/Turma: [preencher pelo autor]
 - Titulo da APS: Desenvolvimento de uma aplicacao de sistema distribuido para
-  dispositivo movel (Monitor Ambiental Urbano)
+  dispositivo movel (Monitor Ambiental Urbano de Sao Paulo)
 - Integrantes do grupo (nome e RA): [preencher pelo autor]
 - Professor(a): [preencher pelo autor]
 - Data de entrega: [preencher pelo autor]
@@ -53,10 +54,16 @@ oficial fornecido pela instituicao:
 ## 10.3 Resumo do trabalho (para a capa/apresentacao)
 
 Aplicacao de sistema distribuido para dispositivo movel voltada ao gerenciamento
-de informacoes ambientais urbanas. E composta por um cliente movel (React
-Native/Expo), um servidor de API REST (FastAPI/Python) e um banco de dados
-(SQLite, migravel para PostgreSQL). O nucleo e a qualidade do ar, com dados reais
-da Open-Meteo Air Quality API, complementado por transito e alagamento no mesmo
-modelo de dados. Oferece consulta por regiao ligada a um mapa, relatorios
-agregados, alertas por limiar e tratamento de erros padronizado. A documentacao
-completa esta nos arquivos numerados desta pasta `docs/` (ver `00_LEIA-ME.md`).
+de informacoes ambientais urbanas da cidade de Sao Paulo (SP). E composta por um
+cliente movel (React Native/Expo), um servidor de API REST (FastAPI/Python) e um
+banco de dados (SQLite, migravel para PostgreSQL). Reune tres assuntos ancorados
+em fontes e autoridades oficiais: **transporte publico** com a SPTrans Olho Vivo
+(fonte OFICIAL da Prefeitura de SP, tempo real com token gratuito e fallback de
+exemplo sem token); **qualidade do ar** com a Open-Meteo Air Quality API (dado
+operacional) tendo a CETESB/QUALAR como autoridade oficial de referencia; e
+**alagamento** com a Open-Meteo Flood API / GloFAS (dado operacional) tendo o
+CGE-SP como autoridade oficial de referencia. A base geografica usa a API oficial
+do IBGE (UF 35 = SP). Oferece consulta por regiao ligada a um mapa enquadrado em
+Sao Paulo, relatorios agregados (com grafico de barras), alertas por limiar e
+tratamento de erros padronizado. A documentacao completa esta nos arquivos
+numerados desta pasta `docs/` (ver `00_LEIA-ME.md`).

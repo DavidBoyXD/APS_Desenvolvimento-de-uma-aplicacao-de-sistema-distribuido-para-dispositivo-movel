@@ -20,11 +20,13 @@ const ROTULOS_TIPO: Record<TipoMedicao, string> = {
  * Rotulos PT-BR dos parametros tecnicos usados pela API. As chaves espelham o
  * campo `parametro` persistido pelo back-end (ver server/app/services/*). Os
  * parametros de transporte_publico vem da SPTrans Olho Vivo:
- * `linhas_monitoradas` e `veiculos_em_operacao`.
+ * `linhas_monitoradas` e `veiculos_em_operacao` (caminho com token, tempo
+ * real) e `linhas_exemplo` (caminho de fallback sem token, dado de exemplo).
  */
 const ROTULOS_PARAMETRO: Record<string, string> = {
   linhas_monitoradas: 'Linhas monitoradas',
   veiculos_em_operacao: 'Veiculos em operacao',
+  linhas_exemplo: 'Linhas (exemplo, sem token)',
 };
 
 /** Retorna o rotulo PT-BR de um tipo de medicao. */

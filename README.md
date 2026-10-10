@@ -112,6 +112,12 @@ um erro 500 cru).
   monitoradas e veiculos em operacao). SEM o token, usa um fallback de exemplo
   claramente rotulado (nao e tempo real), para o app funcionar de ponta a ponta.
   Veja a secao "Configuracao do token da SPTrans" abaixo.
+  **Semantica (metrica por cidade, nao por regiao):** o endpoint recebe
+  `regiao_id` por uniformidade com os demais `atualizar-*`, mas o `/Posicao` da
+  SPTrans devolve a frota de Sao Paulo inteira e ignora o lat/lon da regiao.
+  Portanto `linhas_monitoradas` e `veiculos_em_operacao` sao metricas da cidade
+  de Sao Paulo como um todo (frota do Olho Vivo), nao geofiltradas por regiao:
+  atualizar regioes diferentes no mesmo instante grava os mesmos valores.
 
 Exemplo de chamada:
 

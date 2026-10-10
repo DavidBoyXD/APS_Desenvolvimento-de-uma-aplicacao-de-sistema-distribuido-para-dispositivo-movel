@@ -43,12 +43,16 @@ Comportamento com e sem token
 -----------------------------
 - COM ``SPTRANS_TOKEN`` definido: a integracao autentica no Olho Vivo e deriva
   metricas REAIS (tempo real) da frota (ex.: numero de veiculos/posicoes e
-  numero de linhas monitoradas ao redor da regiao).
-- SEM ``SPTRANS_TOKEN`` (ou autenticacao recuperavelmente falha): usamos um
-  FALLBACK FUNCIONAL com um pequeno conjunto de linhas de SP de EXEMPLO,
-  claramente ROTULADO como dado estatico/GTFS de exemplo (NAO tempo real). O
-  campo ``fonte`` das medicoes de fallback deixa isso explicito. Assim o app
-  funciona de ponta a ponta mesmo sem o token.
+  numero de linhas monitoradas na cidade). Se a autenticacao falhar (token
+  invalido/recusado) ou houver erro de rede/HTTP, isso NAO cai no fallback:
+  vira ``SPTransError`` e o router responde HTTP 502 em PT-BR. A falha explicita
+  e proposital, para nao mascarar um token invalido como dado de exemplo.
+- SEM ``SPTRANS_TOKEN`` (ausencia de token): usamos um FALLBACK FUNCIONAL com um
+  pequeno conjunto de linhas de SP de EXEMPLO, claramente ROTULADO como dado
+  estatico/GTFS de exemplo (NAO tempo real). O campo ``fonte`` das medicoes de
+  fallback deixa isso explicito. Assim o app funciona de ponta a ponta mesmo
+  sem o token. Resumindo: SEM token = fallback de exemplo; COM token e falha de
+  autenticacao = erro 502 (nao ha fallback nesse caso).
 
 Onde e aplicado: chamado pelo router de medicoes
 (``POST /api/v1/regioes/{id}/atualizar-transporte``) para persistir as metricas
@@ -249,9 +253,15 @@ def buscar_transporte_publico(
     Recebe opcionalmente um ``httpx.Client`` (facilita testes). Converte
     qualquer ``httpx.HTTPError`` em ``SPTransError`` para o router tratar.
 
-    Os parametros ``latitude``/``longitude`` sao aceitos para manter o mesmo
-    contrato dos demais servicos (atualizar-* por regiao); o endpoint /Posicao
-    retorna a frota da cidade de Sao Paulo como um todo.
+    SEMANTICA (metrica por CIDADE, nao por regiao): os parametros
+    ``latitude``/``longitude`` sao aceitos APENAS para manter o mesmo contrato
+    dos demais servicos (atualizar-* por regiao), mas NAO sao usados aqui: o
+    endpoint ``/Posicao`` retorna a frota da cidade de Sao Paulo como um todo e
+    nao aceita filtro geografico. Logo ``linhas_monitoradas`` e
+    ``veiculos_em_operacao`` sao metricas da CIDADE inteira (frota do Olho Vivo),
+    nao geofiltradas por regiao. Em consequencia, chamar atualizar-transporte
+    para regioes diferentes no mesmo instante grava os MESMOS valores em todas
+    elas. Isso e intencional e esta documentado para quem consome por regiao.
     """
     token = obter_token()
     if token is None:

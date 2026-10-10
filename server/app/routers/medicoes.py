@@ -180,6 +180,13 @@ def atualizar_transporte(
     fallback de EXEMPLO claramente rotulado (nao tempo real), de modo que o app
     funcione de ponta a ponta sem token. Em caso de falha de rede/HTTP com
     token, retorna 502 padronizado (nunca 500 cru).
+
+    SEMANTICA (metrica por CIDADE, nao por regiao): o endpoint recebe
+    ``regiao_id`` por uniformidade com os demais atualizar-*, mas o /Posicao da
+    SPTrans retorna a frota de Sao Paulo como um todo e ignora o lat/lon da
+    regiao. Portanto as metricas (linhas monitoradas / veiculos em operacao) sao
+    da cidade inteira e, chamadas no mesmo instante, serao identicas para todas
+    as regioes de SP. Nao sao dados geofiltrados por regiao.
     """
     regiao = obter_regiao_ou_404(db, regiao_id)
 

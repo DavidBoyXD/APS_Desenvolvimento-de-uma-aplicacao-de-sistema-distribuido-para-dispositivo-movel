@@ -172,7 +172,11 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    - **Transporte publico:** chama `POST /api/v1/regioes/{id}/atualizar-transporte`.
      Com token, o servidor autentica no Olho Vivo, le o `/Posicao` e persiste
      `linhas_monitoradas` e `veiculos_em_operacao` (tempo real). Sem token,
-     persiste `linhas_exemplo` (fallback rotulado).
+     persiste `linhas_exemplo` (fallback rotulado). Observacao de semantica:
+     essas metricas sao da cidade de Sao Paulo como um todo (o `/Posicao`
+     devolve a frota inteira e ignora o lat/lon da regiao), nao geofiltradas por
+     regiao; por isso regioes diferentes atualizadas no mesmo instante recebem
+     os mesmos valores.
    - **Qualidade do ar:** `POST /api/v1/regioes/{id}/atualizar-ar` (Open-Meteo).
    - **Alagamento:** `POST /api/v1/regioes/{id}/atualizar-alagamento` (Open-Meteo
      Flood/GloFAS).

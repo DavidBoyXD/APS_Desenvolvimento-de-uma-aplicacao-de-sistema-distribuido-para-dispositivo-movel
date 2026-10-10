@@ -125,6 +125,15 @@ def mapear_payload(payload):
             LeituraTransporte("veiculos_em_operacao", ...)]
 ```
 
+**Semantica das metricas (por cidade, nao por regiao).** O endpoint recebe
+`regiao_id` e repassa o lat/lon da regiao por uniformidade com os demais
+`atualizar-*`, mas o `/Posicao` do Olho Vivo retorna a frota de Sao Paulo como
+um todo e nao aceita filtro geografico. Assim, `linhas_monitoradas` e
+`veiculos_em_operacao` sao metricas da cidade inteira (frota do Olho Vivo), nao
+geofiltradas por regiao: chamar `atualizar-transporte` para regioes diferentes
+no mesmo instante persiste os mesmos valores. O comportamento e intencional e
+esta documentado nas docstrings do servico e do router.
+
 E o fallback (sem token) usa um conjunto estatico de linhas de EXEMPLO,
 explicitamente rotulado:
 

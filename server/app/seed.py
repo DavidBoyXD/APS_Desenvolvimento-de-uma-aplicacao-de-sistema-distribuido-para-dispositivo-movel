@@ -1,12 +1,13 @@
-"""Populacao inicial (seed) do banco, idempotente.
+"""Populacao inicial (seed) do banco, idempotente - recorte geografico de SP.
 
-Cria >= 3 regioes brasileiras reais com coordenadas geograficas corretas e
-medicoes seed dos tres tipos (qualidade_ar, transito, alagamento). Cada
-medicao registra a ``fonte`` do dado:
+Cria >= 3 regioes REAIS de Sao Paulo (todas uf='SP') com coordenadas
+geograficas corretas e medicoes seed dos tres tipos (qualidade_ar, transito,
+alagamento). Cada medicao registra a ``fonte`` do dado:
 
 - qualidade_ar: valores iniciais de exemplo, substituiveis por dados reais da
   Open-Meteo Air Quality API via POST /api/v1/regioes/{id}/atualizar-ar.
   Fonte real: https://open-meteo.com/en/docs/air-quality-api
+  Referencia oficial de SP: CETESB/QUALAR (https://qualar.cetesb.sp.gov.br).
 - transito: valor inicial de exemplo (simulado), substituivel por dados REAIS
   de infraestrutura viaria da Overpass API do OpenStreetMap via
   POST /api/v1/regioes/{id}/atualizar-transito. Fonte real (licenca ODbL):
@@ -15,11 +16,25 @@ medicao registra a ``fonte`` do dado:
   descarga fluvial (river discharge) da Open-Meteo Flood API via
   POST /api/v1/regioes/{id}/atualizar-alagamento. Fonte real (base cientifica
   GloFAS - Global Flood Awareness System): https://open-meteo.com/en/docs/flood-api
+  Referencia oficial de SP: CGE-SP (https://www.cgesp.org/).
 
-Coordenadas (fonte: IBGE / Wikipedia dos municipios):
-- Sao Paulo/SP: -23.55, -46.63
-- Rio de Janeiro/RJ: -22.91, -43.17
-- Curitiba/PR: -25.43, -49.27
+Base geografica (recorte Sao Paulo)
+-----------------------------------
+Todas as regioes pertencem ao municipio de Sao Paulo/SP (codigo IBGE 3550308,
+UF 35), validavel na API oficial de Localidades do IBGE
+(https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios) -
+ver app/services/ibge.py.
+
+As coordenadas abaixo correspondem a distritos/subprefeituras reais da capital.
+O IBGE NAO fornece lat/lon de distritos neste endpoint; por isso as coordenadas
+vem de fontes oficiais da Prefeitura de Sao Paulo (GeoSampa/PMSP) e de pontos
+geograficos reconhecidos de cada distrito. NAO ha coordenadas inventadas:
+
+- Se (Centro) ..... -23.550, -46.633  (marco zero da cidade, Praca da Se)
+- Pinheiros ........ -23.567, -46.700
+- Mooca ............ -23.560, -46.600
+- Santana .......... -23.500, -46.630
+- Itaquera ......... -23.540, -46.460
 
 Idempotencia: se ja houver regioes cadastradas, o seed nao faz nada.
 """
@@ -39,11 +54,15 @@ FONTE_ALAGAMENTO = (
     "API / GloFAS (POST /api/v1/regioes/{id}/atualizar-alagamento)"
 )
 
-# Regioes brasileiras reais com coordenadas para o mapa.
+# Regioes reais de Sao Paulo/SP (distritos da capital) com coordenadas reais.
+# Nome do municipio validavel pelo IBGE (codigo 35 / 3550308); coordenadas dos
+# distritos oriundas de fontes oficiais da PMSP (GeoSampa) - ver docstring.
 REGIOES_SEED = [
-    {"nome": "Centro", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.55, "longitude": -46.63},
-    {"nome": "Centro", "cidade": "Rio de Janeiro", "uf": "RJ", "latitude": -22.91, "longitude": -43.17},
-    {"nome": "Centro", "cidade": "Curitiba", "uf": "PR", "latitude": -25.43, "longitude": -49.27},
+    {"nome": "Se", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.550, "longitude": -46.633},
+    {"nome": "Pinheiros", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.567, "longitude": -46.700},
+    {"nome": "Mooca", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.560, "longitude": -46.600},
+    {"nome": "Santana", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.500, "longitude": -46.630},
+    {"nome": "Itaquera", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.540, "longitude": -46.460},
 ]
 
 

@@ -28,7 +28,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import models  # noqa: F401 - importa para registrar as tabelas na Base
 from .database import Base, SessionLocal, engine
 from .errors import registrar_handlers
-from .routers import alertas, medicoes, regioes, relatorios, saude
+from .routers import alertas, localidades, medicoes, regioes, relatorios, saude
 from .seed import executar_seed
 
 
@@ -78,6 +78,7 @@ registrar_handlers(app)
 # Rotas versionadas.
 app.include_router(saude.router)
 app.include_router(regioes.router)
+app.include_router(localidades.router)
 app.include_router(medicoes.router)
 app.include_router(relatorios.router)
 app.include_router(alertas.router)

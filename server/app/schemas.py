@@ -53,6 +53,19 @@ class RegiaoRead(RegiaoBase):
 
 
 # ---------------------------------------------------------------------------
+# Localidade (IBGE)
+# ---------------------------------------------------------------------------
+class MunicipioSPRead(BaseModel):
+    """Municipio de Sao Paulo lido da API oficial de Localidades do IBGE."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int = Field(..., description="Codigo IBGE do municipio.")
+    nome: str = Field(..., description="Nome do municipio.")
+    uf: str = Field(..., description="Sigla da UF (sempre 'SP').")
+
+
+# ---------------------------------------------------------------------------
 # Medicao
 # ---------------------------------------------------------------------------
 class MedicaoBase(BaseModel):

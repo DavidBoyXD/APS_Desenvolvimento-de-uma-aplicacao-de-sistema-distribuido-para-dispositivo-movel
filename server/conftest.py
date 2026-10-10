@@ -90,3 +90,14 @@ def payload_flood() -> dict:
     caminho = os.path.join(FIXTURES_DIR, "flood_sample.json")
     with open(caminho, encoding="utf-8") as f:
         return json.load(f)
+
+
+@pytest.fixture()
+def payload_ibge() -> list:
+    """Carrega o fixture JSON de resposta da API de Localidades do IBGE (SP).
+
+    Atencao: o endpoint do IBGE retorna uma LISTA de municipios (nao um dict).
+    """
+    caminho = os.path.join(FIXTURES_DIR, "ibge_municipios_sample.json")
+    with open(caminho, encoding="utf-8") as f:
+        return json.load(f)

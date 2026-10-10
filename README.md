@@ -91,7 +91,7 @@ com `codigo`, `mensagem` e `detalhe`, nunca um erro 500 cru).
   **SPTrans Olho Vivo** e persiste metricas de `transporte_publico`. Com o token
   `SPTRANS_TOKEN` definido, deriva metricas REAIS em tempo real (linhas
   monitoradas e veiculos em operacao). SEM o token, usa um fallback de exemplo
-  claramente rotulado (nao e tempo real), para o app funcionar de ponta a ponta.
+  claramente rotulado (não é tempo real), para o app funcionar de ponta a ponta.
   Veja a secao "Configuracao do token da SPTrans" abaixo.
   **Semantica (metrica por cidade, nao por regiao):** o endpoint recebe
   `regiao_id` por uniformidade, mas o `/Posicao` da SPTrans devolve a frota de
@@ -243,18 +243,18 @@ Comportamento com e sem token:
 
 - **COM `SPTRANS_TOKEN`**: a integracao autentica no Olho Vivo e deriva metricas
   REAIS da frota em tempo real (linhas monitoradas e veiculos em operacao). O
-  campo `fonte` das medicoes aponta a SPTrans Olho Vivo como fonte oficial.
-- **SEM `SPTRANS_TOKEN`**: a integracao usa um fallback FUNCIONAL com um conjunto
-  de linhas de SP de exemplo, claramente rotulado como dado estatico (GTFS /
-  exemplo, NAO e tempo real). O campo `fonte` deixa isso explicito. Assim o app
+  campo `fonte` das medições aponta a SPTrans Olho Vivo como fonte oficial.
+- **SEM `SPTRANS_TOKEN`**: a integração usa um fallback FUNCIONAL com um conjunto
+  de linhas de SP de exemplo, claramente rotulado como dado estático (GTFS /
+  exemplo, NÃO é tempo real). O campo `fonte` deixa isso explícito. Assim o app
   roda de ponta a ponta mesmo sem o token.
 
-Importante: nunca comite um token real neste repositorio. O valor `seu_token` nos
+Obs: Não comite um token real! O valor `seu_token` nos
 exemplos e apenas um placeholder.
 
 ## Documentacao
 
-A documentacao academica completa em Portugues-BR, seguindo a estrutura exigida
+A documentacao academica completa, seguindo a estrutura exigida
 pela APS (objetivo e motivacao, introducao, fundamentos, plano de
 desenvolvimento, projeto e modulos, relatorio de codigo, apresentacao,
 bibliografia, capa e ficha), esta na pasta [docs/](docs/):

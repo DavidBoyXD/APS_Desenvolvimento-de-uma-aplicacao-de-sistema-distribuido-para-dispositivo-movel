@@ -1,36 +1,36 @@
-# Declaracao de uso de Inteligencia Artificial
+# Declaração de uso de Inteligência Artificial
 
 Data: 30/09/2026
 
-Esta declaracao segue a norma indicada pelo autor sobre o uso de Inteligencia
-Artificial Generativa em trabalhos academicos (Portaria CNPq no 2.664/2026,
-conforme material fornecido pelo autor). Em caso de qualquer duvida quanto a
-numeracao ou a data da portaria, considere a expressao "conforme material
-fornecido". Esta declaracao nao afirma a portaria como fato juridico verificado;
-a referencia normativa e reproduzida conforme material fornecido pelo autor.
+Esta declaração segue a norma indicada pelo autor sobre o uso de Inteligência
+Artificial Generativa em trabalhos acadêmicos (Portaria CNPq no 2.664/2026,
+conforme material fornecido pelo autor). Em caso de qualquer dúvida quanto à
+numeração ou à data da portaria, considere a expressão "conforme material
+fornecido". Esta declaração não afirma a portaria como fato jurídico verificado;
+a referência normativa é reproduzida conforme material fornecido pelo autor.
 
-A declaracao indica, conforme o modelo do material, os tres eixos exigidos: qual
+A declaração indica, conforme o modelo do material, os três eixos exigidos: qual
 ferramenta de IA foi usada, em qual etapa da pesquisa e a finalidade do uso.
 
-## Declaracao (modelo do material, com os campos preenchidos)
+## Declaração (modelo do material, com os campos preenchidos)
 
-Declaro que ferramentas de Inteligencia Artificial Generativa foram utilizadas
+Declaro que ferramentas de Inteligência Artificial Generativa foram utilizadas
 neste trabalho nas seguintes etapas: o assistente de IA (Kiro) foi utilizado para
-apoio a implementacao do codigo do back-end (FastAPI) e do app movel (React
-Native/Expo) e a redacao da documentacao tecnica, na etapa de desenvolvimento e
-documentacao da aplicacao. Todo o conteudo gerado foi revisado criticamente e
+apoio à implementação do código do back-end (FastAPI) e do app móvel (React
+Native/Expo) e à redação da documentação técnica, na etapa de desenvolvimento e
+documentação da aplicação. Todo o conteúdo gerado foi revisado criticamente e
 validado pelo autor, que assume integral responsabilidade pela originalidade e
 veracidade do texto final.
 
 ## Detalhamento por eixo
 
 - Ferramenta: assistente de IA (Kiro).
-- Finalidade: apoio a implementacao do codigo do back-end (FastAPI) e do app
-  movel (React Native/Expo) e a redacao da documentacao tecnica.
-- Etapa da pesquisa: desenvolvimento e documentacao da aplicacao.
+- Finalidade: apoio à implementação do código do back-end (FastAPI) e do app
+  móvel (React Native/Expo) e à redação da documentação técnica.
+- Etapa da pesquisa: desenvolvimento e documentação da aplicação.
 
-O autor revisou criticamente todo o conteudo, validou o funcionamento do sistema
-(testes do back-end e verificacao de tipos do cliente) e assume integral
+O autor revisou criticamente todo o conteúdo, validou o funcionamento do sistema
+(testes do back-end e verificação de tipos do cliente) e assume integral
 responsabilidade pela originalidade e veracidade do texto final.
 
 ## Assinatura
@@ -40,8 +40,8 @@ responsabilidade pela originalidade e veracidade do texto final.
 - Data: [preencher pelo autor]
 - Assinatura: ____________________________________________
 
-## Observacao
+## Observação
 
-Uma versao integrada ao indice academico desta declaracao tambem esta disponivel
-em `docs/09_declaracao_uso_ia.md`. Os dois arquivos sao coerentes entre si; este
-`DECLARACAO_IA.md` na raiz atende ao entregavel de topo do repositorio.
+Uma versão integrada ao índice acadêmico desta declaração também está disponível
+em `docs/09_declaracao_uso_ia.md`. Os dois arquivos são coerentes entre si; este
+`DECLARACAO_IA.md` na raiz atende ao entregável de topo do repositório.

@@ -1,7 +1,7 @@
 # 10. Capa e Ficha de APS
 
-Os dados desta pagina dependem de informacoes pessoais e institucionais do autor.
-Para nao inventar dados, os campos estao marcados como `[preencher pelo autor]`.
+Os dados desta página dependem de informações pessoais e institucionais do autor.
+Para não inventar dados, os campos estão marcados como `[preencher pelo autor]`.
 
 ## 10.1 Capa
 
@@ -31,34 +31,34 @@ Ano: 2026
 
 ## 10.2 Ficha de APS
 
-A ficha de APS e o formulario padrao da UNIP entregue junto ao trabalho. Os
+A ficha de APS é o formulário padrão da UNIP entregue junto ao trabalho. Os
 campos abaixo devem ser preenchidos e assinados pelo autor conforme o modelo
-oficial fornecido pela instituicao:
+oficial fornecido pela instituição:
 
-- Nome da instituicao: Universidade Paulista (UNIP)
-- Curso: Ciencia da Computacao
-- Disciplina: Sistemas Distribuidos
+- Nome da instituição: Universidade Paulista (UNIP)
+- Curso: Ciência da Computação
+- Disciplina: Sistemas Distribuídos
 - Semestre/Turma: [preencher pelo autor]
-- Titulo da APS: Desenvolvimento de uma aplicacao de sistema distribuido para
-  dispositivo movel (Monitor de Transporte Publico de Sao Paulo)
+- Título da APS: Desenvolvimento de uma aplicação de sistema distribuído para
+  dispositivo móvel (Monitor de Transporte Público de São Paulo)
 - Integrantes do grupo (nome e RA): [preencher pelo autor]
 - Professor(a): [preencher pelo autor]
 - Data de entrega: [preencher pelo autor]
-- Nota / avaliacao: (reservado ao professor)
+- Nota / avaliação: (reservado ao professor)
 - Assinaturas dos integrantes: [preencher pelo autor]
 
-> Observacao: substitua este texto pelo formulario oficial da Ficha de APS da
-> UNIP, mantendo o titulo e a descricao do trabalho aqui indicados.
+> Observação: substitua este texto pelo formulário oficial da Ficha de APS da
+> UNIP, mantendo o título e a descrição do trabalho aqui indicados.
 
-## 10.3 Resumo do trabalho (para a capa/apresentacao)
+## 10.3 Resumo do trabalho (para a capa/apresentação)
 
-Aplicacao de sistema distribuido para dispositivo movel voltada ao monitoramento
-do transporte publico (frota de onibus) da cidade de Sao Paulo (SP). E composta
-por um cliente movel (React Native/Expo), um servidor de API REST (FastAPI/Python)
-e um banco de dados (SQLite, migravel para PostgreSQL). Apoia-se em fontes
-OFICIAIS: **transporte publico** com a SPTrans Olho Vivo (fonte OFICIAL da
+Aplicação de sistema distribuído para dispositivo móvel voltada ao monitoramento
+do transporte público (frota de ônibus) da cidade de São Paulo (SP). É composta
+por um cliente móvel (React Native/Expo), um servidor de API REST (FastAPI/Python)
+e um banco de dados (SQLite, migrável para PostgreSQL). Apoia-se em fontes
+OFICIAIS: **transporte público** com a SPTrans Olho Vivo (fonte OFICIAL da
 Prefeitura de SP, tempo real com token gratuito e fallback de exemplo sem token) e
-**base geografica** com a API oficial do IBGE (UF 35 = SP). Oferece consulta por
-regiao ligada a um mapa enquadrado em Sao Paulo, relatorios agregados (com grafico
-de barras), alertas por limiar e tratamento de erros padronizado. A documentacao
-completa esta nos arquivos numerados desta pasta `docs/` (ver `00_LEIA-ME.md`).
+**base geográfica** com a API oficial do IBGE (UF 35 = SP). Oferece consulta por
+região ligada a um mapa enquadrado em São Paulo, relatórios agregados (com gráfico
+de barras), alertas por limiar e tratamento de erros padronizado. A documentação
+completa está nos arquivos numerados desta pasta `docs/` (ver `00_LEIA-ME.md`).

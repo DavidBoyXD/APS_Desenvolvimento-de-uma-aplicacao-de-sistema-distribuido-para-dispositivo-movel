@@ -1,20 +1,20 @@
-# 6. Relatorio com as linhas de codigo
+# 6. Relatório com as linhas de código
 
-Este relatorio comenta os trechos de codigo mais relevantes do projeto, indicando
-o arquivo, a funcao e a tecnologia/fonte aplicada em cada ponto. Nao repete todo o
-codigo; destaca os nucleos. Os caminhos apontam para o codigo real do repositorio.
+Este relatório comenta os trechos de código mais relevantes do projeto, indicando
+o arquivo, a função e a tecnologia/fonte aplicada em cada ponto. Não repete todo o
+código; destaca os núcleos. Os caminhos apontam para o código real do repositório.
 
-## 6.0 Mapa de rastreabilidade (fonte -> arquivo/funcao)
+## 6.0 Mapa de rastreabilidade (fonte -> arquivo/função)
 
-| Fonte / biblioteca | Papel | Arquivo | Funcao / ponto | Endpoint que a usa |
+| Fonte / biblioteca | Papel | Arquivo | Função / ponto | Endpoint que a usa |
 | --- | --- | --- | --- | --- |
-| **SPTrans Olho Vivo** (OFICIAL SP, token) | Transporte publico, tempo real | `server/app/services/sptrans.py` | `obter_token`, `_autenticar`, `mapear_payload`, `buscar_transporte_publico`; constantes `FONTE`/`FONTE_FALLBACK` | `POST /api/v1/regioes/{id}/atualizar-transporte` |
+| **SPTrans Olho Vivo** (OFICIAL SP, token) | Transporte público, tempo real | `server/app/services/sptrans.py` | `obter_token`, `_autenticar`, `mapear_payload`, `buscar_transporte_publico`; constantes `FONTE`/`FONTE_FALLBACK` | `POST /api/v1/regioes/{id}/atualizar-transporte` |
 | **SPTrans GTFS / exemplo** (fallback) | Transporte sem token | `server/app/services/sptrans.py` | `_leituras_fallback` (`LINHAS_EXEMPLO`) | idem (quando `SPTRANS_TOKEN` ausente) |
-| **IBGE Localidades** (OFICIAL, UF 35) | Base geografica de SP | `server/app/services/ibge.py` | `mapear_payload`, `buscar_municipios_sp` | `GET /api/v1/localidades/sp` |
-| **PMSP / GeoSampa** | Coordenadas dos distritos | `server/app/seed.py` | `REGIOES_SEED` (citacao na docstring) | seed de startup |
-| **httpx** | Cliente HTTP do servidor | `server/app/services/*` | chamadas `client.get/post` | servicos sptrans e ibge |
+| **IBGE Localidades** (OFICIAL, UF 35) | Base geográfica de SP | `server/app/services/ibge.py` | `mapear_payload`, `buscar_municipios_sp` | `GET /api/v1/localidades/sp` |
+| **PMSP / GeoSampa** | Coordenadas dos distritos | `server/app/seed.py` | `REGIOES_SEED` (citação na docstring) | seed de startup |
+| **httpx** | Cliente HTTP do servidor | `server/app/services/*` | chamadas `client.get/post` | serviços sptrans e ibge |
 | **react-native-maps** | Mapa de SP | `mobile/src/screens/MapaScreen.tsx` | `MapView`/`Marker`, `REGIAO_INICIAL` | tela Mapa |
-| **react-native-chart-kit** | Grafico de barras | `mobile/src/screens/RelatoriosScreen.tsx` | `GraficoMedias` (`BarChart`) | tela Relatorios |
+| **react-native-chart-kit** | Gráfico de barras | `mobile/src/screens/RelatoriosScreen.tsx` | `GraficoMedias` (`BarChart`) | tela Relatórios |
 | **Fetch API** | Cliente HTTP do app | `mobile/src/api/client.ts` | `requisitar`, `atualizarTransporte` etc. | todas as telas |
 
 ## 6.1 Back-end
@@ -23,18 +23,18 @@ codigo; destaca os nucleos. Os caminhos apontam para o codigo real do repositori
 
 Configura o ORM SQLAlchemy 2.x e o banco SQLite. Pontos-chave:
 
-- `DATABASE_URL` vem de variavel de ambiente; o default e um arquivo SQLite. Para
+- `DATABASE_URL` vem de variável de ambiente; o default é um arquivo SQLite. Para
   **migrar a PostgreSQL**, basta definir `DATABASE_URL` sem mudar modelos ou
-  rotas, exemplificando a escalabilidade do banco no sistema distribuido.
-- `check_same_thread=False` e especifico do SQLite.
-- `get_db` e a **dependencia** injetada nas rotas (`Depends(get_db)`), garantindo
-  uma sessao por requisicao, sempre fechada ao final. Referencia:
+  rotas, exemplificando a escalabilidade do banco no sistema distribuído.
+- `check_same_thread=False` é específico do SQLite.
+- `get_db` é a **dependência** injetada nas rotas (`Depends(get_db)`), garantindo
+  uma sessão por requisição, sempre fechada ao final. Referência:
   [SQLAlchemy ORM Quickstart](https://docs.sqlalchemy.org/en/20/orm/quickstart.html).
 
-### 6.1.2 Modelo generico - `server/app/models.py`
+### 6.1.2 Modelo genérico - `server/app/models.py`
 
-O enum e a tabela `Medicao` sao o coracao do modelo generico. O enum define o
-unico tipo suportado nesta aplicacao:
+O enum e a tabela `Medicao` são o coração do modelo genérico. O enum define o
+único tipo suportado nesta aplicação:
 
 ```python
 class TipoMedicao(str, enum.Enum):
@@ -43,16 +43,16 @@ class TipoMedicao(str, enum.Enum):
 
 Pontos-chave:
 
-- Um unico esquema representa a observacao urbana via `tipo` + `parametro`, o que
-  mantem o modelo aberto a extensoes sem alterar tabelas.
-- `native_enum=False` armazena o enum como texto (portavel entre SQLite e outros).
+- Um único esquema representa a observação urbana via `tipo` + `parametro`, o que
+  mantém o modelo aberto a extensões sem alterar tabelas.
+- `native_enum=False` armazena o enum como texto (portável entre SQLite e outros).
 - `fonte` guarda a origem do dado, sustentando a rastreabilidade em runtime.
 
-### 6.1.3 Transporte publico OFICIAL de SP - `server/app/services/sptrans.py`
+### 6.1.3 Transporte público OFICIAL de SP - `server/app/services/sptrans.py`
 
-Esta e a integracao central da aplicacao: a **SPTrans Olho Vivo**, fonte OFICIAL
-da Prefeitura de Sao Paulo para a frota de onibus. O token e lido somente da
-variavel de ambiente, nunca do codigo:
+Esta é a integração central da aplicação: a **SPTrans Olho Vivo**, fonte OFICIAL
+da Prefeitura de São Paulo para a frota de ônibus. O token é lido somente da
+variável de ambiente, nunca do código:
 
 ```python
 ENV_TOKEN = "SPTRANS_TOKEN"
@@ -65,7 +65,7 @@ def obter_token():
     return token or None
 ```
 
-A autenticacao estabelece a sessao (cookie `apManager`) reutilizando o MESMO
+A autenticação estabelece a sessão (cookie `apManager`) reutilizando o MESMO
 `httpx.Client` nas chamadas seguintes:
 
 ```python
@@ -99,7 +99,7 @@ def buscar_transporte_publico(latitude, longitude, client=None):
     return mapear_payload(payload)
 ```
 
-O `mapear_payload` deriva metricas reais do bloco `l` (linhas) e `vs` (veiculos)
+O `mapear_payload` deriva métricas reais do bloco `l` (linhas) e `vs` (veículos)
 do `/Posicao`:
 
 ```python
@@ -116,16 +116,16 @@ def mapear_payload(payload):
             LeituraTransporte("veiculos_em_operacao", ...)]
 ```
 
-**Semantica das metricas (por cidade, nao por regiao).** O endpoint recebe
-`regiao_id` e repassa o lat/lon da regiao por uniformidade, mas o `/Posicao` do
-Olho Vivo retorna a frota de Sao Paulo como um todo e nao aceita filtro
-geografico. Assim, `linhas_monitoradas` e `veiculos_em_operacao` sao metricas da
-cidade inteira (frota do Olho Vivo), nao geofiltradas por regiao: chamar
-`atualizar-transporte` para regioes diferentes no mesmo instante persiste os
-mesmos valores. O comportamento e intencional e esta documentado nas docstrings do
-servico e do router.
+**Semântica das métricas (por cidade, não por região).** O endpoint recebe
+`regiao_id` e repassa o lat/lon da região por uniformidade, mas o `/Posicao` do
+Olho Vivo retorna a frota de São Paulo como um todo e não aceita filtro
+geográfico. Assim, `linhas_monitoradas` e `veiculos_em_operacao` são métricas da
+cidade inteira (frota do Olho Vivo), não geofiltradas por região: chamar
+`atualizar-transporte` para regiões diferentes no mesmo instante persiste os
+mesmos valores. O comportamento é intencional e está documentado nas docstrings do
+serviço e do router.
 
-E o fallback (sem token) usa um conjunto estatico de linhas de EXEMPLO,
+E o fallback (sem token) usa um conjunto estático de linhas de EXEMPLO,
 explicitamente rotulado:
 
 ```python
@@ -138,17 +138,17 @@ def _leituras_fallback():
 
 Pontos-chave:
 
-- **Fonte OFICIAL** no proprio codigo (constante `FONTE`):
+- **Fonte OFICIAL** no próprio código (constante `FONTE`):
   [SPTrans Olho Vivo](https://www.sptrans.com.br/desenvolvedores/). O fallback usa
-  a constante `FONTE_FALLBACK`, que deixa explicito ser dado de exemplo/GTFS
-  estatico, NAO tempo real.
-- O **token nunca aparece no repositorio**: so e lido de `SPTRANS_TOKEN`.
-- A ausencia de token NAO e erro: cai no fallback funcional (o app roda ponta a
+  a constante `FONTE_FALLBACK`, que deixa explícito ser dado de exemplo/GTFS
+  estático, NÃO tempo real.
+- O **token nunca aparece no repositório**: só é lido de `SPTRANS_TOKEN`.
+- A ausência de token NÃO é erro: cai no fallback funcional (o app roda ponta a
   ponta sem token). Qualquer `httpx.HTTPError` com token vira `SPTransError`.
 
-### 6.1.4 Rota de transporte publico - `server/app/routers/medicoes.py`
+### 6.1.4 Rota de transporte público - `server/app/routers/medicoes.py`
 
-Funcao `atualizar_transporte` (endpoint `POST /api/v1/regioes/{id}/atualizar-transporte`):
+Função `atualizar_transporte` (endpoint `POST /api/v1/regioes/{id}/atualizar-transporte`):
 
 ```python
 regiao = obter_regiao_ou_404(db, regiao_id)
@@ -169,16 +169,16 @@ db.commit()
 
 Pontos-chave:
 
-- Valida a existencia da regiao (404) antes de buscar dados.
-- Escolhe o campo `fonte` conforme a presenca de `SPTRANS_TOKEN` (tempo real ou
-  fallback de exemplo), mantendo a rastreabilidade da origem na propria medicao.
+- Valida a existência da região (404) antes de buscar dados.
+- Escolhe o campo `fonte` conforme a presença de `SPTRANS_TOKEN` (tempo real ou
+  fallback de exemplo), mantendo a rastreabilidade da origem na própria medição.
 - Traduz a falha da fonte externa em **502 Bad Gateway** padronizado (nunca 500
   cru), atendendo ao requisito de tratamento de erros.
-- Persiste as medicoes com `tipo=transporte_publico`.
+- Persiste as medições com `tipo=transporte_publico`.
 
-### 6.1.5 Base geografica OFICIAL (IBGE) - `server/app/services/ibge.py`
+### 6.1.5 Base geográfica OFICIAL (IBGE) - `server/app/services/ibge.py`
 
-Consome a API de Localidades do IBGE (UF 35 = Sao Paulo), fonte OFICIAL e nacional
+Consome a API de Localidades do IBGE (UF 35 = São Paulo), fonte OFICIAL e nacional
 sem chave:
 
 ```python
@@ -197,20 +197,20 @@ def buscar_municipios_sp(client=None):
     return mapear_payload(payload)
 ```
 
-O endpoint retorna uma **lista** JSON; `mapear_payload` le `id`, `nome` e a sigla
+O endpoint retorna uma **lista** JSON; `mapear_payload` lê `id`, `nome` e a sigla
 da UF dos blocos aninhados (`microrregiao.mesorregiao.UF.sigla` ou
 `regiao-imediata.regiao-intermediaria.UF.sigla`), com fallback "SP".
 
 Pontos-chave:
 
-- Fonte OFICIAL no proprio codigo (constante `FONTE`):
+- Fonte OFICIAL no próprio código (constante `FONTE`):
   [IBGE - API de Localidades](https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios).
-- O IBGE nao fornece latitude/longitude de distritos; por isso as coordenadas do
-  seed vem de fontes oficiais da PMSP (GeoSampa), nunca inventadas.
+- O IBGE não fornece latitude/longitude de distritos; por isso as coordenadas do
+  seed vêm de fontes oficiais da PMSP (GeoSampa), nunca inventadas.
 - Exposta por `GET /api/v1/localidades/sp` (`routers/localidades.py`), que
   converte `IbgeError` em 502 padronizado.
 
-### 6.1.6 Consulta por regiao e helper 404 - `server/app/routers/regioes.py`
+### 6.1.6 Consulta por região e helper 404 - `server/app/routers/regioes.py`
 
 ```python
 def obter_regiao_ou_404(db, regiao_id):
@@ -223,50 +223,50 @@ def obter_regiao_ou_404(db, regiao_id):
 Pontos-chave:
 
 - `GET /api/v1/regioes` alimenta o mapa de SP do cliente (lista com lat/lon).
-- O helper e reutilizado por medicoes, relatorios e alertas, padronizando a
+- O helper é reutilizado por medições, relatórios e alertas, padronizando a
   resposta 404 em PT-BR.
 
-### 6.1.7 Relatorios agregados - `server/app/routers/relatorios.py`
+### 6.1.7 Relatórios agregados - `server/app/routers/relatorios.py`
 
-Agrupa as medicoes por `(tipo, parametro)` e calcula media, minimo, maximo,
-contagem e ultima leitura. Como a agregacao e generica, os parametros de
-`transporte_publico` entram automaticamente no relatorio quando ha medicoes. Cobre
-o requisito de "relatorios adicionais" da APS.
+Agrupa as medições por `(tipo, parametro)` e calcula média, mínimo, máximo,
+contagem e última leitura. Como a agregação é genérica, os parâmetros de
+`transporte_publico` entram automaticamente no relatório quando há medições. Cobre
+o requisito de "relatórios adicionais" da APS.
 
 ### 6.1.8 Alertas por limiar - `server/app/routers/alertas.py`
 
-Compara a medicao mais recente de cada `(tipo, parametro)` com as regras ativas
+Compara a medição mais recente de cada `(tipo, parametro)` com as regras ativas
 (`>` ou `<`), retornando os alertas disparados com o valor observado e a mensagem
-em PT-BR. Regras sao criadas por `POST /api/v1/alertas` (validadas por Pydantic).
+em PT-BR. Regras são criadas por `POST /api/v1/alertas` (validadas por Pydantic).
 
 ### 6.1.9 Tratamento de erros global - `server/app/errors.py`
 
 Instala handlers para `HTTPException` (ex.: 404 e 502), `RequestValidationError`
-(422) e um generico para `Exception` (500 tratado), todos no schema `ErroResposta`
-(`codigo`, `mensagem`, `detalhe`) em PT-BR. O handler generico impede vazamento de
-stack trace cru. Referencia:
+(422) e um genérico para `Exception` (500 tratado), todos no schema `ErroResposta`
+(`codigo`, `mensagem`, `detalhe`) em PT-BR. O handler genérico impede vazamento de
+stack trace cru. Referência:
 [FastAPI - Handling Errors](https://fastapi.tiangolo.com/tutorial/handling-errors/).
 
-### 6.1.10 Inicializacao e seed de SP - `server/app/main.py` e `server/app/seed.py`
+### 6.1.10 Inicialização e seed de SP - `server/app/main.py` e `server/app/seed.py`
 
 No `main.py`, o `lifespan` cria as tabelas e roda o seed idempotente no startup; o
-CORS e liberado para o app Expo consumir a API; o titulo do Swagger e "API
+CORS é liberado para o app Expo consumir a API; o título do Swagger é "API
 Transporte Publico SP - APS SD".
 
-O `seed.py` cria 5 regioes reais de Sao Paulo/SP (distritos da capital: Se,
+O `seed.py` cria 5 regiões reais de São Paulo/SP (distritos da capital: Sé,
 Pinheiros, Mooca, Santana, Itaquera) com coordenadas de fontes oficiais da PMSP
-(GeoSampa) citadas na docstring, e nome validavel pelo IBGE (codigo 35 /
-3550308). Para cada regiao gera uma medicao-semente de transporte publico de
+(GeoSampa) citadas na docstring, e nome validável pelo IBGE (código 35 /
+3550308). Para cada região gera uma medição-semente de transporte público de
 EXEMPLO (`veiculos_em_operacao`) e uma regra de alerta
-(`veiculos_em_operacao > 300`). As medicoes de seed sao apenas valores iniciais de
-exemplo (o campo `fonte` aponta a fonte real substituivel). O seed e idempotente.
+(`veiculos_em_operacao > 300`). As medições de seed são apenas valores iniciais de
+exemplo (o campo `fonte` aponta a fonte real substituível). O seed é idempotente.
 
-## 6.2 Cliente movel
+## 6.2 Cliente móvel
 
 ### 6.2.1 Cliente HTTP tipado - `mobile/src/api/client.ts`
 
-Base da URL adaptavel ao ambiente, classe de erro amigavel e timeout por
-`AbortController`. A funcao de transporte publico mapeia o endpoint:
+Base da URL adaptável ao ambiente, classe de erro amigável e timeout por
+`AbortController`. A função de transporte público mapeia o endpoint:
 
 ```typescript
 export function atualizarTransporte(regiaoId: number): Promise<Medicao[]> {
@@ -278,20 +278,20 @@ export function atualizarTransporte(regiaoId: number): Promise<Medicao[]> {
 
 Pontos-chave:
 
-- `10.0.2.2` e o alias do host no emulador Android
+- `10.0.2.2` é o alias do host no emulador Android
   ([Android emulator networking](https://developer.android.com/studio/run/emulator-networking)).
-  Para iOS/web use `localhost`; para dispositivo fisico, o IP da LAN. Configuravel
+  Para iOS/web use `localhost`; para dispositivo físico, o IP da LAN. Configurável
   por `EXPO_PUBLIC_API_BASE_URL`.
 - Toda falha (rede, timeout, HTTP, JSON) vira `ApiError` com mensagem PT-BR; as
   telas exibem `e.mensagem` sem crashar.
-- As funcoes mapeiam 1:1 os endpoints da API (`getRegioes`, `getMedicoes`,
+- As funções mapeiam 1:1 os endpoints da API (`getRegioes`, `getMedicoes`,
   `atualizarTransporte`, `getRelatorio`, `getAlertas`, etc.). Usa a
   [Fetch API](https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API).
 
-### 6.2.2 Mapa de Sao Paulo com fallback - `mobile/src/screens/MapaScreen.tsx`
+### 6.2.2 Mapa de São Paulo com fallback - `mobile/src/screens/MapaScreen.tsx`
 
-O react-native-maps e importado condicionalmente (nao existe build web) e o mapa e
-enquadrado na cidade de Sao Paulo:
+O react-native-maps é importado condicionalmente (não existe build web) e o mapa é
+enquadrado na cidade de São Paulo:
 
 ```tsx
 const REGIAO_INICIAL = {
@@ -304,24 +304,24 @@ const REGIAO_INICIAL = {
 
 Pontos-chave:
 
-- Import condicional evita quebrar a web e mantem a checagem de tipos verde.
-- Ha sempre uma **lista clicavel** ("Regioes monitoradas em Sao Paulo") como
-  alternativa ao mapa (util quando o mapa aparece em cinza no Android sem Google
-  Maps API key). Referencia:
+- Import condicional evita quebrar a web e mantém a checagem de tipos verde.
+- Há sempre uma **lista clicável** ("Regiões monitoradas em São Paulo") como
+  alternativa ao mapa (útil quando o mapa aparece em cinza no Android sem Google
+  Maps API key). Referência:
   [react-native-maps](https://github.com/react-native-maps/react-native-maps).
 
-### 6.2.3 Detalhe da regiao - `mobile/src/screens/DetalheScreen.tsx`
+### 6.2.3 Detalhe da região - `mobile/src/screens/DetalheScreen.tsx`
 
-Lista as medicoes de transporte publico da regiao e oferece um unico botao de
-atualizacao, **"Atualizar transporte"**, que chama `atualizarTransporte(regiaoId)`
-(endpoint `POST /api/v1/regioes/{id}/atualizar-transporte`). Apos a atualizacao, a
-lista recarrega com as novas medicoes e cada item mostra valor, unidade, data/hora
-e a `fonte` (tempo real com token ou exemplo no fallback). Tambem da acesso a tela
-de relatorio da regiao.
+Lista as medições de transporte público da região e oferece um único botão de
+atualização, **"Atualizar transporte"**, que chama `atualizarTransporte(regiaoId)`
+(endpoint `POST /api/v1/regioes/{id}/atualizar-transporte`). Após a atualização, a
+lista recarrega com as novas medições e cada item mostra valor, unidade, data/hora
+e a `fonte` (tempo real com token ou exemplo no fallback). Também dá acesso à tela
+de relatório da região.
 
-### 6.2.4 Relatorio com grafico de barras - `mobile/src/screens/RelatoriosScreen.tsx`
+### 6.2.4 Relatório com gráfico de barras - `mobile/src/screens/RelatoriosScreen.tsx`
 
-Alem da lista tabular, a tela resume as medias por par tipo/parametro num grafico
+Além da lista tabular, a tela resume as médias por par tipo/parâmetro num gráfico
 de barras com `BarChart` do **react-native-chart-kit** (desenha via
 **react-native-svg**), medindo a largura com `useWindowDimensions`:
 
@@ -349,21 +349,21 @@ function GraficoMedias({ resumos, larguraJanela }) {
 Pontos-chave:
 
 - **Biblioteca e justificativa:** react-native-chart-kit (7.0.4) foi escolhida por
-  ser compativel com o stack atual (Expo SDK 57, React 19.2.3, React Native
-  0.86.3) e por ter como unica dependencia nativa o react-native-svg (15.15.4),
-  modulo suportado pelo Expo. Instalada com
-  `npx expo install react-native-chart-kit react-native-svg`. Referencias:
+  ser compatível com o stack atual (Expo SDK 57, React 19.2.3, React Native
+  0.86.3) e por ter como única dependência nativa o react-native-svg (15.15.4),
+  módulo suportado pelo Expo. Instalada com
+  `npx expo install react-native-chart-kit react-native-svg`. Referências:
   [react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit)
   e [npm](https://www.npmjs.com/package/react-native-chart-kit).
-- O rotulo das barras combina **tipo + parametro**, usando `rotuloTipo`/
+- O rótulo das barras combina **tipo + parâmetro**, usando `rotuloTipo`/
   `rotuloParametro` de `src/ui/rotulos.ts`; assim o tipo `transporte_publico`
-  ("Transporte publico (SPTrans)") aparece com rotulo PT-BR.
-- Trata dataset vazio (nao renderiza o grafico) e e injetado como
+  ("Transporte publico (SPTrans)") aparece com rótulo PT-BR.
+- Trata dataset vazio (não renderiza o gráfico) e é injetado como
   `ListHeaderComponent` da `FlatList`, preservando a lista tabular.
 
-### 6.2.5 Rotulos PT-BR - `mobile/src/ui/rotulos.ts`
+### 6.2.5 Rótulos PT-BR - `mobile/src/ui/rotulos.ts`
 
-Mapeia o tipo e os parametros tecnicos para texto PT-BR:
+Mapeia o tipo e os parâmetros técnicos para texto PT-BR:
 
 ```typescript
 const ROTULOS_TIPO = {
@@ -378,36 +378,36 @@ const ROTULOS_PARAMETRO = {
 
 ### 6.2.6 Alertas - `mobile/src/screens/AlertasScreen.tsx`
 
-Lista as regras cadastradas, oferece um formulario para criar uma regra (com o
-tipo `transporte_publico`, parametro, condicao `>`/`<` e limiar) e um botao para
-avaliar os alertas de uma regiao selecionada, destacando os alertas disparados.
+Lista as regras cadastradas, oferece um formulário para criar uma regra (com o
+tipo `transporte_publico`, parâmetro, condição `>`/`<` e limiar) e um botão para
+avaliar os alertas de uma região selecionada, destacando os alertas disparados.
 
-### 6.2.7 Navegacao - `mobile/App.tsx`
+### 6.2.7 Navegação - `mobile/App.tsx`
 
 Registra as telas em um stack nativo do React Navigation
-(`@react-navigation/native-stack`), com titulos em PT-BR. Referencia:
+(`@react-navigation/native-stack`), com títulos em PT-BR. Referência:
 [React Navigation - Native Stack](https://reactnavigation.org/docs/native-stack-navigator).
 
 ## 6.3 Testes automatizados (`server/tests/`)
 
-A suite pytest usa o `TestClient` do FastAPI e um banco SQLite em memoria isolado
+A suíte pytest usa o `TestClient` do FastAPI e um banco SQLite em memória isolado
 (configurado em `server/conftest.py`), sem tocar o banco real. **A rede e o token
-sao SEMPRE mockados** (nenhum teste acessa a SPTrans ou o IBGE reais, nem usa token
+são SEMPRE mockados** (nenhum teste acessa a SPTrans ou o IBGE reais, nem usa token
 real).
 
-- **Transporte publico** (`server/tests/test_transporte.py`): valida o mapeamento
+- **Transporte público** (`server/tests/test_transporte.py`): valida o mapeamento
   do payload do `/Posicao` a partir do fixture
-  `server/tests/fixtures/sptrans_posicao_sample.json` (metricas
+  `server/tests/fixtures/sptrans_posicao_sample.json` (métricas
   `linhas_monitoradas` e `veiculos_em_operacao`); o fallback sem token
   (`linhas_exemplo`), com `SPTRANS_TOKEN` ausente; e o endpoint
   `POST /api/v1/regioes/{id}/atualizar-transporte` (status 200 e 502 em falha),
   com a chamada externa e o token mockados.
-- **Base geografica** (`server/tests/test_ibge.py`): valida o mapeamento do
-  payload de municipios a partir do fixture
+- **Base geográfica** (`server/tests/test_ibge.py`): valida o mapeamento do
+  payload de municípios a partir do fixture
   `server/tests/fixtures/ibge_municipios_sample.json` e o endpoint
   `GET /api/v1/localidades/sp`, com a rede mockada; ramos de erro levantam
   `IbgeError`.
 - **Demais** (`test_health.py`, `test_regioes.py`, `test_medicoes.py`,
-  `test_relatorios.py`, `test_alertas.py`): saude, regioes (404 no schema de
-  erro), listagem/filtro de medicoes, agregacao do relatorio, criacao/avaliacao
-  de alertas e validacao invalida (422).
+  `test_relatorios.py`, `test_alertas.py`): saúde, regiões (404 no schema de
+  erro), listagem/filtro de medições, agregação do relatório, criação/avaliação
+  de alertas e validação inválida (422).

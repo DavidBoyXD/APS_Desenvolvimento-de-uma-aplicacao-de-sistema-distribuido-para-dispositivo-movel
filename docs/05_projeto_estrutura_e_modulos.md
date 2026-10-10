@@ -1,10 +1,10 @@
-# 5. Projeto: estrutura e modulos
+# 5. Projeto: estrutura e módulos
 
-Este capitulo descreve a estrutura real de diretorios do repositorio e o papel de
-cada modulo. Os nomes de arquivos e funcoes correspondem ao codigo efetivamente
+Este capítulo descreve a estrutura real de diretórios do repositório e o papel de
+cada módulo. Os nomes de arquivos e funções correspondem ao código efetivamente
 presente no projeto.
 
-## 5.1 Estrutura de diretorios
+## 5.1 Estrutura de diretórios
 
 ```
 APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-movel/
@@ -78,21 +78,21 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
             └── rotulos.ts          # rotulos PT-BR (transporte_publico)
 ```
 
-Observacao: `server/data/app.db` (banco SQLite) e `mobile/node_modules/` sao
-gerados em runtime/instalacao e estao no `.gitignore` (nao versionados). As pastas
-`mobile/ios` e `mobile/android`, quando existem, sao geradas por Continuous Native
-Generation e nao devem ser editadas a mao.
+Observação: `server/data/app.db` (banco SQLite) e `mobile/node_modules/` são
+gerados em runtime/instalação e estão no `.gitignore` (não versionados). As pastas
+`mobile/ios` e `mobile/android`, quando existem, são geradas por Continuous Native
+Generation e não devem ser editadas à mão.
 
-## 5.2 Modelo de dados generico de "medicao por tipo"
+## 5.2 Modelo de dados genérico de "medição por tipo"
 
-O coracao do dominio esta em `server/app/models.py`. O modelo e **generico**: em
-vez de uma tabela por assunto, ha uma unica tabela `Medicao` que representa
-qualquer observacao urbana, distinguida por um **tipo** e um **parametro**. Isso
-mantem o esquema aberto a extensoes futuras sem alterar as tabelas.
+O coração do domínio está em `server/app/models.py`. O modelo é **genérico**: em
+vez de uma tabela por assunto, há uma única tabela `Medicao` que representa
+qualquer observação urbana, distinguida por um **tipo** e um **parâmetro**. Isso
+mantém o esquema aberto a extensões futuras sem alterar as tabelas.
 
 Entidades:
 
-- **Regiao** (tabela `regioes`): local monitorado em Sao Paulo. Campos: `id`,
+- **Regiao** (tabela `regioes`): local monitorado em São Paulo. Campos: `id`,
   `nome`, `cidade`, `uf`, `latitude`, `longitude`. As coordenadas alimentam os
   marcadores do mapa no cliente.
 - **Medicao** (tabela `medicoes`): um valor observado. Campos: `id`, `regiao_id`
@@ -103,96 +103,96 @@ Entidades:
   `tipo`, `parametro`, `limiar` (float), `condicao` (`>` ou `<`), `ativo` (bool),
   `mensagem`.
 
-O enum `TipoMedicao` (em `models.py`) fixa os tipos suportados; nesta aplicacao,
-apenas `transporte_publico` (SPTrans Olho Vivo). Como o `parametro` e uma string,
-o mesmo tipo pode ter varios parametros. O campo `fonte` documenta, por linha, a
+O enum `TipoMedicao` (em `models.py`) fixa os tipos suportados; nesta aplicação,
+apenas `transporte_publico` (SPTrans Olho Vivo). Como o `parametro` é uma string,
+o mesmo tipo pode ter vários parâmetros. O campo `fonte` documenta, por linha, a
 origem do dado.
 
-## 5.3 Modulos do back-end (`server/app/`)
+## 5.3 Módulos do back-end (`server/app/`)
 
-- **`main.py`** - cria a aplicacao FastAPI (titulo "API Transporte Publico SP -
-  APS SD", visivel no Swagger em `/docs`), habilita CORS (para o app Expo
+- **`main.py`** - cria a aplicação FastAPI (título "API Transporte Publico SP -
+  APS SD", visível no Swagger em `/docs`), habilita CORS (para o app Expo
   consumir), registra os exception handlers e os routers (incluindo
   `localidades.py`), e no `lifespan` de startup cria as tabelas e executa o seed
-  idempotente. Mantem `GET /health`.
+  idempotente. Mantém `GET /health`.
 - **`database.py`** - configura o engine SQLAlchemy 2.x apontando para o SQLite em
-  `server/data/app.db`, a `SessionLocal`, a `Base` declarativa e a dependencia
-  `get_db` (uma sessao por requisicao). Documenta no proprio codigo como migrar
+  `server/data/app.db`, a `SessionLocal`, a `Base` declarativa e a dependência
+  `get_db` (uma sessão por requisição). Documenta no próprio código como migrar
   para PostgreSQL trocando a URL do engine.
-- **`models.py`** - modelos ORM descritos na secao 5.2 (enum com apenas
+- **`models.py`** - modelos ORM descritos na seção 5.2 (enum com apenas
   `transporte_publico`).
-- **`schemas.py`** - schemas Pydantic v2 (entrada/saida), o schema de erro
+- **`schemas.py`** - schemas Pydantic v2 (entrada/saída), o schema de erro
   padronizado `ErroResposta` (`codigo`, `mensagem`, `detalhe`) e o `MunicipioSPRead`
   (resposta do endpoint de localidades do IBGE).
 - **`errors.py`** - instala handlers globais para `HTTPException` (ex.: 404 e
-  502), `RequestValidationError` (422) e um generico para `Exception` (500
+  502), `RequestValidationError` (422) e um genérico para `Exception` (500
   tratado), todos respondendo no formato `ErroResposta` em PT-BR.
-- **`services/sptrans.py`** - integracao com a SPTrans Olho Vivo (fonte OFICIAL de
-  transporte publico de SP). Le o token de `SPTRANS_TOKEN` (`obter_token`),
-  autentica (`_autenticar`, estabelecendo a sessao via cookie), deriva metricas
+- **`services/sptrans.py`** - integração com a SPTrans Olho Vivo (fonte OFICIAL de
+  transporte público de SP). Lê o token de `SPTRANS_TOKEN` (`obter_token`),
+  autentica (`_autenticar`, estabelecendo a sessão via cookie), deriva métricas
   reais do `GET /Posicao` (`mapear_payload`: `linhas_monitoradas` e
   `veiculos_em_operacao`) e, sem token, retorna o fallback de exemplo
-  (`_leituras_fallback`: `linhas_exemplo`). Expoe `FONTE` (tempo real) e
+  (`_leituras_fallback`: `linhas_exemplo`). Expõe `FONTE` (tempo real) e
   `FONTE_FALLBACK` (exemplo). Converte qualquer `httpx.HTTPError` em `SPTransError`.
-- **`services/ibge.py`** - integracao com a API de Localidades do IBGE (base
-  geografica OFICIAL, UF 35 = SP). Define `IBGE_MUNICIPIOS_SP_URL`, `mapear_payload`
-  (le a LISTA de municipios, extraindo `id`, `nome` e a sigla da UF dos blocos
+- **`services/ibge.py`** - integração com a API de Localidades do IBGE (base
+  geográfica OFICIAL, UF 35 = SP). Define `IBGE_MUNICIPIOS_SP_URL`, `mapear_payload`
+  (lê a LISTA de municípios, extraindo `id`, `nome` e a sigla da UF dos blocos
   aninhados) e `buscar_municipios_sp`. Converte falhas em `IbgeError`.
-- **`seed.py`** - `executar_seed` popula o banco (se vazio) com 5 regioes reais de
-  Sao Paulo/SP (distritos da capital: Se, Pinheiros, Mooca, Santana, Itaquera) com
-  coordenadas reais de fontes oficiais da PMSP (GeoSampa) e nome validavel pelo
-  IBGE (codigo 35 / 3550308). Para cada regiao gera uma medicao-semente de
-  transporte publico de EXEMPLO (`veiculos_em_operacao`) e uma regra de alerta
-  (`veiculos_em_operacao > 300`). Os valores de seed sao apenas exemplos iniciais;
-  o campo `fonte` aponta a fonte real substituivel. Idempotente.
-- **`routers/`** - endpoints agrupados por dominio (detalhados no capitulo 6):
+- **`seed.py`** - `executar_seed` popula o banco (se vazio) com 5 regiões reais de
+  São Paulo/SP (distritos da capital: Sé, Pinheiros, Mooca, Santana, Itaquera) com
+  coordenadas reais de fontes oficiais da PMSP (GeoSampa) e nome validável pelo
+  IBGE (código 35 / 3550308). Para cada região gera uma medição-semente de
+  transporte público de EXEMPLO (`veiculos_em_operacao`) e uma regra de alerta
+  (`veiculos_em_operacao > 300`). Os valores de seed são apenas exemplos iniciais;
+  o campo `fonte` aponta a fonte real substituível. Idempotente.
+- **`routers/`** - endpoints agrupados por domínio (detalhados no capítulo 6):
   - `saude.py`: `GET /health` e `GET /api/v1/saude`.
   - `regioes.py`: `GET /api/v1/regioes`, `GET /api/v1/regioes/{id}` e o helper
     `obter_regiao_ou_404` (reusado pelos demais routers).
-  - `localidades.py`: `GET /api/v1/localidades/sp` (municipios de SP via IBGE).
-  - `medicoes.py`: `GET /api/v1/medicoes` (filtros por regiao/tipo),
+  - `localidades.py`: `GET /api/v1/localidades/sp` (municípios de SP via IBGE).
+  - `medicoes.py`: `GET /api/v1/medicoes` (filtros por região/tipo),
     `GET /api/v1/regioes/{id}/medicoes` e
     `POST /api/v1/regioes/{id}/atualizar-transporte` (SPTrans Olho Vivo, token +
     fallback).
-  - `relatorios.py`: `GET /api/v1/relatorios/regiao/{id}` (agregacoes).
+  - `relatorios.py`: `GET /api/v1/relatorios/regiao/{id}` (agregações).
   - `alertas.py`: `GET /api/v1/alertas`, `POST /api/v1/alertas`,
     `GET /api/v1/alertas/avaliar/{regiao_id}`.
 
-## 5.4 Modulos do cliente movel (`mobile/`)
+## 5.4 Módulos do cliente móvel (`mobile/`)
 
 - **`App.tsx`** - componente raiz. Envolve o app em `SafeAreaProvider` e
   `NavigationContainer`, cria um stack nativo (React Navigation) e registra as
-  telas com titulos em PT-BR.
+  telas com títulos em PT-BR.
 - **`src/navigation.ts`** - define `RootStackParamList` com as rotas e seus
-  parametros (`Mapa`, `Detalhe`, `Relatorios`, `Alertas`).
+  parâmetros (`Mapa`, `Detalhe`, `Relatorios`, `Alertas`).
 - **`src/types.ts`** - interfaces TypeScript que espelham os schemas da API,
   incluindo o tipo `transporte_publico` em `TipoMedicao`.
 - **`src/api/client.ts`** - cliente HTTP tipado com `fetch`. Define
   `API_BASE_URL` (default `http://10.0.2.2:8000` para emulador Android), a classe
   `ApiError` (mensagem PT-BR pronta para a UI), timeout via `AbortController` e as
-  funcoes `getRegioes`, `getRegiao`, `getMedicoes`, **`atualizarTransporte`**,
+  funções `getRegioes`, `getRegiao`, `getMedicoes`, **`atualizarTransporte`**,
   `getRelatorio`, `getAlertas`, `criarAlerta`, `avaliarAlertas`.
-- **`src/screens/MapaScreen.tsx`** - tela inicial. Carrega as regioes, plota
+- **`src/screens/MapaScreen.tsx`** - tela inicial. Carrega as regiões, plota
   marcadores no `MapView` (react-native-maps) por latitude/longitude com o
-  enquadramento inicial centrado na cidade de Sao Paulo (`REGIAO_INICIAL`:
-  lat -23.55, lon -46.63, delta ~0.3) e mantem uma lista clicavel ("Regioes
-  monitoradas em Sao Paulo") como alternativa. Trata carregamento, erro e vazio.
-- **`src/screens/DetalheScreen.tsx`** - medicoes de transporte publico da regiao,
-  com o botao **"Atualizar transporte"** (chama
-  `POST /api/v1/regioes/{id}/atualizar-transporte`) e acesso ao relatorio.
-- **`src/screens/RelatoriosScreen.tsx`** - consome o relatorio agregado e mostra
-  media, minimo, maximo, contagem e ultima leitura por parametro em cards. No topo,
-  apresenta um **grafico de barras** ("Medias por parametro") com `BarChart` do
+  enquadramento inicial centrado na cidade de São Paulo (`REGIAO_INICIAL`:
+  lat -23.55, lon -46.63, delta ~0.3) e mantém uma lista clicável ("Regiões
+  monitoradas em São Paulo") como alternativa. Trata carregamento, erro e vazio.
+- **`src/screens/DetalheScreen.tsx`** - medições de transporte público da região,
+  com o botão **"Atualizar transporte"** (chama
+  `POST /api/v1/regioes/{id}/atualizar-transporte`) e acesso ao relatório.
+- **`src/screens/RelatoriosScreen.tsx`** - consome o relatório agregado e mostra
+  média, mínimo, máximo, contagem e última leitura por parâmetro em cards. No topo,
+  apresenta um **gráfico de barras** ("Médias por parâmetro") com `BarChart` do
   **react-native-chart-kit** (que depende de **react-native-svg**), largura
   calculada com `useWindowDimensions` e renderizado como `ListHeaderComponent` da
   `FlatList`. Trata dataset vazio.
-- **`src/screens/AlertasScreen.tsx`** - lista regras, formulario para criar uma
-  regra (com o tipo `transporte_publico`) e botao para avaliar os alertas de uma
-  regiao.
-- **`src/ui/estados.tsx`** - componentes reutilizaveis de estado
+- **`src/screens/AlertasScreen.tsx`** - lista regras, formulário para criar uma
+  regra (com o tipo `transporte_publico`) e botão para avaliar os alertas de uma
+  região.
+- **`src/ui/estados.tsx`** - componentes reutilizáveis de estado
   (`EstadoCarregando`, `EstadoErro` com "Tentar novamente", `EstadoVazio`).
-- **`src/ui/rotulos.ts`** - rotulos em PT-BR do tipo ("Transporte publico
-  (SPTrans)") e dos parametros do transporte publico (`linhas_monitoradas` ->
-  "Linhas monitoradas", `veiculos_em_operacao` -> "Veiculos em operacao",
-  `linhas_exemplo` -> "Linhas (exemplo, sem token)"), alem da formatacao numerica
-  e de data/hora no padrao pt-BR.
+- **`src/ui/rotulos.ts`** - rótulos em PT-BR do tipo ("Transporte público
+  (SPTrans)") e dos parâmetros do transporte público (`linhas_monitoradas` ->
+  "Linhas monitoradas", `veiculos_em_operacao` -> "Veículos em operação",
+  `linhas_exemplo` -> "Linhas (exemplo, sem token)"), além da formatação numérica
+  e de data/hora no padrão pt-BR.

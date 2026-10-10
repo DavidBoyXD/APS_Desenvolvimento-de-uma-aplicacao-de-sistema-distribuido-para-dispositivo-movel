@@ -1,24 +1,14 @@
 /**
- * Tela de detalhe da regiao: mostra as medicoes agrupadas por tipo
- * (qualidade do ar, transito, alagamento, transporte publico). Oferece um botao
- * de atualizacao por tipo, que chama o respectivo endpoint POST de fonte real e
- * recarrega a lista:
- *   - qualidade do ar -> POST /api/v1/regioes/{id}/atualizar-ar (Open-Meteo);
- *   - transito -> POST /api/v1/regioes/{id}/atualizar-transito (Overpass/OSM);
- *   - alagamento -> POST /api/v1/regioes/{id}/atualizar-alagamento (Open-Meteo
- *     Flood API / GloFAS).
+ * Tela de detalhe da regiao: mostra as medicoes de transporte publico. Oferece
+ * um botao de atualizacao que chama o endpoint POST de fonte real e recarrega a
+ * lista:
  *   - transporte publico -> POST /api/v1/regioes/{id}/atualizar-transporte
  *     (SPTrans Olho Vivo, fonte oficial de Sao Paulo; fallback rotulado sem token).
- * Assim as fontes reais alimentam a lista da tela, o relatorio e os alertas.
+ * Assim a fonte real alimenta a lista da tela, o relatorio e os alertas.
  * Tambem leva ao relatorio da regiao.
  *
  * Referencias:
  *   - SectionList: https://reactnative.dev/docs/sectionlist
- *   - Fonte de dados reais de ar: Open-Meteo Air Quality API
- *     https://open-meteo.com/en/docs/air-quality-api
- *   - Fonte de dados reais de transito: Overpass API / OpenStreetMap (ODbL)
- *   - Fonte de dados reais de alagamento: Open-Meteo Flood API / GloFAS
- *     https://open-meteo.com/en/docs/flood-api
  *   - Fonte de dados reais de transporte publico: SPTrans Olho Vivo
  *     https://www.sptrans.com.br/desenvolvedores/
  *
@@ -36,14 +26,7 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import {
-  getMedicoes,
-  atualizarAr,
-  atualizarTransito,
-  atualizarAlagamento,
-  atualizarTransporte,
-  ApiError,
-} from '../api/client';
+import { getMedicoes, atualizarTransporte, ApiError } from '../api/client';
 import { Medicao, TipoMedicao } from '../types';
 import { RootStackParamList } from '../navigation';
 import { EstadoCarregando, EstadoErro } from '../ui/estados';
@@ -62,12 +45,7 @@ interface Secao {
   data: Medicao[];
 }
 
-const ORDEM_TIPOS: TipoMedicao[] = [
-  'qualidade_ar',
-  'transito',
-  'alagamento',
-  'transporte_publico',
-];
+const ORDEM_TIPOS: TipoMedicao[] = ['transporte_publico'];
 
 export default function DetalheScreen({ route, navigation }: Props) {
   const { regiaoId, regiaoNome } = route.params;
@@ -124,39 +102,6 @@ export default function DetalheScreen({ route, navigation }: Props) {
     [regiaoId, carregar],
   );
 
-  const onAtualizarAr = useCallback(
-    () =>
-      atualizar(
-        'qualidade_ar',
-        atualizarAr,
-        'Qualidade do ar atualizada com dados da Open-Meteo.',
-        'Nao foi possivel atualizar a qualidade do ar agora.',
-      ),
-    [atualizar],
-  );
-
-  const onAtualizarTransito = useCallback(
-    () =>
-      atualizar(
-        'transito',
-        atualizarTransito,
-        'Transito atualizado com dados do OpenStreetMap (Overpass).',
-        'Nao foi possivel atualizar o transito agora.',
-      ),
-    [atualizar],
-  );
-
-  const onAtualizarAlagamento = useCallback(
-    () =>
-      atualizar(
-        'alagamento',
-        atualizarAlagamento,
-        'Alagamento atualizado com dados da Open-Meteo Flood API (GloFAS).',
-        'Nao foi possivel atualizar o alagamento agora.',
-      ),
-    [atualizar],
-  );
-
   const onAtualizarTransporte = useCallback(
     () =>
       atualizar(
@@ -194,51 +139,6 @@ export default function DetalheScreen({ route, navigation }: Props) {
             styles.botao,
             algumAtualizando && styles.botaoDesabilitado,
           ]}
-          onPress={onAtualizarAr}
-          disabled={algumAtualizando}
-          accessibilityRole="button"
-        >
-          {atualizandoTipo === 'qualidade_ar' ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.botaoTexto}>Atualizar ar</Text>
-          )}
-        </Pressable>
-        <Pressable
-          style={[
-            styles.botao,
-            algumAtualizando && styles.botaoDesabilitado,
-          ]}
-          onPress={onAtualizarTransito}
-          disabled={algumAtualizando}
-          accessibilityRole="button"
-        >
-          {atualizandoTipo === 'transito' ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.botaoTexto}>Atualizar transito</Text>
-          )}
-        </Pressable>
-        <Pressable
-          style={[
-            styles.botao,
-            algumAtualizando && styles.botaoDesabilitado,
-          ]}
-          onPress={onAtualizarAlagamento}
-          disabled={algumAtualizando}
-          accessibilityRole="button"
-        >
-          {atualizandoTipo === 'alagamento' ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.botaoTexto}>Atualizar alagamento</Text>
-          )}
-        </Pressable>
-        <Pressable
-          style={[
-            styles.botao,
-            algumAtualizando && styles.botaoDesabilitado,
-          ]}
           onPress={onAtualizarTransporte}
           disabled={algumAtualizando}
           accessibilityRole="button"
@@ -267,9 +167,8 @@ export default function DetalheScreen({ route, navigation }: Props) {
       {secoes.length === 0 ? (
         <View style={styles.vazio}>
           <Text style={styles.vazioTexto}>
-            Ainda nao ha medicoes para esta regiao. Use os botoes acima
-            ("Atualizar ar", "Atualizar transito", "Atualizar alagamento" ou
-            "Atualizar transporte") para buscar dados reais.
+            Ainda nao ha medicoes para esta regiao. Use o botao
+            "Atualizar transporte" acima para buscar dados reais.
           </Text>
         </View>
       ) : (

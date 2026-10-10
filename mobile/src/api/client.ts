@@ -198,38 +198,6 @@ export function getMedicoes(params?: {
 }
 
 /**
- * POST /api/v1/regioes/{id}/atualizar-ar -> busca dados reais na Open-Meteo,
- * persiste e retorna as novas medicoes de qualidade do ar. Sem corpo na request.
- */
-export function atualizarAr(regiaoId: number): Promise<Medicao[]> {
-  return requisitar<Medicao[]>(`/regioes/${regiaoId}/atualizar-ar`, {
-    method: 'POST',
-  });
-}
-
-/**
- * POST /api/v1/regioes/{id}/atualizar-transito -> busca vias reais na Overpass
- * API (OpenStreetMap, dados ODbL), persiste e retorna as novas medicoes de
- * transito. Sem corpo na request.
- */
-export function atualizarTransito(regiaoId: number): Promise<Medicao[]> {
-  return requisitar<Medicao[]>(`/regioes/${regiaoId}/atualizar-transito`, {
-    method: 'POST',
-  });
-}
-
-/**
- * POST /api/v1/regioes/{id}/atualizar-alagamento -> busca a descarga fluvial
- * real na Open-Meteo Flood API (base cientifica GloFAS), persiste e retorna as
- * novas medicoes de alagamento. Sem corpo na request.
- */
-export function atualizarAlagamento(regiaoId: number): Promise<Medicao[]> {
-  return requisitar<Medicao[]>(`/regioes/${regiaoId}/atualizar-alagamento`, {
-    method: 'POST',
-  });
-}
-
-/**
  * POST /api/v1/regioes/{id}/atualizar-transporte -> busca a frota de onibus na
  * SPTrans Olho Vivo (fonte oficial da Prefeitura de Sao Paulo, tempo real)
  * quando o token SPTRANS_TOKEN esta definido no servidor; sem o token, o

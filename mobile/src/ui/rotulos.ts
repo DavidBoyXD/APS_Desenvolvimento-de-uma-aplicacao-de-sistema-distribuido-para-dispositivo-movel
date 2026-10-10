@@ -1,8 +1,7 @@
 /**
  * Rotulos amigaveis em PT-BR para os tipos de medicao e formatacao de valores.
  * Mantem os textos de UI em Portugues, enquanto o codigo/dados permanecem com
- * as chaves tecnicas usadas pela API (qualidade_ar, transito, alagamento,
- * transporte_publico).
+ * a chave tecnica usada pela API (transporte_publico).
  *
  * Onde e aplicado: telas de Detalhe, Relatorios e Alertas.
  */
@@ -10,9 +9,6 @@
 import { TipoMedicao } from '../types';
 
 const ROTULOS_TIPO: Record<TipoMedicao, string> = {
-  qualidade_ar: 'Qualidade do ar',
-  transito: 'Transito',
-  alagamento: 'Alagamento',
   transporte_publico: 'Transporte publico (SPTrans)',
 };
 

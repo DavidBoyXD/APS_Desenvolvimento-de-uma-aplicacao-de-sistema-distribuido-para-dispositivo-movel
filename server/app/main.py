@@ -1,4 +1,4 @@
-"""Entrypoint da API REST (FastAPI) do sistema distribuido ambiental urbano.
+"""Entrypoint da API REST (FastAPI) do sistema distribuido de transporte publico.
 
 Arquitetura (sistema distribuido):
     App movel (cliente Expo/React Native)
@@ -45,15 +45,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="API Ambiental Urbana - APS SD",
+    title="API Transporte Publico SP - APS SD",
     description=(
-        "Back-end do sistema distribuido para gerenciamento de informacoes "
-        "ambientais urbanas. Os tres tipos usam fontes reais e verificaveis: "
-        "qualidade do ar (Open-Meteo Air Quality API), transito (Overpass API / "
-        "OpenStreetMap, dados ODbL) e alagamento (Open-Meteo Flood API, base "
-        "cientifica GloFAS). Oferece consulta por regiao (para o mapa), "
-        "relatorios agregados, alertas por limiar e tratamento de erros "
-        "padronizado."
+        "Back-end do sistema distribuido para informacoes de transporte publico "
+        "de Sao Paulo. A fonte de medicoes e real e verificavel: SPTrans Olho "
+        "Vivo (frota de onibus da capital em tempo real). A base geografica "
+        "(municipio/UF) e validada pela API de Localidades do IBGE. Oferece "
+        "consulta por regiao (para o mapa), relatorios agregados, alertas por "
+        "limiar e tratamento de erros padronizado."
     ),
     version="1.0.0",
     lifespan=lifespan,

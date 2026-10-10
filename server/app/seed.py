@@ -1,22 +1,18 @@
 """Populacao inicial (seed) do banco, idempotente - recorte geografico de SP.
 
-Cria >= 3 regioes REAIS de Sao Paulo (todas uf='SP') com coordenadas
-geograficas corretas e medicoes seed dos tres tipos (qualidade_ar, transito,
-alagamento). Cada medicao registra a ``fonte`` do dado:
+Cria as 5 regioes REAIS de Sao Paulo (todas uf='SP') com coordenadas
+geograficas corretas e, para cada uma, uma medicao-semente de transporte
+publico claramente rotulada como EXEMPLO (o valor real vem via
+POST /api/v1/regioes/{id}/atualizar-transporte, que consulta a SPTrans).
 
-- qualidade_ar: valores iniciais de exemplo, substituiveis por dados reais da
-  Open-Meteo Air Quality API via POST /api/v1/regioes/{id}/atualizar-ar.
-  Fonte real: https://open-meteo.com/en/docs/air-quality-api
-  Referencia oficial de SP: CETESB/QUALAR (https://qualar.cetesb.sp.gov.br).
-- transito: valor inicial de exemplo (simulado), substituivel por dados REAIS
-  de infraestrutura viaria da Overpass API do OpenStreetMap via
-  POST /api/v1/regioes/{id}/atualizar-transito. Fonte real (licenca ODbL):
-  https://overpass-api.de/api/interpreter e https://www.openstreetmap.org/copyright
-- alagamento: valor inicial de exemplo, substituivel por dados REAIS de
-  descarga fluvial (river discharge) da Open-Meteo Flood API via
-  POST /api/v1/regioes/{id}/atualizar-alagamento. Fonte real (base cientifica
-  GloFAS - Global Flood Awareness System): https://open-meteo.com/en/docs/flood-api
-  Referencia oficial de SP: CGE-SP (https://www.cgesp.org/).
+Transporte publico (unico tipo de medicao)
+-------------------------------------------
+A fonte oficial e a SPTrans Olho Vivo (frota de onibus de Sao Paulo em tempo
+real). A medicao-semente abaixo e um valor inicial de EXEMPLO (nao tempo real),
+substituivel por dados reais via POST /api/v1/regioes/{id}/atualizar-transporte.
+Fonte real: https://www.sptrans.com.br/desenvolvedores/ - ver app/services/sptrans.py.
+Semear ao menos uma medicao e um alerta de transporte_publico garante dado
+inicial para os relatorios e para a UI do app movel.
 
 Base geografica (recorte Sao Paulo)
 -----------------------------------
@@ -44,14 +40,13 @@ from sqlalchemy.orm import Session
 
 from .models import Alerta, Medicao, Regiao, TipoMedicao
 
-FONTE_AR = "Valor inicial de exemplo; atualizavel via Open-Meteo Air Quality API"
-FONTE_TRANSITO = (
-    "Valor inicial de exemplo; atualizavel com dados reais via Overpass API do "
-    "OpenStreetMap (POST /api/v1/regioes/{id}/atualizar-transito)"
-)
-FONTE_ALAGAMENTO = (
-    "Valor inicial de exemplo; atualizavel com dados reais via Open-Meteo Flood "
-    "API / GloFAS (POST /api/v1/regioes/{id}/atualizar-alagamento)"
+# Fonte da medicao-semente de transporte publico: valor inicial de EXEMPLO (nao
+# tempo real), substituivel por dados reais da SPTrans Olho Vivo via
+# POST /api/v1/regioes/{id}/atualizar-transporte.
+FONTE_TRANSPORTE_EXEMPLO = (
+    "Valor inicial de EXEMPLO (nao tempo real); atualizavel com dados reais da "
+    "SPTrans Olho Vivo via POST /api/v1/regioes/{id}/atualizar-transporte "
+    "(https://www.sptrans.com.br/desenvolvedores/)"
 )
 
 # Regioes reais de Sao Paulo/SP (distritos da capital) com coordenadas reais.
@@ -67,63 +62,30 @@ REGIOES_SEED = [
 
 
 def _medicoes_para_regiao(regiao: Regiao) -> list[Medicao]:
-    """Gera medicoes seed dos tres tipos para uma regiao."""
+    """Gera a medicao-semente de transporte publico (EXEMPLO) para uma regiao."""
     return [
         Medicao(
             regiao=regiao,
-            tipo=TipoMedicao.qualidade_ar,
-            parametro="pm2_5",
-            valor=12.5,
-            unidade="ug/m3",
-            fonte=FONTE_AR,
-        ),
-        Medicao(
-            regiao=regiao,
-            tipo=TipoMedicao.qualidade_ar,
-            parametro="pm10",
-            valor=28.0,
-            unidade="ug/m3",
-            fonte=FONTE_AR,
-        ),
-        Medicao(
-            regiao=regiao,
-            tipo=TipoMedicao.transito,
-            parametro="nivel_congestionamento",
-            valor=45.0,
-            unidade="%",
-            fonte=FONTE_TRANSITO,
-        ),
-        Medicao(
-            regiao=regiao,
-            tipo=TipoMedicao.alagamento,
-            parametro="nivel_agua",
-            valor=0.3,
-            unidade="m",
-            fonte=FONTE_ALAGAMENTO,
+            tipo=TipoMedicao.transporte_publico,
+            parametro="veiculos_em_operacao",
+            valor=250.0,
+            unidade="veiculos",
+            fonte=FONTE_TRANSPORTE_EXEMPLO,
         ),
     ]
 
 
 def _alertas_para_regiao(regiao: Regiao) -> list[Alerta]:
-    """Gera regras de alerta seed para uma regiao."""
+    """Gera a regra de alerta-semente de transporte publico para uma regiao."""
     return [
         Alerta(
             regiao=regiao,
-            tipo=TipoMedicao.qualidade_ar,
-            parametro="pm2_5",
-            limiar=25.0,
+            tipo=TipoMedicao.transporte_publico,
+            parametro="veiculos_em_operacao",
+            limiar=300.0,
             condicao=">",
             ativo=True,
-            mensagem="Qualidade do ar ruim: PM2.5 acima do limite recomendado.",
-        ),
-        Alerta(
-            regiao=regiao,
-            tipo=TipoMedicao.alagamento,
-            parametro="nivel_agua",
-            limiar=0.5,
-            condicao=">",
-            ativo=True,
-            mensagem="Risco de alagamento: nivel da agua elevado.",
+            mensagem="Frota de onibus em operacao acima do nivel de referencia.",
         ),
     ]
 

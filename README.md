@@ -1,6 +1,6 @@
-# Monitor Ambiental Urbano
+# Monitor Ambiental Urbano de Sao Paulo (SP)
 
-APS_7 / 8 Semestre CC na Universidade Paulista (UNIP)
+APS do 7o/8o semestre de Ciencia da Computacao (CC) na Universidade Paulista (UNIP).
 
 Disciplina: Sistemas Distribuidos (SD). Tema da APS: "Desenvolvimento de uma
 aplicacao de sistema distribuido para dispositivo movel".
@@ -8,25 +8,33 @@ aplicacao de sistema distribuido para dispositivo movel".
 ## Descricao do projeto e tema
 
 Este repositorio implementa uma aplicacao de sistema distribuido para dispositivo
-movel voltada ao gerenciamento de informacoes ambientais urbanas. O nucleo cobre
-qualidade do ar (poluicao), com tipos adicionais para transito e areas de
-alagamento. A consulta e feita por regiao, ligada a um mapa, e o sistema oferece
-relatorios agregados, alertas por limiar e tratamento de erros padronizado.
+movel voltada ao monitoramento de informacoes ambientais e urbanas da cidade de
+**Sao Paulo (SP)**. O foco esta em tres eixos:
+
+- **Qualidade do ar** (poluicao: PM2.5, PM10 e correlatos).
+- **Alagamento / chuva** (indicador de descarga fluvial, risco de cheia).
+- **Transporte publico** (frota de onibus da capital, via SPTrans Olho Vivo).
+
+A consulta e feita por regiao da capital (distritos reais de Sao Paulo), ligada a
+um mapa, e o sistema oferece relatorios agregados, alertas por limiar e tratamento
+de erros padronizado em Portugues-BR.
 
 O trabalho e composto por dois programas que se comunicam pela rede, mais um banco
 de dados, caracterizando o sistema distribuido:
 
-- Cliente movel (React Native / Expo) que exibe o mapa, as regioes e as medicoes.
-- Servidor de API REST (Python / FastAPI) que expoe os dados e a logica.
+- Cliente movel (React Native / Expo) que exibe o mapa de SP, as regioes e as
+  medicoes.
+- Servidor de API REST (Python / FastAPI) que expoe os dados e a logica e consome
+  as fontes externas de SP.
 - Banco de dados (SQLite) que persiste regioes, medicoes e alertas.
 
 ## Arquitetura do sistema distribuido
 
 ```
 +---------------------------+        HTTP / REST (JSON)        +---------------------------+
-|  Cliente movel            |  <-----------------------------> |  Servidor de API REST     |
+|  Cliente movel            |  <=============================> |  Servidor de API REST     |
 |  React Native / Expo      |     GET/POST /api/v1/...          |  FastAPI (Python)         |
-|  (mapa, detalhe,          |                                  |  routers + servicos       |
+|  (mapa de SP, detalhe,    |                                  |  routers + servicos       |
 |   relatorios, alertas)    |                                  |                           |
 +---------------------------+                                  +------------+--------------+
                                                                             |
@@ -36,52 +44,90 @@ de dados, caracterizando o sistema distribuido:
                                                                |  Banco de dados SQLite    |
                                                                |  server/data/app.db       |
                                                                +---------------------------+
-
-O servidor tambem consome fontes externas reais de dados (todas gratuitas e sem
-chave): a Open-Meteo Air Quality API para qualidade do ar, a Overpass API do
-OpenStreetMap (dados sob licenca ODbL) para transito e a Open-Meteo Flood API
-(base cientifica GloFAS) para alagamento.
 ```
+
+O servidor consome fontes externas reais, com recorte em Sao Paulo. Para
+transporte publico usa a fonte OFICIAL da Prefeitura (SPTrans Olho Vivo, que
+exige token gratuito, com fallback funcional sem token). Para qualidade do ar e
+alagamento usa APIs operacionais gratuitas (sem chave), citando as autoridades
+oficiais de SP como referencia. A base geografica vem da API oficial do IBGE.
 
 - Base da API: `http://HOST:8000`, prefixo `/api/v1`, corpo em JSON.
 - Documentacao interativa (Swagger) em `http://HOST:8000/docs`.
 - Verificacao de saude em `http://HOST:8000/health`.
 
-### Atualizacao com fontes reais
+## Fontes de dados (recorte Sao Paulo)
+
+| Eixo | Fonte usada no codigo | Autoridade oficial de SP (referencia) | Token |
+| --- | --- | --- | --- |
+| Transporte publico | SPTrans Olho Vivo (OFICIAL, tempo real) + GTFS estatico (fallback) | SPTrans / Prefeitura de SP | Sim (gratuito) |
+| Qualidade do ar | Open-Meteo Air Quality API (operacional) | CETESB / QUALAR | Nao |
+| Alagamento | Open-Meteo Flood API / GloFAS (operacional) | CGE-SP | Nao |
+| Base geografica | API de Localidades do IBGE (codigo UF 35 = SP) | IBGE | Nao |
+
+Links reais:
+
+- **SPTrans Olho Vivo** (fonte OFICIAL da Prefeitura de Sao Paulo, tempo real da
+  frota de onibus; a mesma secao disponibiliza o GTFS estatico usado como
+  fallback): [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
+  Aplicada em `server/app/services/sptrans.py`.
+- **Open-Meteo Air Quality API** (gratuita, sem chave), com a **CETESB/QUALAR**
+  como autoridade oficial de qualidade do ar em SP:
+  [https://open-meteo.com/en/docs/air-quality-api](https://open-meteo.com/en/docs/air-quality-api),
+  [https://cetesb.sp.gov.br/ar/](https://cetesb.sp.gov.br/ar/) e
+  [https://qualar.cetesb.sp.gov.br](https://qualar.cetesb.sp.gov.br).
+  Aplicada em `server/app/services/openmeteo.py`.
+- **Open-Meteo Flood API** (gratuita, sem chave, base cientifica GloFAS do
+  programa Copernicus), com o **CGE-SP** como autoridade oficial de alagamentos
+  em SP: [https://open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api),
+  [https://global-flood.emergency.copernicus.eu](https://global-flood.emergency.copernicus.eu)
+  e [https://www.cgesp.org/](https://www.cgesp.org/).
+  Aplicada em `server/app/services/flood.py`.
+- **IBGE - API de Localidades** (oficial, nacional, sem chave; codigo da UF 35 =
+  Sao Paulo): [https://servicodados.ibge.gov.br/api/v1/localidades](https://servicodados.ibge.gov.br/api/v1/localidades).
+  Aplicada em `server/app/services/ibge.py`.
+
+## Endpoints de atualizacao com fontes reais
+
+Todos os endpoints de atualizacao sao `POST` por regiao, persistem as medicoes
+derivadas e, em caso de falha da fonte externa, retornam **HTTP 502** padronizado
+em Portugues-BR (schema `ErroResposta` com `codigo`, `mensagem` e `detalhe`, nunca
+um erro 500 cru).
 
 - `POST /api/v1/regioes/{id}/atualizar-ar` - busca a qualidade do ar atual na
-  Open-Meteo (sem chave) e persiste as medicoes de `qualidade_ar`.
+  **Open-Meteo Air Quality API** (sem chave) e persiste medicoes de
+  `qualidade_ar` (ex.: PM2.5 e PM10). Referencia oficial de SP: CETESB/QUALAR.
 - `POST /api/v1/regioes/{id}/atualizar-transito` - busca as vias reais ao redor
-  da regiao na **Overpass API do OpenStreetMap** e persiste metricas de
-  infraestrutura viaria como medicoes de `transito`: numero de vias principais,
-  media de faixas (`lanes`) e media de velocidade maxima (`maxspeed`). Os dados
-  do OpenStreetMap sao publicados sob a licenca **ODbL**
-  ([openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)); o
-  campo `fonte` de cada medicao cita a origem. A chamada exige o header
+  da regiao na **Overpass API do OpenStreetMap** (dados sob licenca
+  [ODbL](https://www.openstreetmap.org/copyright)) e persiste metricas de
+  infraestrutura viaria como medicoes de `transito`. A chamada exige o header
   `User-Agent` (a API responde HTTP 406 sem ele).
 - `POST /api/v1/regioes/{id}/atualizar-alagamento` - busca a descarga fluvial
-  real da regiao na **Open-Meteo Flood API** (sem chave, base cientifica
-  **GloFAS** - Global Flood Awareness System, do programa Copernicus) e persiste
-  metricas reais de alagamento como medicoes de `alagamento`: descarga fluvial
-  atual (`river_discharge`), media e maxima do periodo, em m3/s. A descarga
-  fluvial (vazao do rio) e um indicador reconhecido de risco de cheia; o campo
-  `fonte` de cada medicao cita a origem
-  ([open-meteo.com/en/docs/flood-api](https://open-meteo.com/en/docs/flood-api)).
+  real na **Open-Meteo Flood API** (base cientifica GloFAS) e persiste metricas
+  de `alagamento` (descarga fluvial atual, media e maxima do periodo, em m3/s).
+  Referencia oficial de SP: CGE-SP.
+- `POST /api/v1/regioes/{id}/atualizar-transporte` - busca a frota de onibus na
+  **SPTrans Olho Vivo** e persiste metricas de `transporte_publico`. Com o token
+  `SPTRANS_TOKEN` definido, deriva metricas REAIS em tempo real (linhas
+  monitoradas e veiculos em operacao). SEM o token, usa um fallback de exemplo
+  claramente rotulado (nao e tempo real), para o app funcionar de ponta a ponta.
+  Veja a secao "Configuracao do token da SPTrans" abaixo.
 
-Os tres endpoints retornam **HTTP 502** padronizado em PT-BR quando a fonte
-externa falha. Exemplo:
+Exemplo de chamada:
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/regioes/1/atualizar-alagamento
+curl -X POST http://localhost:8000/api/v1/regioes/1/atualizar-transporte
 ```
 
 ## Pre-requisitos
 
-- Python 3.9 ou superior (back-end).
+- Python 3.11 (back-end). O repositorio foi validado com Python 3.11.
 - Node.js 18 ou superior e npm (cliente movel).
-- Expo (usado via `npx`, nao precisa instalar global).
+- Expo (usado via `npx`, nao precisa instalar global). O projeto usa Expo SDK 57.
 - Opcional: Android Studio com emulador Android, ou o app Expo Go em um
   dispositivo fisico, para executar o cliente movel.
+- Opcional: token gratuito da SPTrans para o transporte publico em tempo real
+  (sem ele, o app funciona via fallback). Veja a secao do token mais abaixo.
 
 ## Como rodar o SERVIDOR (back-end FastAPI)
 
@@ -96,12 +142,15 @@ python -m venv .venv
 
 Notas:
 
-- No startup o servidor cria as tabelas e roda o seed idempotente (3 regioes
-  reais: Sao Paulo, Rio de Janeiro e Curitiba, com medicoes iniciais).
+- No startup o servidor cria as tabelas e roda o seed idempotente com 5 regioes
+  reais de Sao Paulo (Se, Pinheiros, Mooca, Santana e Itaquera), todas com
+  `uf = "SP"` e coordenadas reais da capital.
 - Apos subir, acesse:
   - `http://localhost:8000/docs` (Swagger, documentacao interativa da API).
   - `http://localhost:8000/health` (deve responder `{"status":"ok"}`).
-  - `http://localhost:8000/api/v1/regioes` (lista de regioes para o mapa).
+  - `http://localhost:8000/api/v1/regioes` (lista de regioes de SP para o mapa).
+  - `http://localhost:8000/api/v1/localidades/sp` (municipios de SP validados na
+    API oficial do IBGE, codigo da UF 35).
 - O banco fica em `server/data/app.db` e e gerado em tempo de execucao (nao e
   versionado no Git).
 
@@ -111,6 +160,9 @@ Para rodar os testes automatizados do back-end:
 cd server
 .venv/bin/python -m pytest -q
 ```
+
+Os testes nao dependem de rede nem de token real: as chamadas externas e a
+autenticacao da SPTrans sao mockadas (monkeypatch e `httpx.MockTransport`).
 
 ## Como rodar o APP (cliente movel Expo / React Native)
 
@@ -152,8 +204,9 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:8000 npx expo start
 
 Nota sobre o mapa no Android: o componente de mapa (`react-native-maps`) pode
 exigir uma chave do Google Maps para renderizar no Android; sem ela o mapa pode
-aparecer em cinza. O aplicativo mantem uma lista de regioes clicavel como
-alternativa. O passo a passo detalhado esta em
+aparecer em cinza. O aplicativo mantem uma lista de regioes de SP clicavel como
+alternativa (fallback), de modo que a navegacao funciona mesmo sem a chave. O
+passo a passo detalhado esta em
 [docs/07_apresentacao_do_programa.md](docs/07_apresentacao_do_programa.md).
 
 Nota sobre o grafico dos relatorios: a tela de Relatorios exibe, alem da lista de
@@ -163,6 +216,48 @@ ja estao no `package.json` e sao instaladas com o `npm install`. Caso precise
 reinstala-las de forma compativel com o SDK, use o gerenciador do Expo:
 `cd mobile && npx expo install react-native-chart-kit react-native-svg`.
 
+## Configuracao do token da SPTrans (Olho Vivo)
+
+O transporte publico em **tempo real** usa a API Olho Vivo da **SPTrans** (fonte
+OFICIAL da Prefeitura de Sao Paulo), que exige um token de acesso **gratuito**. O
+token nunca e escrito no codigo: ele e lido exclusivamente da variavel de ambiente
+`SPTRANS_TOKEN`.
+
+Passo a passo para obter e configurar o token:
+
+1. Acesse o portal do desenvolvedor da SPTrans:
+   [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
+2. Cadastre-se / faca login e solicite a sua **chave de ativacao** (token) da API
+   Olho Vivo. O cadastro e gratuito.
+3. Copie o token recebido.
+4. Exporte a variavel de ambiente `SPTRANS_TOKEN` com esse valor ANTES de subir o
+   servidor. Use o placeholder `seu_token` abaixo apenas como exemplo e substitua
+   pelo token real recebido da SPTrans:
+
+   ```bash
+   # Linux/macOS - definindo apenas para o processo do servidor
+   SPTRANS_TOKEN=seu_token .venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+   # Alternativa: exportar na sessao do terminal
+   export SPTRANS_TOKEN=seu_token
+
+   # Windows (PowerShell)
+   $env:SPTRANS_TOKEN="seu_token"
+   ```
+
+Comportamento com e sem token:
+
+- **COM `SPTRANS_TOKEN`**: a integracao autentica no Olho Vivo e deriva metricas
+  REAIS da frota em tempo real (linhas monitoradas e veiculos em operacao). O
+  campo `fonte` das medicoes aponta a SPTrans Olho Vivo como fonte oficial.
+- **SEM `SPTRANS_TOKEN`**: a integracao usa um fallback FUNCIONAL com um conjunto
+  de linhas de SP de exemplo, claramente rotulado como dado estatico (GTFS /
+  exemplo, NAO e tempo real). O campo `fonte` deixa isso explicito. Assim o app
+  roda de ponta a ponta mesmo sem o token.
+
+Importante: nunca comite um token real neste repositorio. O valor `seu_token` nos
+exemplos e apenas um placeholder.
+
 ## Documentacao
 
 A documentacao academica completa em Portugues-BR, seguindo a estrutura exigida
@@ -171,6 +266,8 @@ desenvolvimento, projeto e modulos, relatorio de codigo, apresentacao,
 bibliografia, capa e ficha), esta na pasta [docs/](docs/):
 
 - [Indice da documentacao (docs/00_LEIA-ME.md)](docs/00_LEIA-ME.md)
+- [Apresentacao do programa em funcionamento (docs/07_apresentacao_do_programa.md)](docs/07_apresentacao_do_programa.md)
+- [Bibliografia e referencias (docs/08_bibliografia.md)](docs/08_bibliografia.md)
 - [Declaracao de uso de IA (DECLARACAO_IA.md)](DECLARACAO_IA.md)
 
 ## Estrutura do repositorio
@@ -178,6 +275,10 @@ bibliografia, capa e ficha), esta na pasta [docs/](docs/):
 ```
 server/        Back-end FastAPI (API REST) + SQLite
   app/main.py  Entrypoint da aplicacao FastAPI
+  app/services/sptrans.py   Integracao SPTrans Olho Vivo (token + fallback)
+  app/services/openmeteo.py Qualidade do ar (CETESB/QUALAR como referencia)
+  app/services/flood.py     Alagamento (CGE-SP como referencia)
+  app/services/ibge.py      Base geografica oficial (IBGE, UF 35)
 mobile/        Cliente movel Expo / React Native (TypeScript)
 docs/          Documentacao academica em Portugues-BR
 DECLARACAO_IA.md   Declaracao de uso de Inteligencia Artificial
@@ -194,18 +295,26 @@ README.md      Este arquivo
   biblioteca de graficos usada no grafico de barras da tela de Relatorios
   (`mobile/src/screens/RelatoriosScreen.tsx`); depende de
   [react-native-svg](https://github.com/software-mansion/react-native-svg).
+- [SPTrans Olho Vivo](https://www.sptrans.com.br/desenvolvedores/) - fonte OFICIAL
+  da Prefeitura de Sao Paulo para transporte publico (tempo real da frota de
+  onibus; token gratuito), consumida pelo servidor em
+  `server/app/services/sptrans.py`. A mesma secao disponibiliza o GTFS estatico
+  usado como fallback.
 - [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) -
-  fonte real e gratuita (sem chave) de dados de qualidade do ar, consumida pelo
-  servidor.
+  fonte operacional e gratuita (sem chave) de qualidade do ar, consumida pelo
+  servidor; [CETESB/QUALAR](https://qualar.cetesb.sp.gov.br) e a autoridade
+  oficial de referencia em SP.
+- [Open-Meteo Flood API](https://open-meteo.com/en/docs/flood-api) - fonte
+  operacional e gratuita (sem chave) de alagamento (descarga fluvial), com base
+  cientifica no [GloFAS](https://global-flood.emergency.copernicus.eu)
+  (Copernicus); [CGE-SP](https://www.cgesp.org/) e a autoridade oficial de
+  referencia em SP.
 - [Overpass API do OpenStreetMap](https://wiki.openstreetmap.org/wiki/Overpass_API) -
-  fonte real e gratuita (sem chave) de infraestrutura viaria (transito),
-  consumida pelo servidor. Dados sob licenca
-  [ODbL](https://www.openstreetmap.org/copyright).
-- [Open-Meteo Flood API](https://open-meteo.com/en/docs/flood-api) - fonte real e
-  gratuita (sem chave) de alagamento (descarga fluvial / `river_discharge`),
-  consumida pelo servidor. Tem base cientifica no
-  [GloFAS - Global Flood Awareness System](https://global-flood.emergency.copernicus.eu)
-  (Copernicus).
+  fonte gratuita (sem chave) de infraestrutura viaria (transito), consumida pelo
+  servidor. Dados sob licenca [ODbL](https://www.openstreetmap.org/copyright).
+- [IBGE - API de Localidades](https://servicodados.ibge.gov.br/api/v1/localidades) -
+  base geografica oficial (codigo da UF 35 = Sao Paulo), consumida pelo servidor
+  em `server/app/services/ibge.py`.
 
 Referencias adicionais, com indicacao de onde cada tecnologia foi aplicada,
 estao em [docs/08_bibliografia.md](docs/08_bibliografia.md).

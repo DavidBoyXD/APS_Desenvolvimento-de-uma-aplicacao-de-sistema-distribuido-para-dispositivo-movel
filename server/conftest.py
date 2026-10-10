@@ -93,6 +93,14 @@ def payload_flood() -> dict:
 
 
 @pytest.fixture()
+def payload_sptrans() -> dict:
+    """Carrega o fixture JSON de resposta do endpoint /Posicao do Olho Vivo."""
+    caminho = os.path.join(FIXTURES_DIR, "sptrans_posicao_sample.json")
+    with open(caminho, encoding="utf-8") as f:
+        return json.load(f)
+
+
+@pytest.fixture()
 def payload_ibge() -> list:
     """Carrega o fixture JSON de resposta da API de Localidades do IBGE (SP).
 

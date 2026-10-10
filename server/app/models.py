@@ -33,8 +33,14 @@ class TipoMedicao(str, enum.Enum):
     """Tipos de informacao ambiental urbana suportados pelo sistema."""
 
     qualidade_ar = "qualidade_ar"
+    # 'transito' (Overpass/OpenStreetMap) e mantido como tipo LEGADO: o modelo
+    # permanece generico e nao removemos dados/historico anteriores. A fonte
+    # oficial de transporte de SP passa a ser a SPTrans (tipo abaixo).
     transito = "transito"
     alagamento = "alagamento"
+    # Transporte publico oficial de Sao Paulo (SPTrans Olho Vivo, tempo real da
+    # frota de onibus; com fallback de exemplo/GTFS estatico quando sem token).
+    transporte_publico = "transporte_publico"
 
 
 def _agora_utc() -> datetime:

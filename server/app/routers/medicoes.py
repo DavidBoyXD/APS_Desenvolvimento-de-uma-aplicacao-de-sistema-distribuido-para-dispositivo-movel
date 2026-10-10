@@ -11,6 +11,11 @@
 - POST /api/v1/regioes/{id}/atualizar-alagamento -> busca a descarga fluvial
   real na Open-Meteo Flood API (base cientifica GloFAS), deriva metricas de
   alagamento e persiste as medicoes. Falha de rede tambem vira 502 em PT-BR.
+- POST /api/v1/regioes/{id}/atualizar-transporte -> busca a frota de onibus na
+  SPTrans Olho Vivo (fonte OFICIAL da Prefeitura de SP, tempo real) quando o
+  token SPTRANS_TOKEN esta definido; sem o token, usa um fallback de exemplo
+  claramente rotulado (nao tempo real). Persiste medicoes do tipo
+  transporte_publico. Falha de rede tambem vira 502 em PT-BR.
 """
 
 from datetime import datetime, timezone
@@ -28,6 +33,13 @@ from ..services.overpass import FONTE as FONTE_TRANSITO
 from ..services.overpass import OverpassError, buscar_transito
 from ..services.flood import FONTE as FONTE_ALAGAMENTO
 from ..services.flood import FloodError, buscar_alagamento
+from ..services.sptrans import FONTE as FONTE_TRANSPORTE
+from ..services.sptrans import FONTE_FALLBACK as FONTE_TRANSPORTE_FALLBACK
+from ..services.sptrans import (
+    SPTransError,
+    buscar_transporte_publico,
+    obter_token,
+)
 from .regioes import obter_regiao_ou_404
 
 router = APIRouter(prefix="/api/v1", tags=["medicoes"])
@@ -145,6 +157,55 @@ def atualizar_alagamento(
             unidade=leitura.unidade,
             timestamp=ts,
             fonte=FONTE_ALAGAMENTO,
+        )
+        db.add(medicao)
+        novas.append(medicao)
+
+    db.commit()
+    for medicao in novas:
+        db.refresh(medicao)
+    return novas
+
+
+@router.post(
+    "/regioes/{regiao_id}/atualizar-transporte", response_model=list[MedicaoRead]
+)
+def atualizar_transporte(
+    regiao_id: int, db: Session = Depends(get_db)
+) -> list[Medicao]:
+    """Busca a frota de onibus na SPTrans Olho Vivo e persiste as metricas.
+
+    Com o token ``SPTRANS_TOKEN`` definido, deriva metricas REAIS (tempo real)
+    da frota (linhas monitoradas e veiculos em operacao). Sem o token, usa um
+    fallback de EXEMPLO claramente rotulado (nao tempo real), de modo que o app
+    funcione de ponta a ponta sem token. Em caso de falha de rede/HTTP com
+    token, retorna 502 padronizado (nunca 500 cru).
+    """
+    regiao = obter_regiao_ou_404(db, regiao_id)
+
+    # A fonte reflete a origem: oficial/tempo real (com token) ou exemplo
+    # (fallback sem token). Decidida pela presenca de SPTRANS_TOKEN.
+    fonte = FONTE_TRANSPORTE if obter_token() is not None else FONTE_TRANSPORTE_FALLBACK
+
+    try:
+        leituras = buscar_transporte_publico(regiao.latitude, regiao.longitude)
+    except SPTransError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Nao foi possivel obter dados de transporte publico: {exc}",
+        ) from exc
+
+    agora = datetime.now(timezone.utc)
+    novas: list[Medicao] = []
+    for leitura in leituras:
+        medicao = Medicao(
+            regiao_id=regiao.id,
+            tipo=TipoMedicao.transporte_publico,
+            parametro=leitura.parametro,
+            valor=leitura.valor,
+            unidade=leitura.unidade,
+            timestamp=agora,
+            fonte=fonte,
         )
         db.add(medicao)
         novas.append(medicao)

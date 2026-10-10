@@ -229,6 +229,19 @@ export function atualizarAlagamento(regiaoId: number): Promise<Medicao[]> {
   });
 }
 
+/**
+ * POST /api/v1/regioes/{id}/atualizar-transporte -> busca a frota de onibus na
+ * SPTrans Olho Vivo (fonte oficial da Prefeitura de Sao Paulo, tempo real)
+ * quando o token SPTRANS_TOKEN esta definido no servidor; sem o token, o
+ * back-end usa um fallback de exemplo rotulado. Persiste e retorna as novas
+ * medicoes de transporte publico. Sem corpo na request.
+ */
+export function atualizarTransporte(regiaoId: number): Promise<Medicao[]> {
+  return requisitar<Medicao[]>(`/regioes/${regiaoId}/atualizar-transporte`, {
+    method: 'POST',
+  });
+}
+
 /** GET /api/v1/relatorios/regiao/{id} -> relatorio agregado da regiao. */
 export function getRelatorio(regiaoId: number): Promise<RelatorioRegiao> {
   return requisitar<RelatorioRegiao>(`/relatorios/regiao/${regiaoId}`);

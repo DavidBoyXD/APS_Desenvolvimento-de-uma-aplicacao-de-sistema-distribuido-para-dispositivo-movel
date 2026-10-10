@@ -1,11 +1,14 @@
 /**
  * Tela de detalhe da regiao: mostra as medicoes agrupadas por tipo
- * (qualidade do ar, transito, alagamento). Oferece um botao de atualizacao por
- * tipo, que chama o respectivo endpoint POST de fonte real e recarrega a lista:
+ * (qualidade do ar, transito, alagamento, transporte publico). Oferece um botao
+ * de atualizacao por tipo, que chama o respectivo endpoint POST de fonte real e
+ * recarrega a lista:
  *   - qualidade do ar -> POST /api/v1/regioes/{id}/atualizar-ar (Open-Meteo);
  *   - transito -> POST /api/v1/regioes/{id}/atualizar-transito (Overpass/OSM);
  *   - alagamento -> POST /api/v1/regioes/{id}/atualizar-alagamento (Open-Meteo
  *     Flood API / GloFAS).
+ *   - transporte publico -> POST /api/v1/regioes/{id}/atualizar-transporte
+ *     (SPTrans Olho Vivo, fonte oficial de Sao Paulo; fallback rotulado sem token).
  * Assim as fontes reais alimentam a lista da tela, o relatorio e os alertas.
  * Tambem leva ao relatorio da regiao.
  *
@@ -16,6 +19,8 @@
  *   - Fonte de dados reais de transito: Overpass API / OpenStreetMap (ODbL)
  *   - Fonte de dados reais de alagamento: Open-Meteo Flood API / GloFAS
  *     https://open-meteo.com/en/docs/flood-api
+ *   - Fonte de dados reais de transporte publico: SPTrans Olho Vivo
+ *     https://www.sptrans.com.br/desenvolvedores/
  *
  * Onde e aplicado: rota "Detalhe" em App.tsx.
  */
@@ -36,12 +41,18 @@ import {
   atualizarAr,
   atualizarTransito,
   atualizarAlagamento,
+  atualizarTransporte,
   ApiError,
 } from '../api/client';
 import { Medicao, TipoMedicao } from '../types';
 import { RootStackParamList } from '../navigation';
 import { EstadoCarregando, EstadoErro } from '../ui/estados';
-import { formatarNumero, formatarTimestamp, rotuloTipo } from '../ui/rotulos';
+import {
+  formatarNumero,
+  formatarTimestamp,
+  rotuloParametro,
+  rotuloTipo,
+} from '../ui/rotulos';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Detalhe'>;
 
@@ -51,7 +62,12 @@ interface Secao {
   data: Medicao[];
 }
 
-const ORDEM_TIPOS: TipoMedicao[] = ['qualidade_ar', 'transito', 'alagamento'];
+const ORDEM_TIPOS: TipoMedicao[] = [
+  'qualidade_ar',
+  'transito',
+  'alagamento',
+  'transporte_publico',
+];
 
 export default function DetalheScreen({ route, navigation }: Props) {
   const { regiaoId, regiaoNome } = route.params;
@@ -141,6 +157,17 @@ export default function DetalheScreen({ route, navigation }: Props) {
     [atualizar],
   );
 
+  const onAtualizarTransporte = useCallback(
+    () =>
+      atualizar(
+        'transporte_publico',
+        atualizarTransporte,
+        'Transporte publico atualizado com dados da SPTrans (Olho Vivo).',
+        'Nao foi possivel atualizar o transporte publico agora.',
+      ),
+    [atualizar],
+  );
+
   const algumAtualizando = atualizandoTipo !== null;
 
   const secoes = useMemo<Secao[]>(() => {
@@ -207,6 +234,21 @@ export default function DetalheScreen({ route, navigation }: Props) {
             <Text style={styles.botaoTexto}>Atualizar alagamento</Text>
           )}
         </Pressable>
+        <Pressable
+          style={[
+            styles.botao,
+            algumAtualizando && styles.botaoDesabilitado,
+          ]}
+          onPress={onAtualizarTransporte}
+          disabled={algumAtualizando}
+          accessibilityRole="button"
+        >
+          {atualizandoTipo === 'transporte_publico' ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.botaoTexto}>Atualizar transporte</Text>
+          )}
+        </Pressable>
       </View>
       <View style={styles.barraAcoesSecundaria}>
         <Pressable
@@ -226,8 +268,8 @@ export default function DetalheScreen({ route, navigation }: Props) {
         <View style={styles.vazio}>
           <Text style={styles.vazioTexto}>
             Ainda nao ha medicoes para esta regiao. Use os botoes acima
-            ("Atualizar ar", "Atualizar transito" ou "Atualizar alagamento")
-            para buscar dados reais.
+            ("Atualizar ar", "Atualizar transito", "Atualizar alagamento" ou
+            "Atualizar transporte") para buscar dados reais.
           </Text>
         </View>
       ) : (
@@ -241,7 +283,9 @@ export default function DetalheScreen({ route, navigation }: Props) {
           renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={styles.cardLinha}>
-                <Text style={styles.cardParametro}>{item.parametro}</Text>
+                <Text style={styles.cardParametro}>
+                  {rotuloParametro(item.parametro)}
+                </Text>
                 <Text style={styles.cardValor}>
                   {formatarNumero(item.valor)} {item.unidade}
                 </Text>

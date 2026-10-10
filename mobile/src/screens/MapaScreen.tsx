@@ -50,12 +50,13 @@ if (Platform.OS !== 'web') {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Mapa'>;
 
-// Regiao central aproximada do Brasil, usada como enquadramento inicial do mapa.
+// Enquadramento inicial do mapa na cidade de Sao Paulo (recorte da aplicacao).
+// Coordenadas aproximadas do centro de SP; o delta ~0.3 enquadra a cidade.
 const REGIAO_INICIAL = {
-  latitude: -15.78,
-  longitude: -47.93,
-  latitudeDelta: 20,
-  longitudeDelta: 20,
+  latitude: -23.55,
+  longitude: -46.63,
+  latitudeDelta: 0.3,
+  longitudeDelta: 0.3,
 };
 
 export default function MapaScreen({ navigation }: Props) {
@@ -103,7 +104,9 @@ export default function MapaScreen({ navigation }: Props) {
   }
 
   if (regioes.length === 0) {
-    return <EstadoVazio mensagem="Nenhuma regiao cadastrada no servidor." />;
+    return (
+      <EstadoVazio mensagem="Nenhuma regiao de Sao Paulo cadastrada no servidor." />
+    );
   }
 
   return (
@@ -133,7 +136,7 @@ export default function MapaScreen({ navigation }: Props) {
       )}
 
       <View style={styles.listaCabecalho}>
-        <Text style={styles.listaTitulo}>Regioes monitoradas</Text>
+        <Text style={styles.listaTitulo}>Regioes monitoradas em Sao Paulo</Text>
         <Pressable
           style={styles.botaoAlertas}
           onPress={() => navigation.navigate('Alertas')}

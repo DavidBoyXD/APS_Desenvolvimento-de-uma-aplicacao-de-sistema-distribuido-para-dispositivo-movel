@@ -10,7 +10,11 @@
  */
 
 /** Tipos de medicao ambiental suportados pela API. */
-export type TipoMedicao = 'qualidade_ar' | 'transito' | 'alagamento';
+export type TipoMedicao =
+  | 'qualidade_ar'
+  | 'transito'
+  | 'alagamento'
+  | 'transporte_publico';
 
 /** Condicao de comparacao usada nas regras de alerta. */
 export type CondicaoAlerta = '>' | '<';

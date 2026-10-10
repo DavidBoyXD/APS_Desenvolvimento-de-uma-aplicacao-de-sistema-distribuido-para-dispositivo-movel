@@ -1,7 +1,9 @@
 /**
  * Tela de relatorios: consome GET /api/v1/relatorios/regiao/{id} e exibe as
  * agregacoes (media, minimo, maximo, contagem, ultimo valor) por parametro/tipo.
- * Cobre o requisito de "relatorios adicionais" da APS.
+ * Cobre o requisito de "relatorios adicionais" da APS. A agregacao e generica
+ * por (tipo, parametro), entao o novo tipo transporte_publico (SPTrans) entra
+ * automaticamente nos cards e no grafico de barras quando ha medicoes.
  *
  * Alem da exibicao tabular (FlatList de cards), a tela apresenta um GRAFICO de
  * barras com as medias por parametro, resumindo visualmente os dados agregados.
@@ -39,7 +41,12 @@ import { getRelatorio, ApiError } from '../api/client';
 import { RelatorioRegiao, ResumoRelatorio } from '../types';
 import { RootStackParamList } from '../navigation';
 import { EstadoCarregando, EstadoErro, EstadoVazio } from '../ui/estados';
-import { formatarNumero, formatarTimestamp, rotuloTipo } from '../ui/rotulos';
+import {
+  formatarNumero,
+  formatarTimestamp,
+  rotuloParametro,
+  rotuloTipo,
+} from '../ui/rotulos';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Relatorios'>;
 
@@ -88,7 +95,9 @@ export default function RelatoriosScreen({ route }: Props) {
   const renderItem = ({ item }: { item: ResumoRelatorio }) => (
     <View style={styles.card}>
       <View style={styles.cardTopo}>
-        <Text style={styles.cardParametro}>{item.parametro}</Text>
+        <Text style={styles.cardParametro}>
+          {rotuloParametro(item.parametro)}
+        </Text>
         <Text style={styles.cardTipo}>{rotuloTipo(item.tipo)}</Text>
       </View>
       <View style={styles.grade}>
@@ -151,7 +160,7 @@ function GraficoMedias({
   // (tipo, parametro), entao parametros de mesmo nome em tipos diferentes
   // gerariam rotulos duplicados no eixo X se usassemos apenas o parametro.
   const labels = resumos.map(
-    (item) => `${rotuloTipo(item.tipo)} - ${item.parametro}`,
+    (item) => `${rotuloTipo(item.tipo)} - ${rotuloParametro(item.parametro)}`,
   );
   const valores = resumos.map((item) =>
     Number.isFinite(item.media) ? item.media : 0,

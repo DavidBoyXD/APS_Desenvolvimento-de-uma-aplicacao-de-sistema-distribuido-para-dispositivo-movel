@@ -1,9 +1,7 @@
 /**
- * Tipos TypeScript que espelham os schemas Pydantic da API REST (back-end FEAT-002).
+ * Tipos TypeScript que espelham os schemas Pydantic da API REST.
  *
- * Fonte da verdade: contrato documentado em
- *   .agents/tasks/task-aps-sistema-ambiental-distribuido/features/FEAT-002.json
- * e nos schemas em server/app/schemas.py.
+ * Fonte da verdade: os schemas em server/app/schemas.py.
  *
  * Onde e aplicado: consumidos pelo cliente HTTP (src/api/client.ts) e pelas telas
  * (src/screens/*). Mantidos em ingles por serem codigo; textos de UI ficam em PT-BR.
@@ -30,7 +28,7 @@ export interface Regiao {
 }
 
 /**
- * Medicao ambiental generica (por tipo/parametro). Espelha o schema Medicao da API.
+ * Medicao generica (por tipo/parametro). Espelha o schema Medicao da API.
  * O campo timestamp e uma string ISO 8601 com timezone.
  */
 export interface Medicao {

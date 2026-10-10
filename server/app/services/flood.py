@@ -1,28 +1,40 @@
-"""Integracao com a Open-Meteo Flood API / GloFAS (fonte real de dados).
+"""Integracao com a Open-Meteo Flood API / GloFAS (fonte operacional de dados).
 
-Fonte de dados (alagamento / inundacao)
----------------------------------------
-- API: Open-Meteo Flood API
-- Endpoint: https://flood-api.open-meteo.com/v1/flood
-- Documentacao: https://open-meteo.com/en/docs/flood-api
-- Base cientifica: GloFAS (Global Flood Awareness System), sistema global de
-  alerta de inundacoes do programa Copernicus.
-- Licenca/uso: gratuita, sem necessidade de chave de API (API key). Retorna a
-  descarga fluvial diaria (river discharge) simulada/prevista por
-  latitude/longitude a partir dos modelos hidrologicos do GloFAS.
+Recorte: alagamento / inundacao em Sao Paulo (SP)
+-------------------------------------------------
+Esta versao do sistema e focada no territorio de Sao Paulo (SP). Para
+alagamento combinamos duas camadas:
 
-Escolhemos a Open-Meteo Flood API por ser publica, gratuita, sem chave e
-comprovavel (mesma familia da Air Quality API ja usada). A descarga fluvial
-(river discharge, em m3/s) e um indicador reconhecido de risco de cheia: quanto
-maior a vazao do rio, maior o potencial de transbordamento e alagamento. A
-partir dessa serie diaria derivamos metricas REAIS (descarga atual, media e
-maxima do periodo), que substituem os dados de alagamento simulados usados ate
-entao.
+1. Fonte OPERACIONAL (dado consumido em runtime):
+   - API: Open-Meteo Flood API
+   - Endpoint: https://flood-api.open-meteo.com/v1/flood
+   - Documentacao: https://open-meteo.com/en/docs/flood-api
+   - Base cientifica: GloFAS (Global Flood Awareness System), sistema global de
+     alerta de inundacoes do programa Copernicus.
+   - Licenca/uso: gratuita, sem necessidade de chave de API (API key). Retorna
+     a descarga fluvial diaria (river discharge, em m3/s) simulada/prevista por
+     latitude/longitude a partir dos modelos hidrologicos do GloFAS. Validada
+     para SP (daily_units de river_discharge em m3/s).
+   - A descarga fluvial e um indicador reconhecido de risco de cheia: quanto
+     maior a vazao do rio, maior o potencial de transbordamento e alagamento. A
+     partir dessa serie diaria derivamos metricas REAIS (descarga atual, media e
+     maxima do periodo). Escolhida por ser publica, gratuita, sem chave e
+     comprovavel (mesma familia da Air Quality API ja usada).
+
+2. Autoridade OFICIAL de referencia em SP (citada, nao consumida):
+   - CGE-SP - Centro de Gerenciamento de Emergencias Climaticas da Prefeitura
+     de Sao Paulo: https://www.cgesp.org/
+   - O CGE-SP e o orgao OFICIAL que monitora e divulga pontos de alagamento na
+     cidade de Sao Paulo. Nao expomos um endpoint JSON estavel e sem chave do
+     CGE-SP, por isso o citamos como REFERENCIA oficial e mantemos a Open-Meteo
+     Flood/GloFAS como fonte operacional dos valores persistidos.
 
 Onde e aplicado: chamado pelo router de medicoes
 (``POST /api/v1/regioes/{id}/atualizar-alagamento``) para buscar a descarga
-fluvial de uma regiao (usando o lat/lon ja armazenados no modelo ``Regiao``) e
-persistir as metricas derivadas como Medicoes do tipo ``alagamento``.
+fluvial de uma regiao de SP (usando o lat/lon ja armazenados no modelo
+``Regiao``) e persistir as metricas derivadas como Medicoes do tipo
+``alagamento``, com a ``fonte`` citando a Open-Meteo Flood/GloFAS (operacional)
+e o CGE-SP (referencia oficial de SP).
 
 Tratamento de erro: qualquer falha de rede/timeout/HTTP e convertida em
 ``FloodError`` (nunca estoura um 500 cru); o router traduz isso em uma
@@ -51,7 +63,15 @@ TIMEOUT_SEGUNDOS = 10.0
 # traz a unidade do parametro.
 UNIDADE_PADRAO = "m3/s"
 
-FONTE = "Open-Meteo Flood API / GloFAS (https://open-meteo.com/en/docs/flood-api)"
+# FONTE registra a origem OPERACIONAL (Open-Meteo Flood / GloFAS) e a autoridade
+# OFICIAL de referencia de alagamentos em SP (CGE-SP). O CGE-SP nao expoe
+# endpoint JSON estavel e sem chave, por isso e citado como referencia e nao
+# consumido. Mantem as palavras 'Flood' e 'GloFAS' usadas pelos testes.
+FONTE = (
+    "Open-Meteo Flood API / GloFAS (dado operacional, "
+    "https://open-meteo.com/en/docs/flood-api); referencia oficial de SP: "
+    "CGE-SP (https://www.cgesp.org/)"
+)
 
 
 class FloodError(Exception):

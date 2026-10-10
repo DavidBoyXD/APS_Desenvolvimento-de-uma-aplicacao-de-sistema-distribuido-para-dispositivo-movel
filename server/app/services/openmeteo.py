@@ -1,26 +1,39 @@
-"""Integracao com a Open-Meteo Air Quality API (fonte real de dados).
+"""Integracao com a Open-Meteo Air Quality API (fonte operacional de dados).
 
-Fonte de dados (qualidade do ar)
---------------------------------
-- API: Open-Meteo Air Quality API
-- Endpoint: https://air-quality-api.open-meteo.com/v1/air-quality
-- Documentacao: https://open-meteo.com/en/docs/air-quality-api
-- Licenca/uso: gratuita, sem necessidade de chave de API (API key), com
-  atribuicao. Dados abertos (CC BY 4.0). Retorna concentracoes horarias de
-  poluentes (PM2.5, PM10, monoxido de carbono, dioxido de nitrogenio, ozonio)
-  por latitude/longitude.
+Recorte: qualidade do ar em Sao Paulo (SP)
+------------------------------------------
+Esta versao do sistema e focada no territorio de Sao Paulo (SP). Para qualidade
+do ar combinamos duas camadas:
 
-Escolhemos a Open-Meteo por ser publica, gratuita, sem chave e comprovavel
-(dados oficiais de modelos de qualidade do ar CAMS/Copernicus). A alternativa
-OpenAQ v3 exige X-API-Key e por isso NAO foi usada como fonte primaria.
+1. Fonte OPERACIONAL (dado consumido em runtime):
+   - API: Open-Meteo Air Quality API
+   - Endpoint: https://air-quality-api.open-meteo.com/v1/air-quality
+   - Documentacao: https://open-meteo.com/en/docs/air-quality-api
+   - Licenca/uso: gratuita, sem necessidade de chave de API (API key), com
+     atribuicao. Dados abertos (CC BY 4.0). Retorna concentracoes horarias de
+     poluentes (PM2.5, PM10, monoxido de carbono, dioxido de nitrogenio,
+     ozonio) por latitude/longitude. Base cientifica: modelos CAMS/Copernicus.
+   - Validada para SP (hourly_units de pm2_5/pm10 em microgramas por metro
+     cubico). Escolhida por ser publica, gratuita, sem chave e comprovavel. A
+     alternativa OpenAQ v3 exige X-API-Key e por isso NAO foi usada.
+
+2. Autoridade OFICIAL de referencia em SP (citada, nao consumida):
+   - CETESB - Companhia Ambiental do Estado de Sao Paulo: https://cetesb.sp.gov.br/ar/
+   - QUALAR - Sistema de Informacoes da Qualidade do Ar: https://qualar.cetesb.sp.gov.br
+   - A CETESB opera a rede oficial de monitoramento da qualidade do ar no
+     Estado de SP (indice de qualidade do ar, IQAr). Nao possui API REST aberta
+     e estavel para consumo direto, por isso a usamos como REFERENCIA oficial e
+     mantemos a Open-Meteo como fonte operacional dos valores persistidos.
 
 Onde e aplicado: chamado pelo router de medicoes
 (``POST /api/v1/regioes/{id}/atualizar-ar``) para buscar as concentracoes mais
-recentes de uma regiao e persisti-las como Medicoes do tipo ``qualidade_ar``.
+recentes de uma regiao de SP (lat/lon do seed) e persisti-las como Medicoes do
+tipo ``qualidade_ar``, com a ``fonte`` citando a Open-Meteo (operacional) e a
+CETESB/QUALAR (referencia oficial de SP).
 
 Tratamento de erro: qualquer falha de rede/timeout/HTTP e convertida em
 ``OpenMeteoError`` (nunca estoura um 500 cru); o router traduz isso em uma
-resposta de erro padronizada.
+resposta de erro padronizada (HTTP 502 em PT-BR).
 """
 
 from dataclasses import dataclass
@@ -47,7 +60,14 @@ UNIDADES = {
     "ozone": UNIDADE_PADRAO,
 }
 
-FONTE = "Open-Meteo Air Quality API (https://open-meteo.com/en/docs/air-quality-api)"
+# FONTE registra a origem OPERACIONAL (Open-Meteo) e a autoridade OFICIAL de
+# referencia de qualidade do ar em SP (CETESB/QUALAR). A CETESB nao expoe API
+# REST aberta estavel, por isso e citada como referencia e nao consumida.
+FONTE = (
+    "Open-Meteo Air Quality API (dado operacional, "
+    "https://open-meteo.com/en/docs/air-quality-api); referencia oficial de SP: "
+    "CETESB/QUALAR (https://qualar.cetesb.sp.gov.br, https://cetesb.sp.gov.br/ar/)"
+)
 
 TIMEOUT_SEGUNDOS = 10.0
 

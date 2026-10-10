@@ -49,6 +49,10 @@ def test_atualizar_ar_mockado(client, monkeypatch) -> None:
     assert len(dados) == 2
     assert {d["parametro"] for d in dados} == {"pm2_5", "pm10"}
     assert all(d["tipo"] == "qualidade_ar" for d in dados)
+    # A fonte deve citar a Open-Meteo (operacional) e a autoridade oficial de
+    # SP (CETESB/QUALAR), conforme o recorte de Sao Paulo.
+    assert all("Open-Meteo" in d["fonte"] for d in dados)
+    assert all("CETESB" in d["fonte"] and "QUALAR" in d["fonte"] for d in dados)
 
 
 def test_atualizar_ar_falha_rede_tratada(client, monkeypatch) -> None:
@@ -103,3 +107,16 @@ def test_mapear_payload_invalido() -> None:
 
     with pytest.raises(OpenMeteoError):
         openmeteo.mapear_payload({})
+
+
+def test_fonte_cita_openmeteo_e_cetesb_qualar() -> None:
+    """A FONTE cita a Open-Meteo (operacional) e a CETESB/QUALAR (oficial SP).
+
+    Garante o recorte de Sao Paulo: dado operacional da Open-Meteo com a
+    autoridade oficial de qualidade do ar de SP citada por links reais.
+    """
+    assert "Open-Meteo" in openmeteo.FONTE
+    assert "CETESB" in openmeteo.FONTE
+    assert "QUALAR" in openmeteo.FONTE
+    assert "https://qualar.cetesb.sp.gov.br" in openmeteo.FONTE
+    assert "https://cetesb.sp.gov.br/ar/" in openmeteo.FONTE

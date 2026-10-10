@@ -91,6 +91,18 @@ def test_mapear_payload_flood_corpo_de_erro() -> None:
         flood.mapear_payload(payload)
 
 
+def test_fonte_cita_openmeteo_flood_e_cgesp() -> None:
+    """A FONTE cita a Open-Meteo Flood/GloFAS (operacional) e o CGE-SP (SP).
+
+    Garante o recorte de Sao Paulo: dado operacional da Open-Meteo Flood com a
+    autoridade oficial de alagamentos de SP (CGE-SP) citada por link real.
+    """
+    assert "Open-Meteo Flood" in flood.FONTE
+    assert "GloFAS" in flood.FONTE
+    assert "CGE-SP" in flood.FONTE
+    assert "https://www.cgesp.org/" in flood.FONTE
+
+
 def test_atualizar_alagamento_mockado(client, monkeypatch) -> None:
     """POST atualizar-alagamento persiste as metricas retornadas pelo servico."""
 
@@ -115,10 +127,12 @@ def test_atualizar_alagamento_mockado(client, monkeypatch) -> None:
         "river_discharge_media",
         "river_discharge_maxima",
     }
-    # A fonte deve citar a Flood API / GloFAS.
+    # A fonte deve citar a Flood API / GloFAS (operacional) e o CGE-SP como
+    # autoridade oficial de alagamentos em Sao Paulo.
     assert all(
         "Flood" in d["fonte"] or "GloFAS" in d["fonte"] for d in dados
     )
+    assert all("CGE-SP" in d["fonte"] for d in dados)
 
 
 def test_atualizar_alagamento_falha_rede_tratada(client, monkeypatch) -> None:

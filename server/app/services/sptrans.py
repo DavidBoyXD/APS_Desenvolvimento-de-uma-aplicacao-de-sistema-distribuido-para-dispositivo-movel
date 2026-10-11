@@ -1,66 +1,66 @@
-"""Integracao com a API SPTrans Olho Vivo (fonte OFICIAL de Sao Paulo).
+"""Integração com a API SPTrans Olho Vivo (fonte OFICIAL de São Paulo).
 
-Fonte de dados (transporte publico / frota de onibus em tempo real)
+Fonte de dados (transporte público / frota de ônibus em tempo real)
 -------------------------------------------------------------------
-- API: SPTrans Olho Vivo (API de Monitoramento da frota de onibus da capital).
-- Orgao: SPTrans - Sao Paulo Transporte S/A, empresa da Prefeitura de Sao Paulo
-  responsavel pelo transporte publico por onibus na cidade. Portanto esta e a
-  fonte OFICIAL de transporte publico de SP.
+- API: SPTrans Olho Vivo (API de Monitoramento da frota de ônibus da capital).
+- Órgão: SPTrans - São Paulo Transporte S/A, empresa da Prefeitura de São Paulo
+  responsável pelo transporte público por ônibus na cidade. Portanto esta é a
+  fonte OFICIAL de transporte público de SP.
 - Portal do desenvolvedor: https://www.sptrans.com.br/desenvolvedores/
 - Endpoint base da API: https://api.olhovivo.sptrans.com.br/v2.1
-- Dados tambem disponiveis em formato GTFS estatico (sem token) na mesma secao
+- Dados também disponíveis em formato GTFS estático (sem token) na mesma seção
   de desenvolvedores do portal da SPTrans.
 
-Autenticacao (TOKEN gratuito, obrigatorio para o tempo real)
+Autenticação (TOKEN gratuito, obrigatório para o tempo real)
 ------------------------------------------------------------
-A API Olho Vivo exige um TOKEN de acesso gratuito. O fluxo e:
+A API Olho Vivo exige um TOKEN de acesso gratuito. O fluxo é:
 
-1. POST ``/Login/Autenticar?token=SEU_TOKEN`` -> estabelece uma SESSAO. A
-   resposta e ``true``/``false`` e, em caso de sucesso, o servidor devolve um
-   cookie de sessao (apManager). Esse cookie deve ser reutilizado nas chamadas
-   seguintes; por isso usamos o MESMO ``httpx.Client`` para toda a sequencia
+1. POST ``/Login/Autenticar?token=SEU_TOKEN`` -> estabelece uma SESSÃO. A
+   resposta é ``true``/``false`` e, em caso de sucesso, o servidor devolve um
+   cookie de sessão (apManager). Esse cookie deve ser reutilizado nas chamadas
+   seguintes; por isso usamos o MESMO ``httpx.Client`` para toda a sequência
    (o httpx.Client preserva os cookies automaticamente).
-2. Chamadas de dados reutilizando a sessao, ex.: ``GET /Posicao`` (posicao de
+2. Chamadas de dados reutilizando a sessão, ex.: ``GET /Posicao`` (posição de
    toda a frota) e ``GET /Linha/Buscar`` (linhas monitoradas).
 
 PASSO A PASSO para gerar o token (resumo; a doc detalhada vai em docs/README):
 
 1. Acesse o portal do desenvolvedor da SPTrans:
    https://www.sptrans.com.br/desenvolvedores/
-2. Cadastre-se / faca login e solicite a sua "chave de ativacao" (token) da
-   API Olho Vivo. O cadastro e gratuito.
+2. Cadastre-se / faça login e solicite a sua "chave de ativação" (token) da
+   API Olho Vivo. O cadastro é gratuito.
 3. Copie o token recebido.
-4. Defina a variavel de ambiente ``SPTRANS_TOKEN`` com esse valor ANTES de
+4. Defina a variável de ambiente ``SPTRANS_TOKEN`` com esse valor ANTES de
    iniciar o servidor, por exemplo:
 
    ``export SPTRANS_TOKEN="seu_token_aqui"`` (Linux/macOS) ou
    ``set SPTRANS_TOKEN=seu_token_aqui`` (Windows).
 
-O token NUNCA e escrito no codigo (nao ha token literal neste repositorio): ele
-e lido exclusivamente de ``os.environ.get("SPTRANS_TOKEN")``.
+O token NUNCA é escrito no código (não há token literal neste repositório): ele
+é lido exclusivamente de ``os.environ.get("SPTRANS_TOKEN")``.
 
 Comportamento com e sem token
 -----------------------------
-- COM ``SPTRANS_TOKEN`` definido: a integracao autentica no Olho Vivo e deriva
-  metricas REAIS (tempo real) da frota (ex.: numero de veiculos/posicoes e
-  numero de linhas monitoradas na cidade). Se a autenticacao falhar (token
-  invalido/recusado) ou houver erro de rede/HTTP, isso NAO cai no fallback:
-  vira ``SPTransError`` e o router responde HTTP 502 em PT-BR. A falha explicita
-  e proposital, para nao mascarar um token invalido como dado de exemplo.
-- SEM ``SPTRANS_TOKEN`` (ausencia de token): usamos um FALLBACK FUNCIONAL com um
+- COM ``SPTRANS_TOKEN`` definido: a integração autentica no Olho Vivo e deriva
+  métricas REAIS (tempo real) da frota (ex.: número de veículos/posições e
+  número de linhas monitoradas na cidade). Se a autenticação falhar (token
+  inválido/recusado) ou houver erro de rede/HTTP, isso NÃO cai no fallback:
+  vira ``SPTransError`` e o router responde HTTP 502 em PT-BR. A falha explícita
+  é proposital, para não mascarar um token inválido como dado de exemplo.
+- SEM ``SPTRANS_TOKEN`` (ausência de token): usamos um FALLBACK FUNCIONAL com um
   pequeno conjunto de linhas de SP de EXEMPLO, claramente ROTULADO como dado
-  estatico/GTFS de exemplo (NAO tempo real). O campo ``fonte`` das medicoes de
-  fallback deixa isso explicito. Assim o app funciona de ponta a ponta mesmo
+  estático/GTFS de exemplo (NÃO tempo real). O campo ``fonte`` das medições de
+  fallback deixa isso explícito. Assim o app funciona de ponta a ponta mesmo
   sem o token. Resumindo: SEM token = fallback de exemplo; COM token e falha de
-  autenticacao = erro 502 (nao ha fallback nesse caso).
+  autenticação = erro 502 (não há fallback nesse caso).
 
-Onde e aplicado: chamado pelo router de medicoes
-(``POST /api/v1/regioes/{id}/atualizar-transporte``) para persistir as metricas
-derivadas como Medicoes do tipo ``transporte_publico``.
+Onde é aplicado: chamado pelo router de medições
+(``POST /api/v1/regioes/{id}/atualizar-transporte``) para persistir as métricas
+derivadas como Medições do tipo ``transporte_publico``.
 
-Tratamento de erro: qualquer falha de rede/timeout/HTTP e convertida em
+Tratamento de erro: qualquer falha de rede/timeout/HTTP é convertida em
 ``SPTransError`` (nunca estoura um 500 cru); o router traduz isso em uma
-resposta de erro padronizada (HTTP 502 em PT-BR). A ausencia de token NAO e
+resposta de erro padronizada (HTTP 502 em PT-BR). A ausência de token NÃO é
 erro: cai no fallback.
 """
 
@@ -70,35 +70,35 @@ from typing import Optional
 
 import httpx
 
-# Endpoint base da API Olho Vivo (versao 2.1).
+# Endpoint base da API Olho Vivo (versão 2.1).
 OLHOVIVO_BASE_URL = "https://api.olhovivo.sptrans.com.br/v2.1"
 
-# Caminhos usados: autenticacao (estabelece a sessao) e posicao da frota.
+# Caminhos usados: autenticação (estabelece a sessão) e posição da frota.
 CAMINHO_AUTENTICAR = "/Login/Autenticar"
 CAMINHO_POSICAO = "/Posicao"
 
-# Nome da variavel de ambiente que guarda o token (NUNCA hardcode o token).
+# Nome da variável de ambiente que guarda o token (NUNCA hardcode o token).
 ENV_TOKEN = "SPTRANS_TOKEN"
 
 TIMEOUT_SEGUNDOS = 15.0
 
-# Fonte oficial (tempo real), usada quando ha token e a autenticacao funciona.
+# Fonte oficial (tempo real), usada quando há token e a autenticação funciona.
 FONTE = (
     "SPTrans Olho Vivo - fonte OFICIAL da Prefeitura de Sao Paulo (tempo real "
     "da frota de onibus): https://www.sptrans.com.br/desenvolvedores/"
 )
 
-# Fonte do FALLBACK: deixa EXPLICITO que e dado de exemplo/GTFS estatico, NAO
-# tempo real. Essencial para nao induzir o usuario a erro.
+# Fonte do FALLBACK: deixa EXPLÍCITO que é dado de exemplo/GTFS estático, NÃO
+# tempo real. Essencial para não induzir o usuário a erro.
 FONTE_FALLBACK = (
     "SPTrans (dado de EXEMPLO / GTFS estatico - NAO e tempo real; sem token "
     "SPTRANS_TOKEN configurado): https://www.sptrans.com.br/desenvolvedores/"
 )
 
-# Conjunto de EXEMPLO (fallback) com algumas linhas reais de onibus de SP.
-# Serve apenas para o app funcionar ponta a ponta sem token. NAO representa
-# posicoes/estado em tempo real. As metricas derivadas abaixo (numero de linhas
-# de exemplo) sao claramente rotuladas como fallback.
+# Conjunto de EXEMPLO (fallback) com algumas linhas reais de ônibus de SP.
+# Serve apenas para o app funcionar ponta a ponta sem token. NÃO representa
+# posições/estado em tempo real. As métricas derivadas abaixo (número de linhas
+# de exemplo) são claramente rotuladas como fallback.
 LINHAS_EXEMPLO: list[dict] = [
     {"letreiro": "8000-10", "nome": "Term. Lapa - Term. Pinheiros"},
     {"letreiro": "875A-10", "nome": "Metro Santa Cruz - Butanta"},
@@ -109,12 +109,12 @@ LINHAS_EXEMPLO: list[dict] = [
 
 
 class SPTransError(Exception):
-    """Erro tratado da integracao SPTrans Olho Vivo (rede, timeout ou payload)."""
+    """Erro tratado da integração SPTrans Olho Vivo (rede, timeout ou payload)."""
 
 
 @dataclass
 class LeituraTransporte:
-    """Uma metrica derivada de transporte publico, pronta para virar Medicao."""
+    """Uma métrica derivada de transporte público, pronta para virar Medição."""
 
     parametro: str
     valor: float
@@ -123,9 +123,9 @@ class LeituraTransporte:
 
 
 def obter_token() -> Optional[str]:
-    """Le o token da variavel de ambiente ``SPTRANS_TOKEN`` (nunca hardcoded).
+    """Lê o token da variável de ambiente ``SPTRANS_TOKEN`` (nunca hardcoded).
 
-    Retorna ``None`` quando a variavel nao esta definida (ou esta vazia), o que
+    Retorna ``None`` quando a variável não está definida (ou está vazia), o que
     sinaliza ao chamador para usar o fallback.
     """
     token = os.environ.get(ENV_TOKEN)
@@ -136,20 +136,20 @@ def obter_token() -> Optional[str]:
 
 
 def mapear_payload(payload: dict) -> list[LeituraTransporte]:
-    """Deriva metricas reais do payload do endpoint ``/Posicao`` do Olho Vivo.
+    """Deriva métricas reais do payload do endpoint ``/Posicao`` do Olho Vivo.
 
     O payload do ``/Posicao`` tem o formato (resumido):
 
     ``{"hr": "HH:MM", "l": [ {"c": "letreiro", "cl": codigo, "vs": [ {..veiculo..}, ... ]}, ... ]}``
 
-    onde ``l`` e a lista de linhas monitoradas e, em cada linha, ``vs`` e a
-    lista de veiculos (posicoes). Derivamos:
+    onde ``l`` é a lista de linhas monitoradas e, em cada linha, ``vs`` é a
+    lista de veículos (posições). Derivamos:
 
-    - ``linhas_monitoradas``: numero de linhas no bloco ``l``;
-    - ``veiculos_em_operacao``: soma dos veiculos (``vs``) de todas as linhas.
+    - ``linhas_monitoradas``: número de linhas no bloco ``l``;
+    - ``veiculos_em_operacao``: soma dos veículos (``vs``) de todas as linhas.
 
-    Levanta ``SPTransError`` se o payload nao tiver o bloco ``l`` (lista) ou se
-    nenhuma linha valida for encontrada (mesma filosofia dos demais servicos).
+    Levanta ``SPTransError`` se o payload não tiver o bloco ``l`` (lista) ou se
+    nenhuma linha válida for encontrada (mesma filosofia dos demais serviços).
     """
     if not isinstance(payload, dict):
         raise SPTransError("Resposta da SPTrans nao e um objeto JSON valido.")
@@ -196,9 +196,9 @@ def mapear_payload(payload: dict) -> list[LeituraTransporte]:
 
 
 def _leituras_fallback() -> list[LeituraTransporte]:
-    """Metricas do FALLBACK (sem token): conjunto de linhas de EXEMPLO.
+    """Métricas do FALLBACK (sem token): conjunto de linhas de EXEMPLO.
 
-    NAO toca a rede e NAO representa tempo real. O rotulo de exemplo/fallback
+    NÃO toca a rede e NÃO representa tempo real. O rótulo de exemplo/fallback
     aparece tanto no ``detalhe`` quanto na ``FONTE_FALLBACK`` usada no router.
     """
     total = len(LINHAS_EXEMPLO)
@@ -216,10 +216,10 @@ def _leituras_fallback() -> list[LeituraTransporte]:
 
 
 def _autenticar(client: httpx.Client, token: str) -> None:
-    """Autentica na API Olho Vivo estabelecendo a sessao (cookie).
+    """Autentica na API Olho Vivo estabelecendo a sessão (cookie).
 
-    POST ``/Login/Autenticar?token=TOKEN``. O cookie de sessao retornado fica
-    guardado no proprio ``client`` (httpx preserva cookies), sendo reutilizado
+    POST ``/Login/Autenticar?token=TOKEN``. O cookie de sessão retornado fica
+    guardado no próprio ``client`` (httpx preserva cookies), sendo reutilizado
     nas chamadas seguintes. Converte erros HTTP em ``SPTransError``.
     """
     url = f"{OLHOVIVO_BASE_URL}{CAMINHO_AUTENTICAR}"
@@ -243,25 +243,25 @@ def buscar_transporte_publico(
     longitude: float,
     client: Optional[httpx.Client] = None,
 ) -> list[LeituraTransporte]:
-    """Retorna metricas de transporte publico de SP (tempo real ou fallback).
+    """Retorna métricas de transporte público de SP (tempo real ou fallback).
 
     - Sem ``SPTRANS_TOKEN`` definido: retorna o FALLBACK de exemplo (claramente
       rotulado) SEM tocar a rede. Assim o app funciona ponta a ponta sem token.
     - Com token: autentica no Olho Vivo (POST /Login/Autenticar), reutiliza a
-      MESMA sessao (cookie) para ``GET /Posicao`` e deriva as metricas reais.
+      MESMA sessão (cookie) para ``GET /Posicao`` e deriva as métricas reais.
 
     Recebe opcionalmente um ``httpx.Client`` (facilita testes). Converte
     qualquer ``httpx.HTTPError`` em ``SPTransError`` para o router tratar.
 
-    SEMANTICA (metrica por CIDADE, nao por regiao): os parametros
-    ``latitude``/``longitude`` sao aceitos APENAS para manter o mesmo contrato
-    dos demais servicos (atualizar-* por regiao), mas NAO sao usados aqui: o
-    endpoint ``/Posicao`` retorna a frota da cidade de Sao Paulo como um todo e
-    nao aceita filtro geografico. Logo ``linhas_monitoradas`` e
-    ``veiculos_em_operacao`` sao metricas da CIDADE inteira (frota do Olho Vivo),
-    nao geofiltradas por regiao. Em consequencia, chamar atualizar-transporte
-    para regioes diferentes no mesmo instante grava os MESMOS valores em todas
-    elas. Isso e intencional e esta documentado para quem consome por regiao.
+    SEMÂNTICA (métrica por CIDADE, não por região): os parâmetros
+    ``latitude``/``longitude`` são aceitos APENAS para manter o mesmo contrato
+    dos demais serviços (atualizar-* por região), mas NÃO são usados aqui: o
+    endpoint ``/Posicao`` retorna a frota da cidade de São Paulo como um todo e
+    não aceita filtro geográfico. Logo ``linhas_monitoradas`` e
+    ``veiculos_em_operacao`` são métricas da CIDADE inteira (frota do Olho Vivo),
+    não geofiltradas por região. Em consequência, chamar atualizar-transporte
+    para regiões diferentes no mesmo instante grava os MESMOS valores em todas
+    elas. Isso é intencional e está documentado para quem consome por região.
     """
     token = obter_token()
     if token is None:

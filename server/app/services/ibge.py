@@ -1,33 +1,33 @@
-"""Integracao com a API de Localidades do IBGE (fonte oficial de dados).
+"""Integração com a API de Localidades do IBGE (fonte oficial de dados).
 
-Fonte de dados (base geografica oficial de Sao Paulo)
+Fonte de dados (base geográfica oficial de São Paulo)
 -----------------------------------------------------
-- API: Servico de Dados do IBGE - Localidades
+- API: Serviço de Dados do IBGE - Localidades
 - Endpoint: https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios
-- Documentacao: https://servicodados.ibge.gov.br/api/docs/localidades
-- Licenca/uso: oficial, publica, gratuita e SEM necessidade de chave de API.
-  O codigo ``35`` e o codigo oficial da Unidade da Federacao Sao Paulo (SP) no
-  IBGE; o endpoint retorna todos os municipios de SP.
+- Documentação: https://servicodados.ibge.gov.br/api/docs/localidades
+- Licença/uso: oficial, pública, gratuita e SEM necessidade de chave de API.
+  O código ``35`` é o código oficial da Unidade da Federação São Paulo (SP) no
+  IBGE; o endpoint retorna todos os municípios de SP.
 
-Escolhemos a API do IBGE por ser a fonte OFICIAL e verificavel dos nomes e
-codigos dos municipios brasileiros. Ela e usada aqui para VALIDAR e listar os
-municipios de SP (nome/UF), estabelecendo o recorte geografico do sistema.
+Escolhemos a API do IBGE por ser a fonte OFICIAL e verificável dos nomes e
+códigos dos municípios brasileiros. Ela é usada aqui para VALIDAR e listar os
+municípios de SP (nome/UF), estabelecendo o recorte geográfico do sistema.
 
-ATENCAO ao formato: este endpoint retorna uma LISTA JSON (nao um objeto). Cada
-item tem ``id`` (codigo IBGE do municipio) e ``nome``, alem de blocos aninhados
+ATENÇÃO ao formato: este endpoint retorna uma LISTA JSON (não um objeto). Cada
+item tem ``id`` (código IBGE do município) e ``nome``, além de blocos aninhados
 (``microrregiao`` -> ``mesorregiao`` -> ``UF`` e ``regiao-imediata`` ->
 ``regiao-intermediaria`` -> ``UF``) de onde lemos a sigla da UF ("SP").
 
-Onde e aplicado: usado para validar/listar os municipios de SP. O seed
+Onde é aplicado: usado para validar/listar os municípios de SP. O seed
 (``app/seed.py``) referencia esta fonte como origem oficial dos nomes/UF das
-regioes de SP cadastradas. Opcionalmente exposto via
+regiões de SP cadastradas. Opcionalmente exposto via
 ``GET /api/v1/localidades/sp``.
 
-Observacao: o IBGE NAO fornece latitude/longitude neste endpoint; por isso as
-coordenadas das regioes vem de fontes oficiais citadas no seed (GeoSampa/PMSP),
+Observação: o IBGE NÃO fornece latitude/longitude neste endpoint; por isso as
+coordenadas das regiões vêm de fontes oficiais citadas no seed (GeoSampa/PMSP),
 nunca inventadas.
 
-Tratamento de erro: qualquer falha de rede/timeout/HTTP e convertida em
+Tratamento de erro: qualquer falha de rede/timeout/HTTP é convertida em
 ``IbgeError`` (nunca estoura um 500 cru); o router traduz isso em uma resposta
 de erro padronizada (HTTP 502 em PT-BR).
 """
@@ -37,12 +37,12 @@ from typing import Optional
 
 import httpx
 
-# Endpoint oficial de municipios da UF 35 (Sao Paulo) no IBGE.
+# Endpoint oficial de municípios da UF 35 (São Paulo) no IBGE.
 IBGE_MUNICIPIOS_SP_URL = (
     "https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios"
 )
 
-# Codigo oficial IBGE da Unidade da Federacao Sao Paulo.
+# Código oficial IBGE da Unidade da Federação São Paulo.
 UF_SP_CODIGO = 35
 
 TIMEOUT_SEGUNDOS = 10.0
@@ -54,12 +54,12 @@ FONTE = (
 
 
 class IbgeError(Exception):
-    """Erro tratado da integracao com o IBGE (rede, timeout ou payload)."""
+    """Erro tratado da integração com o IBGE (rede, timeout ou payload)."""
 
 
 @dataclass
 class MunicipioSP:
-    """Um municipio de Sao Paulo lido da API de Localidades do IBGE."""
+    """Um município de São Paulo lido da API de Localidades do IBGE."""
 
     id: int
     nome: str
@@ -67,11 +67,11 @@ class MunicipioSP:
 
 
 def _extrair_uf(item: dict) -> Optional[str]:
-    """Le a sigla da UF dos blocos aninhados do item (microrregiao ou imediata).
+    """Lê a sigla da UF dos blocos aninhados do item (microrregiao ou imediata).
 
-    O IBGE expoe a UF em ``microrregiao.mesorregiao.UF.sigla`` e tambem em
+    O IBGE expõe a UF em ``microrregiao.mesorregiao.UF.sigla`` e também em
     ``regiao-imediata.regiao-intermediaria.UF.sigla``. Tentamos ambos para
-    tolerar variacoes do payload.
+    tolerar variações do payload.
     """
     micro = item.get("microrregiao")
     if isinstance(micro, dict):
@@ -93,14 +93,14 @@ def _extrair_uf(item: dict) -> Optional[str]:
 
 
 def mapear_payload(payload: list) -> list[MunicipioSP]:
-    """Mapeia a LISTA de municipios do IBGE para objetos ``MunicipioSP``.
+    """Mapeia a LISTA de municípios do IBGE para objetos ``MunicipioSP``.
 
     O endpoint retorna uma lista; cada item precisa ter ``id`` (int) e ``nome``
-    (str). A sigla da UF e lida dos blocos aninhados (ver ``_extrair_uf``); se
-    ausente, assumimos "SP" (o endpoint ja e filtrado pela UF 35).
+    (str). A sigla da UF é lida dos blocos aninhados (ver ``_extrair_uf``); se
+    ausente, assumimos "SP" (o endpoint já é filtrado pela UF 35).
 
-    Levanta ``IbgeError`` se o payload nao for uma lista ou se nenhum municipio
-    valido for encontrado (mesma filosofia dos demais ``mapear_payload``).
+    Levanta ``IbgeError`` se o payload não for uma lista ou se nenhum município
+    válido for encontrado (mesma filosofia dos demais ``mapear_payload``).
     """
     if not isinstance(payload, list):
         raise IbgeError("Resposta do IBGE nao e uma lista de municipios.")
@@ -124,7 +124,7 @@ def mapear_payload(payload: list) -> list[MunicipioSP]:
 def buscar_municipios_sp(
     client: Optional[httpx.Client] = None,
 ) -> list[MunicipioSP]:
-    """Consulta a API de Localidades do IBGE e retorna os municipios de SP.
+    """Consulta a API de Localidades do IBGE e retorna os municípios de SP.
 
     Recebe opcionalmente um ``httpx.Client`` (facilita testes). Converte
     qualquer erro de rede/HTTP em ``IbgeError`` para o router tratar.

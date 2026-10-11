@@ -1,26 +1,26 @@
 /**
- * Tela de relatorios: consome GET /api/v1/relatorios/regiao/{id} e exibe as
- * agregacoes (media, minimo, maximo, contagem, ultimo valor) por parametro/tipo.
- * Cobre o requisito de "relatorios adicionais" da APS. A agregacao e generica
- * por (tipo, parametro), entao o novo tipo transporte_publico (SPTrans) entra
- * automaticamente nos cards e no grafico de barras quando ha medicoes.
+ * Tela de relatórios: consome GET /api/v1/relatorios/regiao/{id} e exibe as
+ * agregações (média, mínimo, máximo, contagem, último valor) por parâmetro/tipo.
+ * Cobre o requisito de "relatórios adicionais" da APS. A agregação é genérica
+ * por (tipo, parametro), então o novo tipo transporte_publico (SPTrans) entra
+ * automaticamente nos cards e no gráfico de barras quando há medições.
  *
- * Alem da exibicao tabular (FlatList de cards), a tela apresenta um GRAFICO de
- * barras com as medias por parametro, resumindo visualmente os dados agregados.
+ * Além da exibição tabular (FlatList de cards), a tela apresenta um GRÁFICO de
+ * barras com as médias por parâmetro, resumindo visualmente os dados agregados.
  *
- * Biblioteca de grafico: react-native-chart-kit (BarChart).
+ * Biblioteca de gráfico: react-native-chart-kit (BarChart).
  *   - npm:    https://www.npmjs.com/package/react-native-chart-kit
  *   - GitHub: https://github.com/indiespirit/react-native-chart-kit
- * Por que foi escolhida: e compativel com o stack atual (Expo SDK 57, React 19.2.3,
- * React Native 0.86.3) e sua unica dependencia nativa e o react-native-svg, que e
- * um modulo suportado pelo Expo (instalado via `npx expo install`). Alternativas
+ * Por que foi escolhida: é compatível com o stack atual (Expo SDK 57, React 19.2.3,
+ * React Native 0.86.3) e sua única dependência nativa é o react-native-svg, que é
+ * um módulo suportado pelo Expo (instalado via `npx expo install`). Alternativas
  * como react-native-gifted-charts (exige react-native-linear-gradient nativo) e
  * victory-native (peer dependencies mais pesadas) foram descartadas por adicionarem
- * dependencias nativas extras.
- * Onde e aplicado: renderizada no cabecalho desta tela (rota "Relatorios" em App.tsx),
- * acima da lista tabular. As demais telas (Mapa, Detalhe, Alertas) nao sao afetadas.
+ * dependências nativas extras.
+ * Onde é aplicado: renderizada no cabeçalho desta tela (rota "Relatorios" em App.tsx),
+ * acima da lista tabular. As demais telas (Mapa, Detalhe, Alertas) não são afetadas.
  *
- * Referencias:
+ * Referências:
  *   - FlatList: https://reactnative.dev/docs/flatlist
  *   - useWindowDimensions: https://reactnative.dev/docs/usewindowdimensions
  *   - BarChart (react-native-chart-kit): https://github.com/indiespirit/react-native-chart-kit#bar-chart
@@ -141,9 +141,9 @@ export default function RelatoriosScreen({ route }: Props) {
 }
 
 /**
- * Grafico de barras com a media de cada par (tipo/parametro) do relatorio.
- * Usa BarChart do react-native-chart-kit. Trata dataset vazio: se nao houver
- * resumos, nada e renderizado, evitando quebra em runtime.
+ * Gráfico de barras com a média de cada par (tipo/parâmetro) do relatório.
+ * Usa BarChart do react-native-chart-kit. Trata dataset vazio: se não houver
+ * resumos, nada é renderizado, evitando quebra em runtime.
  */
 function GraficoMedias({
   resumos,
@@ -156,9 +156,9 @@ function GraficoMedias({
     return null;
   }
 
-  // Compoe o rotulo com o tipo alem do parametro. O relatorio agrega por
-  // (tipo, parametro), entao parametros de mesmo nome em tipos diferentes
-  // gerariam rotulos duplicados no eixo X se usassemos apenas o parametro.
+  // Compõe o rótulo com o tipo além do parâmetro. O relatório agrega por
+  // (tipo, parametro), então parâmetros de mesmo nome em tipos diferentes
+  // gerariam rótulos duplicados no eixo X se usássemos apenas o parâmetro.
   const labels = resumos.map(
     (item) => `${rotuloTipo(item.tipo)} - ${rotuloParametro(item.parametro)}`,
   );
@@ -189,8 +189,8 @@ function GraficoMedias({
 }
 
 /**
- * Configuracao visual do grafico. A funcao `color` define a cor base de barras e
- * rotulos; e a unica propriedade obrigatoria do chartConfig alem da formatacao.
+ * Configuração visual do gráfico. A função `color` define a cor base de barras e
+ * rótulos; é a única propriedade obrigatória do chartConfig além da formatação.
  */
 const chartConfig = {
   backgroundGradientFrom: '#FFFFFF',

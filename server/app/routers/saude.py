@@ -1,6 +1,6 @@
-"""Router de saude (health check) sob o prefixo /api/v1.
+"""Router de saúde (health check) sob o prefixo /api/v1.
 
-Complementa a rota raiz /health, permitindo que o cliente movel verifique a
+Complementa a rota raiz /health, permitindo que o cliente móvel verifique a
 disponibilidade do servidor pelo mesmo prefixo versionado das demais rotas.
 """
 

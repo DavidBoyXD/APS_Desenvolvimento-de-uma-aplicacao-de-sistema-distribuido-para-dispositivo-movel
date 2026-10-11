@@ -1,1 +1,1 @@
-"""Pacote de servicos (integracoes externas e regras de negocio)."""
+"""Pacote de serviços (integrações externas e regras de negócio)."""

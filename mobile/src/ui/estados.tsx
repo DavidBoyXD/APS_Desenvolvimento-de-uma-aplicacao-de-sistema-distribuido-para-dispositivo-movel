@@ -1,13 +1,13 @@
 /**
- * Componentes reutilizaveis de estado de tela: carregando, erro (com botao de
+ * Componentes reutilizáveis de estado de tela: carregando, erro (com botão de
  * tentar novamente) e mensagem vazia. Centralizam o feedback visual em PT-BR e
- * garantem que falhas de rede NAO derrubem o app (sempre ha uma tela de erro).
+ * garantem que falhas de rede NÃO derrubem o app (sempre há uma tela de erro).
  *
- * Referencias:
+ * Referências:
  *   - ActivityIndicator: https://reactnative.dev/docs/activityindicator
  *   - Pressable: https://reactnative.dev/docs/pressable
  *
- * Onde e aplicado: usado por todas as telas em src/screens/*.
+ * Onde é aplicado: usado por todas as telas em src/screens/*.
  */
 
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';

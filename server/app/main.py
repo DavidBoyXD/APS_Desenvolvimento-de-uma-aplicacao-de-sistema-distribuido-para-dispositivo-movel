@@ -1,21 +1,21 @@
-"""Entrypoint da API REST (FastAPI) do sistema distribuido de transporte publico.
+"""Entrypoint da API REST (FastAPI) do sistema distribuído de transporte público.
 
-Arquitetura (sistema distribuido):
-    App movel (cliente Expo/React Native)
+Arquitetura (sistema distribuído):
+    App móvel (cliente Expo/React Native)
         <-> API REST (este servidor FastAPI)
-            <-> Banco de dados (SQLite; migravel para PostgreSQL)
+            <-> Banco de dados (SQLite; migrável para PostgreSQL)
 
-Responsabilidades deste modulo:
-- Cria a aplicacao FastAPI com titulo/descricao em PT-BR (aparecem no Swagger
+Responsabilidades deste módulo:
+- Cria a aplicação FastAPI com título/descrição em PT-BR (aparecem no Swagger
   em /docs).
-- Registra os routers (regioes, medicoes, relatorios, alertas, saude) sob o
+- Registra os routers (regiões, medições, relatórios, alertas, saúde) sob o
   prefixo /api/v1.
 - Registra os exception handlers globais (tratamento de erros padronizado).
 - Habilita CORS para o app Expo poder consumir a API.
 - No startup, cria as tabelas e roda o seed idempotente.
-- Mantem GET /health para monitoramento e testes de fumaca.
+- Mantém GET /health para monitoramento e testes de fumaça.
 
-Referencias:
+Referências:
 - FastAPI: https://fastapi.tiangolo.com/
 - CORS no FastAPI: https://fastapi.tiangolo.com/tutorial/cors/
 """
@@ -58,11 +58,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS liberado para o app Expo (em dev, o cliente roda em host/porta variavel).
-# ATENCAO (producao): allow_origins=["*"] e proposital apenas para o contexto de
-# desenvolvimento/APS, em que o endereco do cliente muda (emulador, dispositivo
-# fisico, web). Em producao, restrinja allow_origins a lista de dominios/hosts
-# confiaveis do app. Ver: https://fastapi.tiangolo.com/tutorial/cors/
+# CORS liberado para o app Expo (em dev, o cliente roda em host/porta variável).
+# ATENÇÃO (produção): allow_origins=["*"] é proposital apenas para o contexto de
+# desenvolvimento/APS, em que o endereço do cliente muda (emulador, dispositivo
+# físico, web). Em produção, restrinja allow_origins à lista de domínios/hosts
+# confiáveis do app. Ver: https://fastapi.tiangolo.com/tutorial/cors/
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -85,5 +85,5 @@ app.include_router(alertas.router)
 
 @app.get("/health", tags=["saude"])
 def health() -> dict:
-    """Health check simples usado para monitoramento e testes de fumaca."""
+    """Health check simples usado para monitoramento e testes de fumaça."""
     return {"status": "ok"}

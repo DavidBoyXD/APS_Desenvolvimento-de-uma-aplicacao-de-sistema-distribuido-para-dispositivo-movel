@@ -1,9 +1,9 @@
 /**
- * Rotulos amigaveis em PT-BR para os tipos de medicao e formatacao de valores.
- * Mantem os textos de UI em Portugues, enquanto o codigo/dados permanecem com
- * a chave tecnica usada pela API (transporte_publico).
+ * Rótulos amigáveis em PT-BR para os tipos de medição e formatação de valores.
+ * Mantém os textos de UI em Português, enquanto o código/dados permanecem com
+ * a chave técnica usada pela API (transporte_publico).
  *
- * Onde e aplicado: telas de Detalhe, Relatorios e Alertas.
+ * Onde é aplicado: telas de Detalhe, Relatorios e Alertas.
  */
 
 import { TipoMedicao } from '../types';
@@ -13,9 +13,9 @@ const ROTULOS_TIPO: Record<TipoMedicao, string> = {
 };
 
 /**
- * Rotulos PT-BR dos parametros tecnicos usados pela API. As chaves espelham o
+ * Rótulos PT-BR dos parâmetros técnicos usados pela API. As chaves espelham o
  * campo `parametro` persistido pelo back-end (ver server/app/services/*). Os
- * parametros de transporte_publico vem da SPTrans Olho Vivo:
+ * parâmetros de transporte_publico vêm da SPTrans Olho Vivo:
  * `linhas_monitoradas` e `veiculos_em_operacao` (caminho com token, tempo
  * real) e `linhas_exemplo` (caminho de fallback sem token, dado de exemplo).
  */
@@ -25,21 +25,21 @@ const ROTULOS_PARAMETRO: Record<string, string> = {
   linhas_exemplo: 'Linhas (exemplo, sem token)',
 };
 
-/** Retorna o rotulo PT-BR de um tipo de medicao. */
+/** Retorna o rótulo PT-BR de um tipo de medição. */
 export function rotuloTipo(tipo: TipoMedicao): string {
   return ROTULOS_TIPO[tipo] ?? tipo;
 }
 
 /**
- * Retorna o rotulo PT-BR de um parametro tecnico. Caso o parametro nao tenha
- * rotulo mapeado, devolve a propria chave (comportamento seguro para dados
+ * Retorna o rótulo PT-BR de um parâmetro técnico. Caso o parâmetro não tenha
+ * rótulo mapeado, devolve a própria chave (comportamento seguro para dados
  * novos vindos da API).
  */
 export function rotuloParametro(parametro: string): string {
   return ROTULOS_PARAMETRO[parametro] ?? parametro;
 }
 
-/** Formata um numero com ate 2 casas decimais no padrao pt-BR. */
+/** Formata um número com até 2 casas decimais no padrão pt-BR. */
 export function formatarNumero(valor: number): string {
   if (!Number.isFinite(valor)) {
     return '-';
@@ -50,7 +50,7 @@ export function formatarNumero(valor: number): string {
   });
 }
 
-/** Formata um timestamp ISO 8601 para data/hora local legivel (pt-BR). */
+/** Formata um timestamp ISO 8601 para data/hora local legível (pt-BR). */
 export function formatarTimestamp(iso: string): string {
   const data = new Date(iso);
   if (Number.isNaN(data.getTime())) {

@@ -1,8 +1,8 @@
-"""Endpoint de relatorios agregados por regiao.
+"""Endpoint de relatórios agregados por região.
 
-- GET /api/v1/relatorios/regiao/{id} -> agrega as medicoes por (tipo,
-  parametro): contagem, media, minimo, maximo e a ultima leitura. Cobre o
-  requisito de "relatorios adicionais" da APS.
+- GET /api/v1/relatorios/regiao/{id} -> agrega as medições por (tipo,
+  parametro): contagem, média, mínimo, máximo e a última leitura. Cobre o
+  requisito de "relatórios adicionais" da APS.
 """
 
 from fastapi import APIRouter, Depends
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/v1/relatorios", tags=["relatorios"])
 
 @router.get("/regiao/{regiao_id}", response_model=RelatorioRegiao)
 def relatorio_regiao(regiao_id: int, db: Session = Depends(get_db)) -> RelatorioRegiao:
-    """Gera o relatorio agregado de uma regiao (404 se nao existir)."""
+    """Gera o relatório agregado de uma região (404 se não existir)."""
     regiao = obter_regiao_ou_404(db, regiao_id)
 
     stmt = (
@@ -29,7 +29,7 @@ def relatorio_regiao(regiao_id: int, db: Session = Depends(get_db)) -> Relatorio
     )
     medicoes = list(db.execute(stmt).scalars().all())
 
-    # Agrupa por (tipo, parametro) preservando a ordem cronologica.
+    # Agrupa por (tipo, parametro) preservando a ordem cronológica.
     grupos: dict[tuple, list[Medicao]] = {}
     for m in medicoes:
         grupos.setdefault((m.tipo, m.parametro), []).append(m)
@@ -37,7 +37,7 @@ def relatorio_regiao(regiao_id: int, db: Session = Depends(get_db)) -> Relatorio
     resumos: list[ResumoParametro] = []
     for (tipo, parametro), itens in grupos.items():
         valores = [i.valor for i in itens]
-        ultimo = itens[-1]  # mais recente por causa da ordenacao asc
+        ultimo = itens[-1]  # mais recente por causa da ordenação asc
         resumos.append(
             ResumoParametro(
                 tipo=tipo,

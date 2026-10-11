@@ -2,8 +2,8 @@
 
 - GET  /api/v1/alertas                    -> lista as regras de alerta.
 - POST /api/v1/alertas                    -> cria uma regra de limiar.
-- GET  /api/v1/alertas/avaliar/{regiao_id} -> compara as medicoes mais recentes
-  de cada parametro com as regras ativas e retorna os alertas disparados, com
+- GET  /api/v1/alertas/avaliar/{regiao_id} -> compara as medições mais recentes
+  de cada parâmetro com as regras ativas e retorna os alertas disparados, com
   mensagem em PT-BR.
 """
 
@@ -27,7 +27,7 @@ def listar_alertas(db: Session = Depends(get_db)) -> list[Alerta]:
 
 @router.post("", response_model=AlertaRead, status_code=201)
 def criar_alerta(dados: AlertaCreate, db: Session = Depends(get_db)) -> Alerta:
-    """Cria uma regra de alerta de limiar (404 se a regiao nao existir)."""
+    """Cria uma regra de alerta de limiar (404 se a região não existir)."""
     obter_regiao_ou_404(db, dados.regiao_id)
     alerta = Alerta(**dados.model_dump())
     db.add(alerta)
@@ -37,7 +37,7 @@ def criar_alerta(dados: AlertaCreate, db: Session = Depends(get_db)) -> Alerta:
 
 
 def _viola_limiar(valor: float, condicao: str, limiar: float) -> bool:
-    """Retorna True quando o valor viola o limiar segundo a condicao."""
+    """Retorna True quando o valor viola o limiar segundo a condição."""
     if condicao == ">":
         return valor > limiar
     if condicao == "<":
@@ -49,7 +49,7 @@ def _viola_limiar(valor: float, condicao: str, limiar: float) -> bool:
 def avaliar_alertas(
     regiao_id: int, db: Session = Depends(get_db)
 ) -> list[AlertaDisparado]:
-    """Avalia as regras ativas da regiao contra as medicoes mais recentes."""
+    """Avalia as regras ativas da região contra as medições mais recentes."""
     obter_regiao_ou_404(db, regiao_id)
 
     regras = list(
@@ -64,7 +64,7 @@ def avaliar_alertas(
 
     disparados: list[AlertaDisparado] = []
     for regra in regras:
-        # Medicao mais recente do mesmo tipo/parametro da regra.
+        # Medição mais recente do mesmo tipo/parâmetro da regra.
         stmt = (
             select(Medicao)
             .where(

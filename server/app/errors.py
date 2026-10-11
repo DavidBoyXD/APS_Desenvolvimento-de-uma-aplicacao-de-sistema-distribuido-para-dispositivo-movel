@@ -1,16 +1,16 @@
 """Tratamento de erros global e padronizado (respostas em PT-BR).
 
-Registra tres exception handlers no app FastAPI, todos retornando o schema
+Registra três exception handlers no app FastAPI, todos retornando o schema
 ``ErroResposta`` (codigo/mensagem/detalhe):
 
-1. HTTPException      -> erros esperados (ex.: 404 regiao inexistente).
-2. RequestValidationError -> corpo/parametros invalidos (422).
-3. Exception (generico)   -> qualquer falha inesperada vira 500 tratado,
+1. HTTPException      -> erros esperados (ex.: 404 região inexistente).
+2. RequestValidationError -> corpo/parâmetros inválidos (422).
+3. Exception (genérico)   -> qualquer falha inesperada vira 500 tratado,
    sem vazar stack trace cru para o cliente.
 
 Isso atende ao requisito de "tratamento de erros robusto" da APS.
 
-Referencia (exception handlers no FastAPI):
+Referência (exception handlers no FastAPI):
 https://fastapi.tiangolo.com/tutorial/handling-errors/
 """
 
@@ -31,11 +31,11 @@ def _resposta_erro(codigo: int, mensagem: str, detalhe: Optional[str] = None) ->
 
 
 def registrar_handlers(app: FastAPI) -> None:
-    """Registra os handlers de excecao no app."""
+    """Registra os handlers de exceção no app."""
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_exception_handler(request: Request, exc: StarletteHTTPException):
-        # ``exc.detail`` costuma ja vir em PT-BR (definido nos routers).
+        # ``exc.detail`` costuma já vir em PT-BR (definido nos routers).
         mensagem = exc.detail if isinstance(exc.detail, str) else "Erro na requisicao."
         return _resposta_erro(exc.status_code, mensagem)
 

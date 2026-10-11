@@ -1,4 +1,4 @@
-"""Pacote da aplicacao back-end (API REST FastAPI).
+"""Pacote da aplicação back-end (API REST FastAPI).
 
-Sistema distribuido ambiental urbano - APS UNIP (Sistemas Distribuidos).
+Sistema distribuído ambiental urbano - APS UNIP (Sistemas Distribuídos).
 """

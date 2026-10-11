@@ -1,23 +1,23 @@
-# 7. Apresentacao do programa em funcionamento
+# 7. Apresentação do programa em funcionamento
 
-Este capitulo e o roteiro para demonstrar o sistema distribuido em funcionamento:
+Este capítulo é o roteiro para demonstrar o sistema distribuído em funcionamento:
 subir o servidor (API REST), configurar (opcionalmente) o token da SPTrans, rodar
-o cliente movel em emulador/dispositivo e percorrer as funcionalidades. As
-referencias das ferramentas estao no capitulo 8.
+o cliente móvel em emulador/dispositivo e percorrer as funcionalidades. As
+referências das ferramentas estão no capítulo 8.
 
-## 7.1 Pre-requisitos
+## 7.1 Pré-requisitos
 
 - **Python 3.11+** para o back-end ([python.org](https://www.python.org)).
 - **Node.js 18+** e **npm** para o cliente ([nodejs.org](https://nodejs.org)).
-- **Expo** (usado via `npx`, nao requer instalacao global) e, para testar em
-  celular fisico, o app **Expo Go** ([expo.dev/go](https://expo.dev/go)).
+- **Expo** (usado via `npx`, não requer instalação global) e, para testar em
+  celular físico, o app **Expo Go** ([expo.dev/go](https://expo.dev/go)).
 - Para o emulador Android: **Android Studio** com um AVD (Android Virtual Device)
   configurado ([developer.android.com/studio](https://developer.android.com/studio)).
 - Para o simulador iOS: **Xcode** (apenas em macOS).
 
 ## 7.2 Passo 1 - Subir o servidor (API REST)
 
-No diretorio do repositorio:
+No diretório do repositório:
 
 ```bash
 cd server
@@ -26,49 +26,49 @@ python -m venv .venv
 .venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Observacoes:
+Observações:
 
-- No Windows, o executavel do venv fica em `.venv\Scripts\` (ex.:
+- No Windows, o executável do venv fica em `.venv\Scripts\` (ex.:
   `.venv\Scripts\python -m uvicorn ...`).
 - `--host 0.0.0.0` permite que o emulador e dispositivos na mesma rede acessem a
   API.
-- No startup, o servidor cria as tabelas e roda o seed (5 regioes reais de Sao
-  Paulo/SP com medicoes e alertas de exemplo).
+- No startup, o servidor cria as tabelas e roda o seed (5 regiões reais de São
+  Paulo/SP com medições e alertas de exemplo).
 
-Verificacoes rapidas (em outro terminal ou no navegador):
+Verificações rápidas (em outro terminal ou no navegador):
 
 - `http://localhost:8000/health` -> `{"status":"ok"}`.
-- `http://localhost:8000/api/v1/regioes` -> lista de regioes de SP (JSON).
-- `http://localhost:8000/api/v1/localidades/sp` -> municipios de SP via IBGE.
-- `http://localhost:8000/docs` -> documentacao interativa Swagger ("API Transporte
+- `http://localhost:8000/api/v1/regioes` -> lista de regiões de SP (JSON).
+- `http://localhost:8000/api/v1/localidades/sp` -> municípios de SP via IBGE.
+- `http://localhost:8000/docs` -> documentação interativa Swagger ("API Transporte
   Publico SP - APS SD").
 
-## 7.3 Passo 2 - Configurar o token da SPTrans (transporte publico em tempo real)
+## 7.3 Passo 2 - Configurar o token da SPTrans (transporte público em tempo real)
 
-O transporte publico usa a **SPTrans Olho Vivo**, a API OFICIAL da Prefeitura de
-Sao Paulo para a frota de onibus. Ela exige um **token gratuito**. O sistema foi
+O transporte público usa a **SPTrans Olho Vivo**, a API OFICIAL da Prefeitura de
+São Paulo para a frota de ônibus. Ela exige um **token gratuito**. O sistema foi
 desenhado para funcionar **com** e **sem** token:
 
 - **Com token (`SPTRANS_TOKEN` definido):** o servidor autentica no Olho Vivo e
-  deriva metricas REAIS, em **tempo real**, da frota (linhas monitoradas e
-  veiculos em operacao).
-- **Sem token:** o servidor usa um **fallback de exemplo** (conjunto estatico de
-  linhas de SP, no espirito dos dados GTFS da SPTrans), claramente ROTULADO como
-  NAO tempo real. Assim, a demonstracao funciona de ponta a ponta mesmo sem token.
+  deriva métricas REAIS, em **tempo real**, da frota (linhas monitoradas e
+  veículos em operação).
+- **Sem token:** o servidor usa um **fallback de exemplo** (conjunto estático de
+  linhas de SP, no espírito dos dados GTFS da SPTrans), claramente ROTULADO como
+  NÃO tempo real. Assim, a demonstração funciona de ponta a ponta mesmo sem token.
 
 ### 7.3.1 Passo a passo para gerar o token no portal da SPTrans
 
 1. Acesse o portal do desenvolvedor da SPTrans:
    [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
-2. Cadastre-se / faca login e solicite a sua **chave de ativacao** (token) da API
-   Olho Vivo. O cadastro e gratuito; o proprio portal traz a opcao de solicitar a
-   chave de ativacao.
-3. Copie o token recebido. **Nunca** escreva o token no codigo nem o publique em
-   repositorio.
+2. Cadastre-se / faça login e solicite a sua **chave de ativação** (token) da API
+   Olho Vivo. O cadastro é gratuito; o próprio portal traz a opção de solicitar a
+   chave de ativação.
+3. Copie o token recebido. **Nunca** escreva o token no código nem o publique em
+   repositório.
 
-### 7.3.2 Configurar a variavel de ambiente `SPTRANS_TOKEN`
+### 7.3.2 Configurar a variável de ambiente `SPTRANS_TOKEN`
 
-Defina a variavel de ambiente ANTES de iniciar o servidor (o valor abaixo e apenas
+Defina a variável de ambiente ANTES de iniciar o servidor (o valor abaixo é apenas
 um **placeholder**; use o seu token real no seu ambiente):
 
 ```bash
@@ -83,15 +83,15 @@ set SPTRANS_TOKEN=COLE_AQUI_O_SEU_TOKEN
 .venv\Scripts\python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Observacoes:
+Observações:
 
-- O token e lido exclusivamente de `SPTRANS_TOKEN` em
-  `server/app/services/sptrans.py` (funcao `obter_token`); nao ha token literal no
-  repositorio.
-- Se a variavel nao estiver definida (ou estiver vazia), o servidor usa o fallback
+- O token é lido exclusivamente de `SPTRANS_TOKEN` em
+  `server/app/services/sptrans.py` (função `obter_token`); não há token literal no
+  repositório.
+- Se a variável não estiver definida (ou estiver vazia), o servidor usa o fallback
   de exemplo automaticamente, sem erro.
 
-## 7.4 Passo 3 - Rodar o cliente movel
+## 7.4 Passo 3 - Rodar o cliente móvel
 
 ```bash
 cd mobile
@@ -101,15 +101,15 @@ npx expo start
 
 O `expo start` abre um painel com um QR Code e atalhos de teclado:
 
-- Pressione **a** para abrir no **emulador Android** (requer AVD em execucao).
+- Pressione **a** para abrir no **emulador Android** (requer AVD em execução).
 - Pressione **i** para abrir no **simulador iOS** (apenas macOS/Xcode).
-- Escaneie o **QR Code** com o app **Expo Go** para rodar em um **celular fisico**.
+- Escaneie o **QR Code** com o app **Expo Go** para rodar em um **celular físico**.
 
-### 7.4.1 Configurar o endereco da API (importante)
+### 7.4.1 Configurar o endereço da API (importante)
 
-O cliente precisa saber onde esta a API. O default e `http://10.0.2.2:8000`
+O cliente precisa saber onde está a API. O default é `http://10.0.2.2:8000`
 (alias do host no emulador Android). Ajuste conforme o ambiente definindo a
-variavel de ambiente antes do `expo start`:
+variável de ambiente antes do `expo start`:
 
 ```bash
 # Emulador Android (padrao, pode omitir):
@@ -122,92 +122,92 @@ EXPO_PUBLIC_API_BASE_URL=http://localhost:8000 npx expo start
 EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:8000 npx expo start
 ```
 
-Descubra o IP da maquina com `ipconfig` (Windows) ou `ifconfig`/`ip addr`
+Descubra o IP da máquina com `ipconfig` (Windows) ou `ifconfig`/`ip addr`
 (Linux/macOS). O celular e o computador precisam estar na mesma rede Wi-Fi.
 
-### 7.4.2 Google Maps API key no Android (mapa de Sao Paulo)
+### 7.4.2 Google Maps API key no Android (mapa de São Paulo)
 
 No Android, o `MapView` do react-native-maps usa o Google Maps e pode exigir uma
 **Google Maps API key**; sem ela, o mapa pode aparecer em cinza. Para habilitar,
 obtenha uma chave no Google Cloud Console
 ([console.cloud.google.com](https://console.cloud.google.com), habilitando o
-"Maps SDK for Android") e configure-a conforme a documentacao do react-native-maps
+"Maps SDK for Android") e configure-a conforme a documentação do react-native-maps
 ([github.com/react-native-maps/react-native-maps](https://github.com/react-native-maps/react-native-maps))
 e do Expo ([docs.expo.dev](https://docs.expo.dev)). Mesmo sem a chave, a **lista de
-regioes clicavel** na tela do mapa (enquadrada em Sao Paulo) garante a navegacao e
-a demonstracao de todas as funcionalidades.
+regiões clicável** na tela do mapa (enquadrada em São Paulo) garante a navegação e
+a demonstração de todas as funcionalidades.
 
-> Nota sobre o ambiente de desenvolvimento deste trabalho: nao havia emulador
-> disponivel no ambiente onde o codigo foi construido. Por isso, o cliente foi
+> Nota sobre o ambiente de desenvolvimento deste trabalho: não havia emulador
+> disponível no ambiente onde o código foi construído. Por isso, o cliente foi
 > validado por checagem de tipos (`npx tsc --noEmit`), e este roteiro documenta o
-> passo a passo completo para execucao em emulador/dispositivo real.
+> passo a passo completo para execução em emulador/dispositivo real.
 
-## 7.5 Roteiro de demonstracao das funcionalidades
+## 7.5 Roteiro de demonstração das funcionalidades
 
 Com o servidor no ar e o app aberto, percorra o fluxo:
 
-1. **Mapa e consulta por regiao.** A tela inicial ("Monitor Ambiental Urbano")
-   mostra o mapa enquadrado em Sao Paulo com marcadores nas regioes (Se,
-   Pinheiros, Mooca, Santana, Itaquera) e uma lista clicavel abaixo ("Regioes
-   monitoradas em Sao Paulo"). Toque em um marcador (callout) ou em um item da
+1. **Mapa e consulta por região.** A tela inicial ("Monitor Ambiental Urbano")
+   mostra o mapa enquadrado em São Paulo com marcadores nas regiões (Sé,
+   Pinheiros, Mooca, Santana, Itaquera) e uma lista clicável abaixo ("Regiões
+   monitoradas em São Paulo"). Toque em um marcador (callout) ou em um item da
    lista para abrir o detalhe.
 
-2. **Detalhe da regiao.** Veja as medicoes de **Transporte publico (SPTrans)**,
+2. **Detalhe da região.** Veja as medições de **Transporte público (SPTrans)**,
    com valor, unidade, data/hora e a fonte de cada dado.
 
    > **Origem dos dados (fonte oficial de SP):**
-   > - **Transporte publico:** SPTrans Olho Vivo (fonte OFICIAL da Prefeitura de
-   >   SP). Com `SPTRANS_TOKEN`, os valores sao em tempo real; sem token, o campo
-   >   `fonte` indica explicitamente dado de EXEMPLO (fallback, NAO tempo real).
-   > As medicoes criadas pelo seed sao apenas **valores iniciais de exemplo**, e o
-   > proprio campo `fonte` registra a origem em tempo de execucao.
+   > - **Transporte público:** SPTrans Olho Vivo (fonte OFICIAL da Prefeitura de
+   >   SP). Com `SPTRANS_TOKEN`, os valores são em tempo real; sem token, o campo
+   >   `fonte` indica explicitamente dado de EXEMPLO (fallback, NÃO tempo real).
+   > As medições criadas pelo seed são apenas **valores iniciais de exemplo**, e o
+   > próprio campo `fonte` registra a origem em tempo de execução.
 
-3. **Atualizacao com dados da fonte.** No detalhe, toque no botao **"Atualizar
+3. **Atualização com dados da fonte.** No detalhe, toque no botão **"Atualizar
    transporte"**, que chama `POST /api/v1/regioes/{id}/atualizar-transporte`.
-   Com token, o servidor autentica no Olho Vivo, le o `/Posicao` e persiste
+   Com token, o servidor autentica no Olho Vivo, lê o `/Posicao` e persiste
    `linhas_monitoradas` e `veiculos_em_operacao` (tempo real). Sem token,
-   persiste `linhas_exemplo` (fallback rotulado). Observacao de semantica: essas
-   metricas sao da cidade de Sao Paulo como um todo (o `/Posicao` devolve a frota
-   inteira e ignora o lat/lon da regiao), nao geofiltradas por regiao; por isso
-   regioes diferentes atualizadas no mesmo instante recebem os mesmos valores.
-   Apos a atualizacao, a lista recarrega com as medicoes e o campo `fonte` registra
+   persiste `linhas_exemplo` (fallback rotulado). Observação de semântica: essas
+   métricas são da cidade de São Paulo como um todo (o `/Posicao` devolve a frota
+   inteira e ignora o lat/lon da região), não geofiltradas por região; por isso
+   regiões diferentes atualizadas no mesmo instante recebem os mesmos valores.
+   Após a atualização, a lista recarrega com as medições e o campo `fonte` registra
    a origem.
 
-4. **Relatorios.** No detalhe, toque em "Ver relatorio" para abrir as agregacoes
-   por parametro: media, minimo, maximo, contagem (amostras) e ultima leitura. No
-   topo, um **grafico de barras** ("Medias por parametro") resume visualmente os
-   dados, incluindo os parametros de transporte publico quando houver medicoes.
+4. **Relatórios.** No detalhe, toque em "Ver relatório" para abrir as agregações
+   por parâmetro: média, mínimo, máximo, contagem (amostras) e última leitura. No
+   topo, um **gráfico de barras** ("Médias por parâmetro") resume visualmente os
+   dados, incluindo os parâmetros de transporte público quando houver medições.
 
 5. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
-   regra (escolha regiao, tipo, parametro, condicao `>`/`<` e limiar) e toque em
-   "Avaliar regiao selecionada". Os alertas disparados aparecem destacados com o
-   valor observado. Dica: crie uma regra com limiar baixo (ex.: veiculos em
-   operacao > 1) para forcar um disparo.
+   regra (escolha região, tipo, parâmetro, condição `>`/`<` e limiar) e toque em
+   "Avaliar região selecionada". Os alertas disparados aparecem destacados com o
+   valor observado. Dica: crie uma regra com limiar baixo (ex.: veículos em
+   operação > 1) para forçar um disparo.
 
-6. **Tratamento de erros (demonstracao).** Pare o servidor (encerre o uvicorn) e
+6. **Tratamento de erros (demonstração).** Pare o servidor (encerre o uvicorn) e
    tente recarregar uma tela no app: em vez de travar, o app exibe uma mensagem
-   amigavel em PT-BR ("Nao foi possivel conectar ao servidor...") com a opcao de
-   "Tentar novamente". No servidor, uma regiao inexistente
+   amigável em PT-BR ("Nao foi possivel conectar ao servidor...") com a opção de
+   "Tentar novamente". No servidor, uma região inexistente
    (`GET /api/v1/regioes/99999`) retorna 404 no formato padronizado `ErroResposta`;
    e uma falha na fonte externa retorna 502 padronizado (nunca 500 cru).
 
-## 7.6 Executar os testes do back-end (opcional na apresentacao)
+## 7.6 Executar os testes do back-end (opcional na apresentação)
 
 ```bash
 cd server
 .venv/bin/python -m pytest -q
 ```
 
-A suite valida saude, regioes, medicoes, relatorios, alertas, tratamento de erros,
-a base geografica do IBGE e o transporte publico da SPTrans (com token e
-fallback). A rede e o token sao SEMPRE mockados: nenhum teste acessa a SPTrans ou o
+A suíte valida saúde, regiões, medições, relatórios, alertas, tratamento de erros,
+a base geográfica do IBGE e o transporte público da SPTrans (com token e
+fallback). A rede e o token são SEMPRE mockados: nenhum teste acessa a SPTrans ou o
 IBGE reais nem usa token real.
 
-## 7.7 Checagem de tipos do cliente (opcional na apresentacao)
+## 7.7 Checagem de tipos do cliente (opcional na apresentação)
 
 ```bash
 cd mobile
 npx tsc --noEmit
 ```
 
-Deve terminar sem erros de tipo, confirmando a integridade do codigo TypeScript.
+Deve terminar sem erros de tipo, confirmando a integridade do código TypeScript.

@@ -1,24 +1,24 @@
 /**
- * Tela inicial: mapa com as regioes monitoradas (consulta por regiao ligada ao
- * mapa, requisito da APS). Plota um marcador por regiao usando latitude/longitude
+ * Tela inicial: mapa com as regiões monitoradas (consulta por região ligada ao
+ * mapa, requisito da APS). Plota um marcador por região usando latitude/longitude
  * e permite tocar para abrir o Detalhe.
  *
  * IMPORTANTE (react-native-maps):
  *   - Em emulador/dispositivo Android sem uma Google Maps API key configurada, o
- *     MapView pode nao renderizar o mapa (aparece cinza). Configuracao:
+ *     MapView pode não renderizar o mapa (aparece cinza). Configuração:
  *     https://docs.expo.dev/versions/latest/sdk/map-view/ e
  *     https://github.com/react-native-maps/react-native-maps
- *   - No sandbox nao ha emulador; por isso este arquivo tambem oferece um
- *     FALLBACK: uma lista de regioes clicaveis, sempre disponivel abaixo do mapa,
- *     garantindo que a funcionalidade (escolher regiao) funcione mesmo sem mapa.
- *   - Na web (react-native-web), o MapView nativo nao existe; renderizamos apenas
+ *   - No sandbox não há emulador; por isso este arquivo também oferece um
+ *     FALLBACK: uma lista de regiões clicáveis, sempre disponível abaixo do mapa,
+ *     garantindo que a funcionalidade (escolher região) funcione mesmo sem mapa.
+ *   - Na web (react-native-web), o MapView nativo não existe; renderizamos apenas
  *     a lista. Detectamos a plataforma via Platform.OS.
  *
- * Referencias:
+ * Referências:
  *   - MapView / Marker: https://github.com/react-native-maps/react-native-maps/blob/master/docs/mapview.md
  *   - FlatList: https://reactnative.dev/docs/flatlist
  *
- * Onde e aplicado: registrada como rota "Mapa" em App.tsx.
+ * Onde é aplicado: registrada como rota "Mapa" em App.tsx.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -37,7 +37,7 @@ import { Regiao } from '../types';
 import { RootStackParamList } from '../navigation';
 import { EstadoCarregando, EstadoErro, EstadoVazio } from '../ui/estados';
 
-// react-native-maps nao possui build para web; importamos condicionalmente.
+// react-native-maps não possui build para web; importamos condicionalmente.
 // Em nativo, MapaComponente/MarcadorComponente recebem os componentes reais.
 let MapaComponente: any = null;
 let MarcadorComponente: any = null;
@@ -50,7 +50,7 @@ if (Platform.OS !== 'web') {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Mapa'>;
 
-// Enquadramento inicial do mapa na cidade de Sao Paulo (recorte da aplicacao).
+// Enquadramento inicial do mapa na cidade de São Paulo (recorte da aplicação).
 // Coordenadas aproximadas do centro de SP; o delta ~0.3 enquadra a cidade.
 const REGIAO_INICIAL = {
   latitude: -23.55,

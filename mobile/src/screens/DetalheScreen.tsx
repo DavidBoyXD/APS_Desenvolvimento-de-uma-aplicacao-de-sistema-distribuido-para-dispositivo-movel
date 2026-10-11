@@ -1,18 +1,18 @@
 /**
- * Tela de detalhe da regiao: mostra as medicoes de transporte publico. Oferece
- * um botao de atualizacao que chama o endpoint POST de fonte real e recarrega a
+ * Tela de detalhe da região: mostra as medições de transporte público. Oferece
+ * um botão de atualização que chama o endpoint POST de fonte real e recarrega a
  * lista:
- *   - transporte publico -> POST /api/v1/regioes/{id}/atualizar-transporte
- *     (SPTrans Olho Vivo, fonte oficial de Sao Paulo; fallback rotulado sem token).
- * Assim a fonte real alimenta a lista da tela, o relatorio e os alertas.
- * Tambem leva ao relatorio da regiao.
+ *   - transporte público -> POST /api/v1/regioes/{id}/atualizar-transporte
+ *     (SPTrans Olho Vivo, fonte oficial de São Paulo; fallback rotulado sem token).
+ * Assim a fonte real alimenta a lista da tela, o relatório e os alertas.
+ * Também leva ao relatório da região.
  *
- * Referencias:
+ * Referências:
  *   - SectionList: https://reactnative.dev/docs/sectionlist
- *   - Fonte de dados reais de transporte publico: SPTrans Olho Vivo
+ *   - Fonte de dados reais de transporte público: SPTrans Olho Vivo
  *     https://www.sptrans.com.br/desenvolvedores/
  *
- * Onde e aplicado: rota "Detalhe" em App.tsx.
+ * Onde é aplicado: rota "Detalhe" em App.tsx.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -52,7 +52,7 @@ export default function DetalheScreen({ route, navigation }: Props) {
   const [medicoes, setMedicoes] = useState<Medicao[]>([]);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
-  // Tipo em atualizacao (null quando ocioso), para desabilitar so o botao ativo.
+  // Tipo em atualização (null quando ocioso), para desabilitar só o botão ativo.
   const [atualizandoTipo, setAtualizandoTipo] = useState<TipoMedicao | null>(
     null,
   );

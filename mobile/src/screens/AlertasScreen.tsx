@@ -1,13 +1,13 @@
 /**
  * Tela de alertas: lista as regras de alerta cadastradas (GET /api/v1/alertas),
  * permite criar uma regra simples (POST /api/v1/alertas) e avaliar os alertas de
- * uma regiao (GET /api/v1/alertas/avaliar/{regiao_id}), exibindo os disparados.
+ * uma região (GET /api/v1/alertas/avaliar/{regiao_id}), exibindo os disparados.
  *
- * Referencias:
+ * Referências:
  *   - TextInput: https://reactnative.dev/docs/textinput
  *   - ScrollView: https://reactnative.dev/docs/scrollview
  *
- * Onde e aplicado: rota "Alertas" em App.tsx.
+ * Onde é aplicado: rota "Alertas" em App.tsx.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -52,7 +52,7 @@ export default function AlertasScreen(_props: Props) {
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  // Estado do formulario de criacao.
+  // Estado do formulário de criação.
   const [regiaoId, setRegiaoId] = useState<number | null>(null);
   const [tipo, setTipo] = useState<TipoMedicao>('transporte_publico');
   const [parametro, setParametro] = useState<string>('veiculos_em_operacao');
@@ -62,7 +62,7 @@ export default function AlertasScreen(_props: Props) {
   const [salvando, setSalvando] = useState<boolean>(false);
   const [feedbackForm, setFeedbackForm] = useState<string | null>(null);
 
-  // Estado da avaliacao.
+  // Estado da avaliação.
   const [avaliando, setAvaliando] = useState<boolean>(false);
   const [disparados, setDisparados] = useState<AlertaDisparado[] | null>(null);
   const [feedbackAvaliacao, setFeedbackAvaliacao] = useState<string | null>(null);
@@ -201,7 +201,7 @@ export default function AlertasScreen(_props: Props) {
         ))
       )}
 
-      {/* Formulario de criacao */}
+      {/* Formulário de criação */}
       <Text style={styles.secaoTitulo}>Nova regra de alerta</Text>
 
       <Text style={styles.rotuloCampo}>Regiao</Text>
@@ -280,7 +280,7 @@ export default function AlertasScreen(_props: Props) {
       </Pressable>
       {feedbackForm ? <Text style={styles.feedback}>{feedbackForm}</Text> : null}
 
-      {/* Avaliacao */}
+      {/* Avaliação */}
       <Text style={styles.secaoTitulo}>Avaliar alertas da regiao</Text>
       <Pressable
         style={[styles.botaoSecundario, avaliando && styles.botaoDesabilitado]}

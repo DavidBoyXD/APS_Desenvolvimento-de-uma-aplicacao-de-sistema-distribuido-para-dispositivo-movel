@@ -1,22 +1,22 @@
-"""Modelos ORM (SQLAlchemy 2.x) do dominio de transporte publico urbano de SP.
+"""Modelos ORM (SQLAlchemy 2.x) do domínio de transporte público urbano de SP.
 
-O modelo e generico e centrado no conceito de "medicao por tipo", permitindo
-representar as metricas exigidas pela APS com o mesmo esquema. O tipo suportado
-usa fonte real e verificavel, com o campo ``fonte`` indicando a origem:
-transporte publico (SPTrans Olho Vivo, frota de onibus de Sao Paulo em tempo
-real). A base geografica (municipio/UF) e validavel pela API de Localidades do
+O modelo é genérico e centrado no conceito de "medição por tipo", permitindo
+representar as métricas exigidas pela APS com o mesmo esquema. O tipo suportado
+usa fonte real e verificável, com o campo ``fonte`` indicando a origem:
+transporte público (SPTrans Olho Vivo, frota de ônibus de São Paulo em tempo
+real). A base geográfica (município/UF) é validável pela API de Localidades do
 IBGE.
 
 Entidades
 ---------
 - Regiao: local monitorado, com latitude/longitude para posicionar no mapa
-  do app movel.
-- Medicao: um valor observado (ex.: veiculos_em_operacao = 318 veiculos) de um
-  ``tipo`` e ``parametro``, ligado a uma regiao, com data/hora e a fonte do dado.
+  do app móvel.
+- Medicao: um valor observado (ex.: veiculos_em_operacao = 318 veículos) de um
+  ``tipo`` e ``parametro``, ligado a uma região, com data/hora e a fonte do dado.
 - Alerta: regra de limiar (ex.: veiculos_em_operacao > 300) que, quando violada
-  por uma medicao recente, dispara um alerta com mensagem em PT-BR.
+  por uma medição recente, dispara um alerta com mensagem em PT-BR.
 
-Referencia SQLAlchemy 2.0 (Mapped/mapped_column): 
+Referência SQLAlchemy 2.0 (Mapped/mapped_column): 
 https://docs.sqlalchemy.org/en/20/orm/quickstart.html
 """
 
@@ -30,10 +30,10 @@ from .database import Base
 
 
 class TipoMedicao(str, enum.Enum):
-    """Tipos de informacao urbana suportados pelo sistema."""
+    """Tipos de informação urbana suportados pelo sistema."""
 
-    # Transporte publico oficial de Sao Paulo (SPTrans Olho Vivo, tempo real da
-    # frota de onibus; com fallback de exemplo/GTFS estatico quando sem token).
+    # Transporte público oficial de São Paulo (SPTrans Olho Vivo, tempo real da
+    # frota de ônibus; com fallback de exemplo/GTFS estático quando sem token).
     transporte_publico = "transporte_publico"
 
 
@@ -43,7 +43,7 @@ def _agora_utc() -> datetime:
 
 
 class Regiao(Base):
-    """Regiao/local monitorado (aparece como ponto no mapa do app movel)."""
+    """Região/local monitorado (aparece como ponto no mapa do app móvel)."""
 
     __tablename__ = "regioes"
 
@@ -51,7 +51,7 @@ class Regiao(Base):
     nome: Mapped[str] = mapped_column(String(120), nullable=False)
     cidade: Mapped[str] = mapped_column(String(120), nullable=False)
     uf: Mapped[str] = mapped_column(String(2), nullable=False)
-    # Coordenadas geograficas usadas pelo mapa (react-native-maps no cliente).
+    # Coordenadas geográficas usadas pelo mapa (react-native-maps no cliente).
     latitude: Mapped[float] = mapped_column(Float, nullable=False)
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
 
@@ -64,7 +64,7 @@ class Regiao(Base):
 
 
 class Medicao(Base):
-    """Valor observado de um parametro ambiental em uma regiao."""
+    """Valor observado de um parâmetro ambiental em uma região."""
 
     __tablename__ = "medicoes"
 
@@ -75,15 +75,15 @@ class Medicao(Base):
     tipo: Mapped[TipoMedicao] = mapped_column(
         Enum(TipoMedicao, native_enum=False), nullable=False, index=True
     )
-    # Parametro observado, ex.: 'linhas_monitoradas', 'veiculos_em_operacao'.
-    # Mantido como string para o modelo permanecer generico.
+    # Parâmetro observado, ex.: 'linhas_monitoradas', 'veiculos_em_operacao'.
+    # Mantido como string para o modelo permanecer genérico.
     parametro: Mapped[str] = mapped_column(String(60), nullable=False)
     valor: Mapped[float] = mapped_column(Float, nullable=False)
     unidade: Mapped[str] = mapped_column(String(30), nullable=False, default="")
     timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_agora_utc
     )
-    # Origem do dado (link/descricao). Ex.: 'SPTrans Olho Vivo'.
+    # Origem do dado (link/descrição). Ex.: 'SPTrans Olho Vivo'.
     fonte: Mapped[str] = mapped_column(String(255), nullable=False, default="")
 
     regiao: Mapped["Regiao"] = relationship(back_populates="medicoes")
@@ -106,7 +106,7 @@ class Alerta(Base):
     )
     parametro: Mapped[str] = mapped_column(String(60), nullable=False)
     limiar: Mapped[float] = mapped_column(Float, nullable=False)
-    # Condicao de comparacao: '>' dispara quando valor > limiar; '<' quando
+    # Condição de comparação: '>' dispara quando valor > limiar; '<' quando
     # valor < limiar.
     condicao: Mapped[str] = mapped_column(String(1), nullable=False, default=">")
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

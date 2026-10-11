@@ -3,18 +3,18 @@
  *
  * Fonte da verdade: os schemas em server/app/schemas.py.
  *
- * Onde e aplicado: consumidos pelo cliente HTTP (src/api/client.ts) e pelas telas
- * (src/screens/*). Mantidos em ingles por serem codigo; textos de UI ficam em PT-BR.
+ * Onde é aplicado: consumidos pelo cliente HTTP (src/api/client.ts) e pelas telas
+ * (src/screens/*). Mantidos em inglês por serem código; textos de UI ficam em PT-BR.
  */
 
-/** Tipos de medicao suportados pela API (apenas transporte publico/SPTrans). */
+/** Tipos de medição suportados pela API (apenas transporte público/SPTrans). */
 export type TipoMedicao = 'transporte_publico';
 
-/** Condicao de comparacao usada nas regras de alerta. */
+/** Condição de comparação usada nas regras de alerta. */
 export type CondicaoAlerta = '>' | '<';
 
 /**
- * Regiao urbana monitorada. As coordenadas latitude/longitude sao usadas para
+ * Região urbana monitorada. As coordenadas latitude/longitude são usadas para
  * posicionar os marcadores no react-native-maps (MapaScreen).
  * Espelha o schema Regiao da API.
  */
@@ -28,8 +28,8 @@ export interface Regiao {
 }
 
 /**
- * Medicao generica (por tipo/parametro). Espelha o schema Medicao da API.
- * O campo timestamp e uma string ISO 8601 com timezone.
+ * Medição genérica (por tipo/parâmetro). Espelha o schema Medicao da API.
+ * O campo timestamp é uma string ISO 8601 com timezone.
  */
 export interface Medicao {
   id: number;
@@ -71,7 +71,7 @@ export interface AlertaCreate {
 }
 
 /**
- * Alerta efetivamente disparado ao avaliar as medicoes recentes contra as regras.
+ * Alerta efetivamente disparado ao avaliar as medições recentes contra as regras.
  * Espelha o schema AlertaDisparado da API.
  */
 export interface AlertaDisparado {
@@ -86,7 +86,7 @@ export interface AlertaDisparado {
 }
 
 /**
- * Resumo agregado de um par (tipo, parametro) usado no relatorio da regiao.
+ * Resumo agregado de um par (tipo, parametro) usado no relatório da região.
  * Espelha o item de RelatorioRegiao.resumos da API.
  */
 export interface ResumoRelatorio {
@@ -102,7 +102,7 @@ export interface ResumoRelatorio {
 }
 
 /**
- * Relatorio agregado de uma regiao. Espelha o schema RelatorioRegiao da API
+ * Relatório agregado de uma região. Espelha o schema RelatorioRegiao da API
  * (GET /api/v1/relatorios/regiao/{id}).
  */
 export interface RelatorioRegiao {

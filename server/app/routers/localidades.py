@@ -1,7 +1,7 @@
-"""Endpoints de localidades (base geografica oficial de Sao Paulo via IBGE).
+"""Endpoints de localidades (base geográfica oficial de São Paulo via IBGE).
 
-- GET /api/v1/localidades/sp -> lista os municipios de SP a partir da API
-  oficial de Localidades do IBGE (codigo da UF = 35). Falha de rede/HTTP e
+- GET /api/v1/localidades/sp -> lista os municípios de SP a partir da API
+  oficial de Localidades do IBGE (código da UF = 35). Falha de rede/HTTP é
   tratada (retorna 502 padronizado em PT-BR, sem 500 cru).
 
 Fonte: ver app/services/ibge.py
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/v1/localidades", tags=["localidades"])
 
 @router.get("/sp", response_model=list[MunicipioSPRead])
 def listar_municipios_sp() -> list[MunicipioSPRead]:
-    """Lista os municipios de Sao Paulo (UF 35) via API oficial do IBGE.
+    """Lista os municípios de São Paulo (UF 35) via API oficial do IBGE.
 
     Em caso de falha de rede/HTTP, retorna 502 padronizado (nunca 500 cru).
     """

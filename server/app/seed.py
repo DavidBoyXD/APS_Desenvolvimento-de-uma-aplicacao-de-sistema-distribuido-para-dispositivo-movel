@@ -1,38 +1,38 @@
-"""Populacao inicial (seed) do banco, idempotente - recorte geografico de SP.
+"""População inicial (seed) do banco, idempotente - recorte geográfico de SP.
 
-Cria as 5 regioes REAIS de Sao Paulo (todas uf='SP') com coordenadas
-geograficas corretas e, para cada uma, uma medicao-semente de transporte
-publico claramente rotulada como EXEMPLO (o valor real vem via
+Cria as 5 regiões REAIS de São Paulo (todas uf='SP') com coordenadas
+geográficas corretas e, para cada uma, uma medição-semente de transporte
+público claramente rotulada como EXEMPLO (o valor real vem via
 POST /api/v1/regioes/{id}/atualizar-transporte, que consulta a SPTrans).
 
-Transporte publico (unico tipo de medicao)
+Transporte público (único tipo de medição)
 -------------------------------------------
-A fonte oficial e a SPTrans Olho Vivo (frota de onibus de Sao Paulo em tempo
-real). A medicao-semente abaixo e um valor inicial de EXEMPLO (nao tempo real),
-substituivel por dados reais via POST /api/v1/regioes/{id}/atualizar-transporte.
+A fonte oficial é a SPTrans Olho Vivo (frota de ônibus de São Paulo em tempo
+real). A medição-semente abaixo é um valor inicial de EXEMPLO (não tempo real),
+substituível por dados reais via POST /api/v1/regioes/{id}/atualizar-transporte.
 Fonte real: https://www.sptrans.com.br/desenvolvedores/ - ver app/services/sptrans.py.
-Semear ao menos uma medicao e um alerta de transporte_publico garante dado
-inicial para os relatorios e para a UI do app movel.
+Semear ao menos uma medição e um alerta de transporte_publico garante dado
+inicial para os relatórios e para a UI do app móvel.
 
-Base geografica (recorte Sao Paulo)
+Base geográfica (recorte São Paulo)
 -----------------------------------
-Todas as regioes pertencem ao municipio de Sao Paulo/SP (codigo IBGE 3550308,
-UF 35), validavel na API oficial de Localidades do IBGE
+Todas as regiões pertencem ao município de São Paulo/SP (código IBGE 3550308,
+UF 35), validável na API oficial de Localidades do IBGE
 (https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios) -
 ver app/services/ibge.py.
 
 As coordenadas abaixo correspondem a distritos/subprefeituras reais da capital.
-O IBGE NAO fornece lat/lon de distritos neste endpoint; por isso as coordenadas
-vem de fontes oficiais da Prefeitura de Sao Paulo (GeoSampa/PMSP) e de pontos
-geograficos reconhecidos de cada distrito. NAO ha coordenadas inventadas:
+O IBGE NÃO fornece lat/lon de distritos neste endpoint; por isso as coordenadas
+vêm de fontes oficiais da Prefeitura de São Paulo (GeoSampa/PMSP) e de pontos
+geográficos reconhecidos de cada distrito. NÃO há coordenadas inventadas:
 
-- Se (Centro) ..... -23.550, -46.633  (marco zero da cidade, Praca da Se)
+- Sé (Centro) ..... -23.550, -46.633  (marco zero da cidade, Praça da Sé)
 - Pinheiros ........ -23.567, -46.700
 - Mooca ............ -23.560, -46.600
 - Santana .......... -23.500, -46.630
 - Itaquera ......... -23.540, -46.460
 
-Idempotencia: se ja houver regioes cadastradas, o seed nao faz nada.
+Idempotência: se já houver regiões cadastradas, o seed não faz nada.
 """
 
 from sqlalchemy import select
@@ -40,8 +40,8 @@ from sqlalchemy.orm import Session
 
 from .models import Alerta, Medicao, Regiao, TipoMedicao
 
-# Fonte da medicao-semente de transporte publico: valor inicial de EXEMPLO (nao
-# tempo real), substituivel por dados reais da SPTrans Olho Vivo via
+# Fonte da medição-semente de transporte público: valor inicial de EXEMPLO (não
+# tempo real), substituível por dados reais da SPTrans Olho Vivo via
 # POST /api/v1/regioes/{id}/atualizar-transporte.
 FONTE_TRANSPORTE_EXEMPLO = (
     "Valor inicial de EXEMPLO (nao tempo real); atualizavel com dados reais da "
@@ -49,8 +49,8 @@ FONTE_TRANSPORTE_EXEMPLO = (
     "(https://www.sptrans.com.br/desenvolvedores/)"
 )
 
-# Regioes reais de Sao Paulo/SP (distritos da capital) com coordenadas reais.
-# Nome do municipio validavel pelo IBGE (codigo 35 / 3550308); coordenadas dos
+# Regiões reais de São Paulo/SP (distritos da capital) com coordenadas reais.
+# Nome do município validável pelo IBGE (código 35 / 3550308); coordenadas dos
 # distritos oriundas de fontes oficiais da PMSP (GeoSampa) - ver docstring.
 REGIOES_SEED = [
     {"nome": "Se", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.550, "longitude": -46.633},
@@ -62,7 +62,7 @@ REGIOES_SEED = [
 
 
 def _medicoes_para_regiao(regiao: Regiao) -> list[Medicao]:
-    """Gera a medicao-semente de transporte publico (EXEMPLO) para uma regiao."""
+    """Gera a medição-semente de transporte público (EXEMPLO) para uma região."""
     return [
         Medicao(
             regiao=regiao,
@@ -76,7 +76,7 @@ def _medicoes_para_regiao(regiao: Regiao) -> list[Medicao]:
 
 
 def _alertas_para_regiao(regiao: Regiao) -> list[Alerta]:
-    """Gera a regra de alerta-semente de transporte publico para uma regiao."""
+    """Gera a regra de alerta-semente de transporte público para uma região."""
     return [
         Alerta(
             regiao=regiao,

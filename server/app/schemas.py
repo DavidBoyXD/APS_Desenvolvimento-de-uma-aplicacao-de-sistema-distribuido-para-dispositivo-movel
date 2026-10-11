@@ -1,13 +1,13 @@
-"""Schemas Pydantic v2 (validacao e serializacao da API).
+"""Schemas Pydantic v2 (validação e serialização da API).
 
-Separam o contrato HTTP (entrada/saida JSON) dos modelos ORM. Os schemas de
-leitura usam ``from_attributes=True`` para serem construidos diretamente a
+Separam o contrato HTTP (entrada/saída JSON) dos modelos ORM. Os schemas de
+leitura usam ``from_attributes=True`` para serem construídos diretamente a
 partir dos objetos SQLAlchemy.
 
 Inclui o schema de erro padronizado ``ErroResposta``, usado por TODOS os
-handlers de excecao (ver errors.py) para dar respostas consistentes em PT-BR.
+handlers de exceção (ver errors.py) para dar respostas consistentes em PT-BR.
 
-Referencia Pydantic v2: https://docs.pydantic.dev/latest/
+Referência Pydantic v2: https://docs.pydantic.dev/latest/
 """
 
 from datetime import datetime
@@ -22,7 +22,7 @@ from .models import TipoMedicao
 # Erro padronizado
 # ---------------------------------------------------------------------------
 class ErroResposta(BaseModel):
-    """Formato unico de erro retornado pela API (mensagens em PT-BR)."""
+    """Formato único de erro retornado pela API (mensagens em PT-BR)."""
 
     codigo: int = Field(..., description="Codigo HTTP do erro.")
     mensagem: str = Field(..., description="Mensagem legivel em portugues.")
@@ -32,7 +32,7 @@ class ErroResposta(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Regiao
+# Região
 # ---------------------------------------------------------------------------
 class RegiaoBase(BaseModel):
     nome: str = Field(..., min_length=1, max_length=120)
@@ -56,7 +56,7 @@ class RegiaoRead(RegiaoBase):
 # Localidade (IBGE)
 # ---------------------------------------------------------------------------
 class MunicipioSPRead(BaseModel):
-    """Municipio de Sao Paulo lido da API oficial de Localidades do IBGE."""
+    """Município de São Paulo lido da API oficial de Localidades do IBGE."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -66,7 +66,7 @@ class MunicipioSPRead(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Medicao
+# Medição
 # ---------------------------------------------------------------------------
 class MedicaoBase(BaseModel):
     tipo: TipoMedicao
@@ -112,7 +112,7 @@ class AlertaRead(AlertaBase):
 
 
 class AlertaDisparado(BaseModel):
-    """Resultado da avaliacao de um alerta contra uma medicao recente."""
+    """Resultado da avaliação de um alerta contra uma medição recente."""
 
     alerta_id: int
     regiao_id: int
@@ -125,10 +125,10 @@ class AlertaDisparado(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Relatorio
+# Relatório
 # ---------------------------------------------------------------------------
 class ResumoParametro(BaseModel):
-    """Agregacoes de um parametro dentro de um tipo."""
+    """Agregações de um parâmetro dentro de um tipo."""
 
     tipo: TipoMedicao
     parametro: str
@@ -142,7 +142,7 @@ class ResumoParametro(BaseModel):
 
 
 class RelatorioRegiao(BaseModel):
-    """Relatorio agregado de uma regiao (cobre 'relatorios adicionais')."""
+    """Relatório agregado de uma região (cobre 'relatórios adicionais')."""
 
     regiao: RegiaoRead
     total_medicoes: int

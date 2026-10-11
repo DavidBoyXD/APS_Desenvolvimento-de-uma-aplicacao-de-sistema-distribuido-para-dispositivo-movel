@@ -1,9 +1,9 @@
-"""Endpoints de regioes (pontos do mapa no app movel).
+"""Endpoints de regiões (pontos do mapa no app móvel).
 
-- GET /api/v1/regioes           -> lista todas as regioes (alimenta o mapa).
-- GET /api/v1/regioes/{id}      -> detalha uma regiao (404 se nao existir).
+- GET /api/v1/regioes           -> lista todas as regiões (alimenta o mapa).
+- GET /api/v1/regioes/{id}      -> detalha uma região (404 se não existir).
 
-Referencia FastAPI (path params/erros): https://fastapi.tiangolo.com/
+Referência FastAPI (path params/erros): https://fastapi.tiangolo.com/
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/v1/regioes", tags=["regioes"])
 
 
 def obter_regiao_ou_404(db: Session, regiao_id: int) -> Regiao:
-    """Busca a regiao ou levanta 404 com mensagem em PT-BR."""
+    """Busca a região ou levanta 404 com mensagem em PT-BR."""
     regiao = db.get(Regiao, regiao_id)
     if regiao is None:
         raise HTTPException(
@@ -29,11 +29,11 @@ def obter_regiao_ou_404(db: Session, regiao_id: int) -> Regiao:
 
 @router.get("", response_model=list[RegiaoRead])
 def listar_regioes(db: Session = Depends(get_db)) -> list[Regiao]:
-    """Lista todas as regioes monitoradas."""
+    """Lista todas as regiões monitoradas."""
     return list(db.execute(select(Regiao)).scalars().all())
 
 
 @router.get("/{regiao_id}", response_model=RegiaoRead)
 def obter_regiao(regiao_id: int, db: Session = Depends(get_db)) -> Regiao:
-    """Retorna uma regiao pelo id (404 se nao existir)."""
+    """Retorna uma região pelo id (404 se não existir)."""
     return obter_regiao_ou_404(db, regiao_id)

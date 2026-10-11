@@ -1,12 +1,12 @@
-"""Endpoints de medicoes de transporte publico.
+"""Endpoints de medições de transporte público.
 
 - GET  /api/v1/medicoes                    -> lista com filtros (regiao_id, tipo).
-- GET  /api/v1/regioes/{id}/medicoes       -> medicoes de uma regiao.
-- POST /api/v1/regioes/{id}/atualizar-transporte -> busca a frota de onibus na
+- GET  /api/v1/regioes/{id}/medicoes       -> medições de uma região.
+- POST /api/v1/regioes/{id}/atualizar-transporte -> busca a frota de ônibus na
   SPTrans Olho Vivo (fonte OFICIAL da Prefeitura de SP, tempo real) quando o
-  token SPTRANS_TOKEN esta definido; sem o token, usa um fallback de exemplo
-  claramente rotulado (nao tempo real). Persiste medicoes do tipo
-  transporte_publico. Falha de rede tambem vira 502 em PT-BR.
+  token SPTRANS_TOKEN está definido; sem o token, usa um fallback de exemplo
+  claramente rotulado (não tempo real). Persiste medições do tipo
+  transporte_publico. Falha de rede também vira 502 em PT-BR.
 """
 
 from datetime import datetime, timezone
@@ -37,7 +37,7 @@ def listar_medicoes(
     tipo: Optional[TipoMedicao] = Query(default=None),
     db: Session = Depends(get_db),
 ) -> list[Medicao]:
-    """Lista medicoes, com filtros opcionais por regiao e por tipo."""
+    """Lista medições, com filtros opcionais por região e por tipo."""
     stmt = select(Medicao)
     if regiao_id is not None:
         stmt = stmt.where(Medicao.regiao_id == regiao_id)
@@ -51,7 +51,7 @@ def listar_medicoes(
 def listar_medicoes_da_regiao(
     regiao_id: int, db: Session = Depends(get_db)
 ) -> list[Medicao]:
-    """Lista as medicoes de uma regiao especifica (404 se nao existir)."""
+    """Lista as medições de uma região específica (404 se não existir)."""
     obter_regiao_ou_404(db, regiao_id)
     stmt = (
         select(Medicao)
@@ -67,25 +67,25 @@ def listar_medicoes_da_regiao(
 def atualizar_transporte(
     regiao_id: int, db: Session = Depends(get_db)
 ) -> list[Medicao]:
-    """Busca a frota de onibus na SPTrans Olho Vivo e persiste as metricas.
+    """Busca a frota de ônibus na SPTrans Olho Vivo e persiste as métricas.
 
-    Com o token ``SPTRANS_TOKEN`` definido, deriva metricas REAIS (tempo real)
-    da frota (linhas monitoradas e veiculos em operacao). Sem o token, usa um
-    fallback de EXEMPLO claramente rotulado (nao tempo real), de modo que o app
+    Com o token ``SPTRANS_TOKEN`` definido, deriva métricas REAIS (tempo real)
+    da frota (linhas monitoradas e veículos em operação). Sem o token, usa um
+    fallback de EXEMPLO claramente rotulado (não tempo real), de modo que o app
     funcione de ponta a ponta sem token. Em caso de falha de rede/HTTP com
     token, retorna 502 padronizado (nunca 500 cru).
 
-    SEMANTICA (metrica por CIDADE, nao por regiao): o endpoint recebe
+    SEMÂNTICA (métrica por CIDADE, não por região): o endpoint recebe
     ``regiao_id`` por uniformidade com os demais atualizar-*, mas o /Posicao da
-    SPTrans retorna a frota de Sao Paulo como um todo e ignora o lat/lon da
-    regiao. Portanto as metricas (linhas monitoradas / veiculos em operacao) sao
-    da cidade inteira e, chamadas no mesmo instante, serao identicas para todas
-    as regioes de SP. Nao sao dados geofiltrados por regiao.
+    SPTrans retorna a frota de São Paulo como um todo e ignora o lat/lon da
+    região. Portanto as métricas (linhas monitoradas / veículos em operação) são
+    da cidade inteira e, chamadas no mesmo instante, serão idênticas para todas
+    as regiões de SP. Não são dados geofiltrados por região.
     """
     regiao = obter_regiao_ou_404(db, regiao_id)
 
     # A fonte reflete a origem: oficial/tempo real (com token) ou exemplo
-    # (fallback sem token). Decidida pela presenca de SPTRANS_TOKEN.
+    # (fallback sem token). Decidida pela presença de SPTRANS_TOKEN.
     fonte = FONTE_TRANSPORTE if obter_token() is not None else FONTE_TRANSPORTE_FALLBACK
 
     try:

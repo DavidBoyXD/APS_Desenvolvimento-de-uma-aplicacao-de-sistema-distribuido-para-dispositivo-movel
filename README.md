@@ -210,6 +210,14 @@ já estão no `package.json` e são instaladas com o `npm install`. Caso precise
 reinstalá-las de forma compatível com o SDK, use o gerenciador do Expo:
 `cd mobile && npx expo install react-native-chart-kit react-native-svg`.
 
+### Como gerar o APK (Android)
+
+Para instalar o aplicativo em um celular Android sem usar o Expo Go, você pode
+gerar um arquivo `.apk` com o **EAS Build** (serviço de build na nuvem do Expo).
+O passo a passo completo e numerado (pré-requisitos, autenticação com a sua conta
+Expo, inicialização do projeto, geração e instalação do APK) está em
+[mobile/BUILD_APK.md](mobile/BUILD_APK.md).
+
 ## Configuração do token da SPTrans (Olho Vivo)
 
 O transporte público em **tempo real** usa a API Olho Vivo da **SPTrans** (fonte

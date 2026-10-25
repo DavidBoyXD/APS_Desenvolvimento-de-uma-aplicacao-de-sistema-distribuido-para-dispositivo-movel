@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Monitor Ambiental Urbano",
-    "slug": "monitor-ambiental-urbano",
+    "name": "Transporte Publico SP",
+    "slug": "transporte-publico-sp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,6 +10,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "br.unip.aps.transportepublicosp",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -20,6 +22,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "COLOQUE_AQUI_APOS_eas_init"
+      }
     }
   }
 }

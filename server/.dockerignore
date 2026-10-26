@@ -1,0 +1,25 @@
+# Exclui artefatos locais do contexto de build da imagem Docker.
+# Mantem a imagem enxuta e evita copiar banco/venv/caches.
+
+# Ambiente virtual local
+.venv/
+
+# Banco SQLite gerado em runtime (sera recriado no startup pelo seed)
+data/
+*.db
+*.sqlite3
+
+# Caches do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Testes (nao necessarios na imagem de producao)
+tests/
+conftest.py
+
+# Diversos
+*.log
+.DS_Store

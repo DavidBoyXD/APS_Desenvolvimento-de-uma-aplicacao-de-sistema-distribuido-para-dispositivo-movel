@@ -1,0 +1,30 @@
+# ===========================================================================
+# Blueprint do Render (Infrastructure as Code) para o back-end FastAPI.
+#
+# Este arquivo descreve um Web Service Docker construido a partir do diretorio
+# server/ do repositorio. Ao usar o fluxo "Blueprint" do Render apontando para
+# este arquivo, o servico e criado ja com runtime Docker, plano gratuito e
+# health check em /health.
+#
+# Observacoes importantes:
+# - rootDir: server -> o Render trata server/ como raiz do servico; assim os
+#   caminhos Docker abaixo ("./Dockerfile" e ".") resolvem dentro de server/.
+# - A porta e injetada pelo Render na variavel de ambiente PORT; o CMD do
+#   Dockerfile ja escuta em 0.0.0.0:${PORT:-8000}.
+# - Disco efemero: no plano gratuito o SQLite em server/data/app.db e recriado
+#   a cada deploy/restart; o seed idempotente roda no startup. Para persistencia
+#   real, defina DATABASE_URL apontando para um PostgreSQL (ver server/DEPLOY.md).
+#
+# Referencia do schema: https://render.com/docs/blueprint-spec
+# ===========================================================================
+
+services:
+  - type: web
+    name: aps-transporte-sp-api
+    runtime: docker
+    plan: free
+    rootDir: server
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: commit

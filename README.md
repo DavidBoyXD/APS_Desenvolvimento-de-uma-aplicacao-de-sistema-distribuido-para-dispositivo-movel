@@ -158,6 +158,18 @@ cd server
 Os testes não dependem de rede nem de token real: as chamadas externas e a
 autenticação da SPTrans são mockadas (monkeypatch e `httpx.MockTransport`).
 
+## Como hospedar o back-end
+
+Para que o APK instalado em um celular funcione **fora da rede local** (inclusive
+com dados móveis), o servidor FastAPI precisa estar publicado na internet, com um
+endereço público HTTPS. O repositório já traz o necessário em `server/`
+(`Dockerfile`, `.dockerignore` e `render.yaml`), com porta dinâmica via variável
+de ambiente `PORT` e health check em `/health`.
+
+O passo a passo completo para publicar o servidor em um serviço gratuito (ex.:
+Render, via Docker ou nativo Python) e, em seguida, gerar o APK apontando para a
+URL pública está em [server/DEPLOY.md](server/DEPLOY.md).
+
 ## Como rodar o APP (cliente móvel Expo / React Native)
 
 Em outro terminal, a partir do diretório raiz do repositório:

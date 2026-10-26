@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -81,6 +81,13 @@ def atualizar_transporte(
     região. Portanto as métricas (linhas monitoradas / veículos em operação) são
     da cidade inteira e, chamadas no mesmo instante, serão idênticas para todas
     as regiões de SP. Não são dados geofiltrados por região.
+
+    ATUALIZAÇÃO SEM ACÚMULO: cada chamada SUBSTITUI as medições de
+    ``transporte_publico`` da região em vez de empilhá-las. Antes de inserir as
+    novas leituras, as medições desse tipo da região são apagadas, mantendo no
+    máximo uma medição vigente por parâmetro. Assim, repetir a atualização não
+    multiplica/acumula os valores, e os relatórios/alertas (que agregam por
+    tipo/parâmetro) passam a refletir sempre o valor atual.
     """
     regiao = obter_regiao_ou_404(db, regiao_id)
 
@@ -95,6 +102,16 @@ def atualizar_transporte(
             status_code=502,
             detail=f"Nao foi possivel obter dados de transporte publico: {exc}",
         ) from exc
+
+    # Apaga as medicoes de transporte publico anteriores desta regiao para que
+    # a atualizacao SUBSTITUA os valores em vez de acumula-los. So removemos
+    # apos a busca ser bem-sucedida (acima), evitando apagar dados vigentes
+    # quando a fonte falha (502) e preservando o estado anterior nesse caso.
+    db.execute(
+        delete(Medicao)
+        .where(Medicao.regiao_id == regiao.id)
+        .where(Medicao.tipo == TipoMedicao.transporte_publico)
+    )
 
     agora = datetime.now(timezone.utc)
     novas: list[Medicao] = []

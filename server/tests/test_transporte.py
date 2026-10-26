@@ -99,6 +99,51 @@ def test_atualizar_transporte_fallback_sem_token(client, monkeypatch) -> None:
     assert dados[0]["fonte"] == FONTE_FALLBACK
 
 
+def test_atualizar_transporte_nao_acumula(client, monkeypatch) -> None:
+    """Chamar atualizar-transporte DUAS vezes substitui, nao acumula.
+
+    Cada atualizacao do tipo transporte_publico deve SUBSTITUIR as medicoes
+    anteriores da regiao (mesmo tipo), de modo que a contagem apos a 2a chamada
+    seja igual a da 1a (e nao o dobro). Evita a multiplicacao de valores
+    observada ao atualizar repetidamente.
+    """
+    monkeypatch.setenv(ENV_TOKEN, "token-de-teste-fake")
+
+    def fake_buscar(latitude, longitude, client=None):
+        return [
+            LeituraTransporte("linhas_monitoradas", 42.0, "linhas"),
+            LeituraTransporte("veiculos_em_operacao", 318.0, "veiculos"),
+        ]
+
+    monkeypatch.setattr(
+        "app.routers.medicoes.buscar_transporte_publico", fake_buscar
+    )
+
+    regiao_id = client.get("/api/v1/regioes").json()[0]["id"]
+
+    primeira = client.post(f"/api/v1/regioes/{regiao_id}/atualizar-transporte")
+    assert primeira.status_code == 200
+    quantidade_primeira = len(primeira.json())
+
+    segunda = client.post(f"/api/v1/regioes/{regiao_id}/atualizar-transporte")
+    assert segunda.status_code == 200
+    # A resposta de cada chamada traz apenas as medicoes recem-inseridas.
+    assert len(segunda.json()) == quantidade_primeira
+
+    # A regiao deve manter apenas a ultima leva de transporte_publico, nao a
+    # soma das duas chamadas (sem acumulo/multiplicacao).
+    medicoes = client.get(
+        "/api/v1/regioes/%d/medicoes" % regiao_id
+    ).json()
+    transporte = [
+        m for m in medicoes if m["tipo"] == "transporte_publico"
+    ]
+    assert len(transporte) == quantidade_primeira
+    # No maximo uma medicao vigente por parametro apos a substituicao.
+    parametros = [m["parametro"] for m in transporte]
+    assert len(parametros) == len(set(parametros))
+
+
 def test_atualizar_transporte_falha_rede_tratada(client, monkeypatch) -> None:
     """Falha de rede vira 502 padronizado (nunca 500 cru)."""
     monkeypatch.setenv(ENV_TOKEN, "token-de-teste-fake")

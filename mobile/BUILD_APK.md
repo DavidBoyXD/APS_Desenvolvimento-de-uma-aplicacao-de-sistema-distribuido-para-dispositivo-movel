@@ -105,6 +105,10 @@ no momento em que você gera o build.
   ```
 
   Há um modelo em [`.env.example`](.env.example) mostrando essa variável.
+- **Como hospedar o servidor:** o passo a passo completo para publicar o back-end
+  FastAPI em um serviço gratuito (e obter essa URL pública HTTPS) está em
+  [`../server/DEPLOY.md`](../server/DEPLOY.md). Publique o servidor **antes** de
+  rodar o build e use a URL obtida em `EXPO_PUBLIC_API_BASE_URL`.
 - **Onde:** terminal, na pasta `mobile/`.
 - **Quando:** imediatamente antes do build (Passo 6), sempre que quiser apontar o
   APK para um servidor remoto. Se for usar só no emulador, pode pular este passo.

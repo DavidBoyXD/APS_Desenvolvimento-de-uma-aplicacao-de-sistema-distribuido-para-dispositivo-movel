@@ -68,11 +68,16 @@ eas login
 eas init
 ```
 
-- **O que faz:** cria (ou vincula) o projeto na sua conta Expo e **preenche
-  automaticamente** o campo `extra.eas.projectId` no arquivo `mobile/app.json`.
-  No repositório esse campo vem com o placeholder `COLOQUE_AQUI_APOS_eas_init`,
-  que será substituído pelo identificador real após este comando. Você **não**
-  precisa digitar nenhum `projectId` à mão.
+- **O que faz:** cria (ou vincula) o projeto na sua conta Expo e **adiciona
+  automaticamente** o campo `extra.eas.projectId` no arquivo `mobile/app.json`,
+  já com o identificador real (um UUID). Você **não** precisa digitar nenhum
+  `projectId` à mão, e o repositório **não** traz esse campo preenchido de
+  propósito: o `eas init` é quem o insere.
+- **Importante:** se você vir o erro `Invalid UUID appId` ou a mensagem
+  `Project already linked (ID: ...)` com um valor que **não** seja um UUID, é
+  porque existe um `extra.eas.projectId` invalido no `app.json`. Remova o bloco
+  `extra` do `app.json` (conforme a mensagem do proprio EAS sugere) e rode
+  `eas init` novamente.
 - **Onde:** terminal, na pasta `mobile/`.
 - **Quando:** uma vez por projeto/conta (depois do `eas login`).
 

@@ -22,11 +22,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "COLOQUE_AQUI_APOS_eas_init"
-      }
     }
   }
 }

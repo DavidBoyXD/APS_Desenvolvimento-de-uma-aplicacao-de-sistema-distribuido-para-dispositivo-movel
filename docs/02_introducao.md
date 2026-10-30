@@ -13,15 +13,14 @@ rápido pelo cidadão comum, especialmente em mobilidade.
 Este trabalho propõe o **Monitor de Transporte Público** com recorte em São Paulo,
 um aplicativo móvel que reúne informações da frota de ônibus por região, apoiado
 por um servidor central que integra os dados da fonte oficial e organiza consultas,
-relatórios e alertas. A ideia é oferecer, em uma única tela inicial (um mapa
-enquadrado na cidade de São Paulo), o ponto de partida para explorar cada região em
+relatórios e alertas. A ideia é oferecer, em uma única tela inicial (uma lista das
+regiões monitoradas em São Paulo), o ponto de partida para explorar cada região em
 detalhe.
 
 O fluxo básico de uso é:
 
-1. O usuário abre o app e vê um **mapa** enquadrado em São Paulo com as regiões
-   monitoradas (marcadores por latitude/longitude). Uma lista clicável acompanha o
-   mapa como alternativa.
+1. O usuário abre o app e vê a **lista** das regiões monitoradas em São Paulo. Cada
+   item traz nome, cidade/UF e as coordenadas (latitude/longitude) da região.
 2. Ao escolher uma região, ele vê as **medições** de transporte público e pode
    acionar a atualização com dados da fonte (SPTrans Olho Vivo).
 3. A partir da região, ele acessa um **relatório** com agregações (média, mínimo,

@@ -59,8 +59,8 @@ desenvolvimento (ano de 2026).
   Aplicado em `mobile/App.tsx` e `mobile/src/navigation.ts`.
   - Native Stack Navigator:
     [https://reactnavigation.org/docs/native-stack-navigator](https://reactnavigation.org/docs/native-stack-navigator)
-- **react-native-maps** - mapa nativo (MapView e Marker), enquadrado em São Paulo.
-  [https://github.com/react-native-maps/react-native-maps](https://github.com/react-native-maps/react-native-maps).
+- **FlatList (React Native)** - lista performática usada na tela inicial.
+  [https://reactnative.dev/docs/flatlist](https://reactnative.dev/docs/flatlist).
   Aplicado em `mobile/src/screens/MapaScreen.tsx`.
 - **react-native-chart-kit** - biblioteca de gráficos usada no relatório.
   npm: [https://www.npmjs.com/package/react-native-chart-kit](https://www.npmjs.com/package/react-native-chart-kit).

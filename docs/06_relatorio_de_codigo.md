@@ -13,7 +13,6 @@ código; destaca os núcleos. Os caminhos apontam para o código real do reposit
 | **IBGE Localidades** (OFICIAL, UF 35) | Base geográfica de SP | `server/app/services/ibge.py` | `mapear_payload`, `buscar_municipios_sp` | `GET /api/v1/localidades/sp` |
 | **PMSP / GeoSampa** | Coordenadas dos distritos | `server/app/seed.py` | `REGIOES_SEED` (citação na docstring) | seed de startup |
 | **httpx** | Cliente HTTP do servidor | `server/app/services/*` | chamadas `client.get/post` | serviços sptrans e ibge |
-| **react-native-maps** | Mapa de SP | `mobile/src/screens/MapaScreen.tsx` | `MapView`/`Marker`, `REGIAO_INICIAL` | tela Mapa |
 | **react-native-chart-kit** | Gráfico de barras | `mobile/src/screens/RelatoriosScreen.tsx` | `GraficoMedias` (`BarChart`) | tela Relatórios |
 | **Fetch API** | Cliente HTTP do app | `mobile/src/api/client.ts` | `requisitar`, `atualizarTransporte` etc. | todas as telas |
 
@@ -222,7 +221,7 @@ def obter_regiao_ou_404(db, regiao_id):
 
 Pontos-chave:
 
-- `GET /api/v1/regioes` alimenta o mapa de SP do cliente (lista com lat/lon).
+- `GET /api/v1/regioes` alimenta a lista de regiões de SP do cliente (com lat/lon).
 - O helper é reutilizado por medições, relatórios e alertas, padronizando a
   resposta 404 em PT-BR.
 
@@ -288,27 +287,21 @@ Pontos-chave:
   `atualizarTransporte`, `getRelatorio`, `getAlertas`, etc.). Usa a
   [Fetch API](https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API).
 
-### 6.2.2 Mapa de São Paulo com fallback - `mobile/src/screens/MapaScreen.tsx`
+### 6.2.2 Lista de regiões de São Paulo - `mobile/src/screens/MapaScreen.tsx`
 
-O react-native-maps é importado condicionalmente (não existe build web) e o mapa é
-enquadrado na cidade de São Paulo:
-
-```tsx
-const REGIAO_INICIAL = {
-  latitude: -23.55,
-  longitude: -46.63,
-  latitudeDelta: 0.3,
-  longitudeDelta: 0.3,
-};
-```
+A tela inicial carrega as regiões de São Paulo da API (`getRegioes`) e as exibe em
+uma **lista clicável** ("Regiões monitoradas em São Paulo"), em que cada item abre
+o detalhe da região. A tela não depende de nenhum módulo nativo de mapa.
 
 Pontos-chave:
 
-- Import condicional evita quebrar a web e mantém a checagem de tipos verde.
-- Há sempre uma **lista clicável** ("Regiões monitoradas em São Paulo") como
-  alternativa ao mapa (útil quando o mapa aparece em cinza no Android sem Google
-  Maps API key). Referência:
-  [react-native-maps](https://github.com/react-native-maps/react-native-maps).
+- A tela trata os três estados de carregamento de dados: carregando, erro (com
+  opção de tentar novamente) e vazio (nenhuma região cadastrada).
+- O conteúdo é a mesma lista em qualquer plataforma (Android, iOS ou web), sem
+  chave do Google Maps, garantindo que a tela sempre abra.
+- Cada card mostra nome, cidade/UF e as coordenadas (latitude/longitude) da
+  região, e o toque navega para o Detalhe. Referência:
+  [FlatList](https://reactnative.dev/docs/flatlist).
 
 ### 6.2.3 Detalhe da região - `mobile/src/screens/DetalheScreen.tsx`
 

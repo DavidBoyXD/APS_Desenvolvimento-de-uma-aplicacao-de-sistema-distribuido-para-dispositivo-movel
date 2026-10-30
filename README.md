@@ -17,14 +17,14 @@ sistema se apoia em duas fontes OFICIAIS:
 - **Base geográfica** (município/UF), via **API de Localidades do IBGE** (código
   da UF 35 = São Paulo).
 
-A consulta é feita por região da capital (distritos reais de São Paulo), ligada a
-um mapa, e o sistema oferece relatórios agregados, alertas por limiar e tratamento
-de erros padronizado em Português-BR.
+A consulta é feita por região da capital (distritos reais de São Paulo),
+apresentada em uma lista de regiões, e o sistema oferece relatórios agregados,
+alertas por limiar e tratamento de erros padronizado em Português-BR.
 
 O trabalho é composto por dois programas que se comunicam pela rede, mais um banco
 de dados, caracterizando o sistema distribuído:
 
-- Cliente móvel (React Native / Expo) que exibe o mapa de SP, as regiões e as
+- Cliente móvel (React Native / Expo) que exibe a lista de regiões de SP e as
   medições.
 - Servidor de API REST (Python / FastAPI) que expõe os dados e a lógica e consome
   as fontes externas de SP.
@@ -36,8 +36,9 @@ de dados, caracterizando o sistema distribuído:
 +---------------------------+        HTTP / REST (JSON)        +---------------------------+
 |  Cliente movel            |  <=============================> |  Servidor de API REST     |
 |  React Native / Expo      |     GET/POST /api/v1/...          |  FastAPI (Python)         |
-|  (mapa de SP, detalhe,    |                                  |  routers + servicos       |
-|   relatorios, alertas)    |                                  |                           |
+|  (lista de regioes de SP, |                                  |  routers + servicos       |
+|   detalhe, relatorios,    |                                  |                           |
+|   alertas)                |                                  |                           |
 +---------------------------+                                  +------------+--------------+
                                                                             |
                                                           SQLAlchemy (ORM)  |
@@ -83,7 +84,7 @@ servidor retorna **HTTP 502** padronizado em Português-BR (schema `ErroResposta
 com `codigo`, `mensagem` e `detalhe`, nunca um erro 500 cru).
 
 - `GET /health` - verificação de saúde (`{"status":"ok"}`).
-- `GET /api/v1/regioes` - lista de regiões de SP (para o mapa, com lat/lon).
+- `GET /api/v1/regioes` - lista de regiões de SP (com lat/lon).
 - `GET /api/v1/regioes/{id}` - detalhe de uma região.
 - `GET /api/v1/medicoes` - lista de medições (filtros por região/tipo).
 - `GET /api/v1/regioes/{id}/medicoes` - medições de uma região.
@@ -142,7 +143,7 @@ Notas:
 - Após subir, acesse:
   - `http://localhost:8000/docs` (Swagger, documentação interativa da API).
   - `http://localhost:8000/health` (deve responder `{"status":"ok"}`).
-  - `http://localhost:8000/api/v1/regioes` (lista de regiões de SP para o mapa).
+  - `http://localhost:8000/api/v1/regioes` (lista de regiões de SP).
   - `http://localhost:8000/api/v1/localidades/sp` (municípios de SP validados na
     API oficial do IBGE, código da UF 35).
 - O banco fica em `server/data/app.db` e é gerado em tempo de execução (não é

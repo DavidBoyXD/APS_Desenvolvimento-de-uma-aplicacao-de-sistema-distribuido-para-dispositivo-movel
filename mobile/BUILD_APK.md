@@ -169,59 +169,14 @@ relatórios e alertas vêm da API).
   do build (Passo 5). As instruções para subir o servidor estão no `README.md` da
   raiz do repositório.
 
-## Mapa (Google Maps no Android)
+## Tela inicial (lista de regiões)
 
-A tela inicial usa `react-native-maps`, que no Android precisa de uma **chave da
-API do Google Maps** para renderizar o mapa visual.
+A tela inicial do app é a **lista de regiões monitoradas em São Paulo**: uma
+lista clicável em que cada item leva ao detalhe da região (transporte público),
+com acesso rápido aos alertas pelo botão "Ver alertas".
 
-**O app ABRE mesmo sem a chave.** A tela foi protegida para não derrubar o
-aplicativo: se o mapa nativo não puder ser inicializado (chave ausente ou
-inválida), a tela cai automaticamente no **fallback de lista** de regiões (uma
-lista clicável que leva ao detalhe de cada região), e a navegação continua
-funcionando normalmente. Ou seja, a chave é **opcional** — ela só habilita o
-mapa visual; sem ela, você usa a lista.
-
-### Onde a chave fica configurada
-
-O `mobile/app.json` já traz a estrutura pronta, dentro de `expo.android`, com um
-**placeholder** (texto de exemplo, **não** é uma chave real):
-
-```json
-"android": {
-  "config": {
-    "googleMaps": {
-      "apiKey": "SUA_CHAVE_DO_GOOGLE_MAPS"
-    }
-  }
-}
-```
-
-Para habilitar o mapa visual, substitua o texto `SUA_CHAVE_DO_GOOGLE_MAPS` pela
-sua chave real **antes** de gerar o build (Passo 6). **Nunca** faça commit de uma
-chave real no repositório — troque apenas na sua cópia local.
-
-### Como obter a chave do Google Maps (passo a passo)
-
-1. Acesse o **Google Cloud Console** em
-   [https://console.cloud.google.com](https://console.cloud.google.com) e faça
-   login com uma conta Google.
-2. No topo, **crie um projeto** (ou selecione um existente). Dê um nome, por
-   exemplo `transporte-publico-sp`.
-3. No menu lateral, vá em **APIs e serviços > Biblioteca** ("APIs & Services >
-   Library").
-4. Procure por **"Maps SDK for Android"** e clique em **Ativar** ("Enable").
-   Esta é a API necessária para o mapa no Android.
-5. Vá em **APIs e serviços > Credenciais** ("Credentials") e clique em
-   **Criar credenciais > Chave de API** ("Create credentials > API key").
-6. Copie a chave gerada (uma sequência começando por `AIza...`).
-7. (Recomendado) Clique na chave para **restringi-la**: em "Restrições de
-   aplicativo", escolha **Apps Android** e informe o nome do pacote
-   (`br.unip.aps.transportepublicosp`) e a impressão digital SHA-1 do seu
-   certificado de assinatura; em "Restrições de API", limite à **Maps SDK for
-   Android**. Isso evita uso indevido da chave.
-8. Cole a chave no lugar de `SUA_CHAVE_DO_GOOGLE_MAPS` em `mobile/app.json`
-   (apenas na sua cópia local) e gere o APK novamente (Passo 6).
-
-> Se preferir não habilitar o mapa agora, **não precisa fazer nada**: deixe o
-> placeholder como está. O app continua compilando e abrindo normalmente, usando
-> a lista de regiões no lugar do mapa.
+O app **não depende de nenhum módulo nativo de mapa** nem de uma chave do Google
+Maps. Não há nada a configurar: o APK abre direto na lista de regiões, e a
+navegação (Detalhe, Relatórios e Alertas) funciona normalmente. Por isso o
+`mobile/app.json` **não** precisa de `expo.android.config.googleMaps` nem de
+qualquer chave de API de mapa.

@@ -125,17 +125,14 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:8000 npx expo start
 Descubra o IP da máquina com `ipconfig` (Windows) ou `ifconfig`/`ip addr`
 (Linux/macOS). O celular e o computador precisam estar na mesma rede Wi-Fi.
 
-### 7.4.2 Google Maps API key no Android (mapa de São Paulo)
+### 7.4.2 Tela inicial no Android (lista de regiões de São Paulo)
 
-No Android, o `MapView` do react-native-maps usa o Google Maps e pode exigir uma
-**Google Maps API key**; sem ela, o mapa pode aparecer em cinza. Para habilitar,
-obtenha uma chave no Google Cloud Console
-([console.cloud.google.com](https://console.cloud.google.com), habilitando o
-"Maps SDK for Android") e configure-a conforme a documentação do react-native-maps
-([github.com/react-native-maps/react-native-maps](https://github.com/react-native-maps/react-native-maps))
-e do Expo ([docs.expo.dev](https://docs.expo.dev)). Mesmo sem a chave, a **lista de
-regiões clicável** na tela do mapa (enquadrada em São Paulo) garante a navegação e
-a demonstração de todas as funcionalidades.
+A tela inicial do app é a **lista de regiões monitoradas em São Paulo**: uma
+lista clicável em que cada item abre o detalhe da região. O app **não depende de
+nenhum módulo nativo de mapa** nem de uma chave do Google Maps, portanto não há
+nada a configurar no Android para a tela inicial abrir. A lista garante a
+navegação e a demonstração de todas as funcionalidades (detalhe, relatórios e
+alertas).
 
 > Nota sobre o ambiente de desenvolvimento deste trabalho: não havia emulador
 > disponível no ambiente onde o código foi construído. Por isso, o cliente foi
@@ -146,11 +143,9 @@ a demonstração de todas as funcionalidades.
 
 Com o servidor no ar e o app aberto, percorra o fluxo:
 
-1. **Mapa e consulta por região.** A tela inicial ("Monitor Ambiental Urbano")
-   mostra o mapa enquadrado em São Paulo com marcadores nas regiões (Sé,
-   Pinheiros, Mooca, Santana, Itaquera) e uma lista clicável abaixo ("Regiões
-   monitoradas em São Paulo"). Toque em um marcador (callout) ou em um item da
-   lista para abrir o detalhe.
+1. **Lista e consulta por região.** A tela inicial mostra a lista clicável
+   "Regiões monitoradas em São Paulo" com as regiões (Sé, Pinheiros, Mooca,
+   Santana, Itaquera). Toque em um item da lista para abrir o detalhe.
 
 2. **Detalhe da região.** Veja as medições de **Transporte público (SPTrans)**,
    com valor, unidade, data/hora e a fonte de cada dado.

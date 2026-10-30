@@ -52,7 +52,7 @@ seu papel e se comunica por rede.
   (nome "Monitor Ambiental Urbano"), scripts em `mobile/package.json`.
 
 Justificativa: React Native/Expo entrega uma única base TypeScript para Android e
-iOS, ecossistema maduro (navegação, mapas, gráficos), execução em
+iOS, ecossistema maduro (navegação, listas, gráficos), execução em
 emulador/dispositivo com recarregamento rápido e boa integração com APIs REST via
 `fetch`. Isso maximiza o refinamento e a demonstrabilidade exigidos pela APS com
 esforço controlado.
@@ -66,16 +66,12 @@ esforço controlado.
   `mobile/src/navigation.ts` (tipos das rotas). Observação: adotou-se React
   Navigation (e **não** o Expo Router) para casar com o contrato do projeto; o
   código real importa de `@react-navigation/native-stack`.
-- **react-native-maps** (1.27.2) - componente de mapa nativo (MapView e Marker).
-  Referência:
-  [https://github.com/react-native-maps/react-native-maps](https://github.com/react-native-maps/react-native-maps).
-  Aplicado em: `mobile/src/screens/MapaScreen.tsx`, para posicionar as regiões de
-  São Paulo por latitude/longitude. O enquadramento inicial do mapa
-  (`REGIAO_INICIAL`) é centrado no centro de SP (latitude -23.55, longitude -46.63,
-  delta ~0.3), de modo a enquadrar a cidade. No Android, o MapView usa o Google
-  Maps e pode exigir uma **Google Maps API key** (sem ela o mapa pode aparecer em
-  cinza); por isso a tela também oferece uma lista clicável como alternativa.
-  Detalhes de configuração em `07_apresentacao_do_programa.md`.
+- **FlatList** (React Native) - lista performática usada na tela inicial.
+  Referência: [https://reactnative.dev/docs/flatlist](https://reactnative.dev/docs/flatlist).
+  Aplicado em: `mobile/src/screens/MapaScreen.tsx`, para exibir as regiões de São
+  Paulo em uma lista clicável (cada item mostra nome, cidade/UF e as coordenadas e
+  abre o Detalhe ao ser tocado). A tela inicial não depende de nenhum módulo nativo
+  de mapa nem de uma Google Maps API key, garantindo que o app sempre abra.
 - **react-native-screens** (4.26.2) e **react-native-safe-area-context** (5.7.0) -
   dependências nativas exigidas pelo React Navigation (telas nativas e áreas
   seguras). Aplicado em: `mobile/App.tsx` (envolvido por `SafeAreaProvider`).

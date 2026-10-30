@@ -16,7 +16,7 @@ O sistema é composto por três partes que se comunicam em rede, caracterizando 
 sistema distribuído:
 
 1. **Cliente móvel** (aplicativo React Native/Expo) que roda no dispositivo do
-   usuário e apresenta as informações, com o mapa enquadrado em São Paulo.
+   usuário e apresenta as informações, com a lista das regiões de São Paulo.
 2. **Servidor de aplicação** (API REST em FastAPI) que centraliza a lógica,
    integra as fontes externas e responde às consultas.
 3. **Banco de dados** (SQLite, com caminho documentado para PostgreSQL) que
@@ -24,9 +24,8 @@ sistema distribuído:
 
 Objetivos específicos, todos implementados no código do repositório:
 
-- Consultar informações **por região** de São Paulo, com as regiões posicionadas
-  em um mapa por latitude/longitude (requisito de "consulta por região ligada a um
-  mapa").
+- Consultar informações **por região** de São Paulo, com as regiões listadas e
+  identificadas por latitude/longitude (requisito de "consulta por região").
 - Obter dados de **transporte público** da fonte OFICIAL de SP, a **SPTrans Olho
   Vivo** ([https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/)),
   em tempo real quando há token, com fallback de exemplo quando não há token.
@@ -68,7 +67,7 @@ funções extras e relatórios adicionais. Esta aplicação, focada no transport
 público de São Paulo, atende a esses pontos:
 
 - **Núcleo da aplicação:** transporte público com a fonte OFICIAL da Prefeitura de
-  SP (SPTrans Olho Vivo), por região, ligada a um mapa enquadrado na capital.
+  SP (SPTrans Olho Vivo), por região, a partir de uma lista das regiões da capital.
 - **Funções extras:** relatórios agregados (com gráfico de barras) e sistema de
   alertas por limiar.
 - **Tratamento de erros:** handlers globais no servidor (respostas 502 e 404

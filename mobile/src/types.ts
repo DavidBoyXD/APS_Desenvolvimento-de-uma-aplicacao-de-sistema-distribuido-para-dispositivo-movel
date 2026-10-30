@@ -14,8 +14,8 @@ export type TipoMedicao = 'transporte_publico';
 export type CondicaoAlerta = '>' | '<';
 
 /**
- * Região urbana monitorada. As coordenadas latitude/longitude são usadas para
- * posicionar os marcadores no react-native-maps (MapaScreen).
+ * Região urbana monitorada. As coordenadas latitude/longitude são exibidas na
+ * lista de regiões (MapaScreen) e identificam cada local.
  * Espelha o schema Regiao da API.
  */
 export interface Regiao {

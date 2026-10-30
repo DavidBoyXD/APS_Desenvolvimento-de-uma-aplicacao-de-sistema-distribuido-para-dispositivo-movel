@@ -40,7 +40,7 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
 │   │   │   └── ibge.py             # IBGE Localidades (base geografica SP, UF 35)
 │   │   └── routers/
 │   │       ├── saude.py            # GET /health e /api/v1/saude
-│   │       ├── regioes.py          # GET regioes (mapa) + helper 404
+│   │       ├── regioes.py          # GET regioes (lista) + helper 404
 │   │       ├── localidades.py      # GET /api/v1/localidades/sp (IBGE)
 │   │       ├── medicoes.py         # listar/filtrar + atualizar-transporte
 │   │       ├── relatorios.py       # agregacoes por regiao
@@ -69,7 +69,7 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
         ├── api/
         │   └── client.ts           # cliente HTTP tipado (fetch) + atualizarTransporte()
         ├── screens/
-        │   ├── MapaScreen.tsx       # mapa enquadrado em SP
+        │   ├── MapaScreen.tsx       # lista de regioes de SP
         │   ├── DetalheScreen.tsx    # transporte publico + botao "Atualizar transporte"
         │   ├── RelatoriosScreen.tsx # grafico de barras + transporte_publico
         │   └── AlertasScreen.tsx
@@ -93,8 +93,8 @@ mantém o esquema aberto a extensões futuras sem alterar as tabelas.
 Entidades:
 
 - **Regiao** (tabela `regioes`): local monitorado em São Paulo. Campos: `id`,
-  `nome`, `cidade`, `uf`, `latitude`, `longitude`. As coordenadas alimentam os
-  marcadores do mapa no cliente.
+  `nome`, `cidade`, `uf`, `latitude`, `longitude`. As coordenadas são exibidas na
+  lista de regiões do cliente.
 - **Medicao** (tabela `medicoes`): um valor observado. Campos: `id`, `regiao_id`
   (FK), `tipo` (enum `transporte_publico`), `parametro` (string livre, ex.:
   `linhas_monitoradas`, `veiculos_em_operacao`, `linhas_exemplo`), `valor`
@@ -172,11 +172,10 @@ origem do dado.
   `ApiError` (mensagem PT-BR pronta para a UI), timeout via `AbortController` e as
   funções `getRegioes`, `getRegiao`, `getMedicoes`, **`atualizarTransporte`**,
   `getRelatorio`, `getAlertas`, `criarAlerta`, `avaliarAlertas`.
-- **`src/screens/MapaScreen.tsx`** - tela inicial. Carrega as regiões, plota
-  marcadores no `MapView` (react-native-maps) por latitude/longitude com o
-  enquadramento inicial centrado na cidade de São Paulo (`REGIAO_INICIAL`:
-  lat -23.55, lon -46.63, delta ~0.3) e mantém uma lista clicável ("Regiões
-  monitoradas em São Paulo") como alternativa. Trata carregamento, erro e vazio.
+- **`src/screens/MapaScreen.tsx`** - tela inicial. Carrega as regiões da API e as
+  apresenta em uma lista clicável ("Regiões monitoradas em São Paulo"); cada item
+  mostra nome, cidade/UF e as coordenadas e abre o Detalhe ao ser tocado. A tela
+  não depende de nenhum módulo nativo de mapa e trata carregamento, erro e vazio.
 - **`src/screens/DetalheScreen.tsx`** - medições de transporte público da região,
   com o botão **"Atualizar transporte"** (chama
   `POST /api/v1/regioes/{id}/atualizar-transporte`) e acesso ao relatório.

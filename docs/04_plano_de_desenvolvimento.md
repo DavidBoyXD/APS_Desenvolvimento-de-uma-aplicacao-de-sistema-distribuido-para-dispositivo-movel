@@ -14,10 +14,10 @@ comunicam por rede, mais os serviços externos oficiais de dados:
 |   CLIENTE MOVEL           |  ----------------------------------> |   SERVIDOR (API REST)      |
 |   React Native / Expo     |     GET/POST /api/v1/...             |   FastAPI (Python)         |
 |   (Android / iOS)         | <----------------------------------  |                            |
-|   mapa enquadrado em SP    |     respostas JSON (dados/erros)     |   - routers (regioes,      |
+|   lista de regioes de SP   |     respostas JSON (dados/erros)     |   - routers (regioes,      |
 |                           |                                      |     medicoes, localidades, |
 |   mobile/                 |                                      |     relatorios, alertas)   |
-|   - MapaScreen (SP)        |                                      |   - schemas (Pydantic)     |
+|   - MapaScreen (lista SP)  |                                      |   - schemas (Pydantic)     |
 |   - DetalheScreen          |                                      |   - errors (handlers 502)  |
 |   - RelatoriosScreen       |                                      |   server/                  |
 |   - AlertasScreen          |                                      +-------------+--------------+
@@ -36,7 +36,7 @@ comunicam por rede, mais os serviços externos oficiais de dados:
 
 Fluxo de uma consulta típica (abrir uma região no app):
 
-1. O usuário toca em uma região de São Paulo no mapa (cliente móvel).
+1. O usuário toca em uma região de São Paulo na lista (cliente móvel).
 2. O cliente faz `GET /api/v1/regioes/{id}/medicoes` ao servidor (HTTP/JSON).
 3. O servidor consulta o banco via SQLAlchemy e devolve a lista de medições.
 4. O cliente exibe as medições de transporte público da região.
@@ -105,7 +105,6 @@ Fontes de dados externas (recorte São Paulo):
 | React | 19.2.3 | [react.dev](https://react.dev) | Componentes do app |
 | @react-navigation/native | 7.5.0 | [reactnavigation.org](https://reactnavigation.org) | `mobile/App.tsx` |
 | @react-navigation/native-stack | 7.20.0 | [reactnavigation.org](https://reactnavigation.org) | `mobile/App.tsx` |
-| react-native-maps | 1.27.2 | [github.com/react-native-maps](https://github.com/react-native-maps/react-native-maps) | `mobile/src/screens/MapaScreen.tsx` (enquadrado em SP) |
 | react-native-chart-kit | 7.0.4 | [github.com/indiespirit/react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit) | `mobile/src/screens/RelatoriosScreen.tsx` (gráfico de barras) |
 | react-native-svg | 15.15.4 | [github.com/software-mansion/react-native-svg](https://github.com/software-mansion/react-native-svg) | Dependência do chart-kit |
 | react-native-screens | 4.26.2 | [github.com/software-mansion/react-native-screens](https://github.com/software-mansion/react-native-screens) | Dependência da navegação |
@@ -130,7 +129,7 @@ mobile):
    enum `TipoMedicao` e endpoint `POST /api/v1/regioes/{id}/atualizar-transporte`
    em `routers/medicoes.py`.
 
-3. **Cliente móvel.** Mapa enquadrado na cidade de São Paulo; rótulos PT-BR do
+3. **Cliente móvel.** Lista de regiões da cidade de São Paulo; rótulos PT-BR do
    tipo em `src/ui/rotulos.ts`; `atualizarTransporte()` em `src/api/client.ts`;
    detalhe e relatórios para `transporte_publico`; gráfico de barras com
    react-native-chart-kit em `RelatoriosScreen.tsx`.

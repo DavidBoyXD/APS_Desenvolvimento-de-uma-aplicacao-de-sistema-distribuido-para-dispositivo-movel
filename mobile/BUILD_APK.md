@@ -88,12 +88,19 @@ O aplicativo lê a base da API pela variável de ambiente
 **embutidas no pacote em tempo de build**, ou seja, o valor é "congelado" no APK
 no momento em que você gera o build.
 
-- O valor padrão do código é `http://10.0.2.2:8000`, que funciona **apenas no
-  emulador Android** (`10.0.2.2` é o apelido do `localhost` da sua máquina visto
-  de dentro do emulador).
-- Em um **APK instalado em um celular físico**, `10.0.2.2` **não funciona**. O
-  celular precisa de um servidor FastAPI acessível pela internet (ou pelo IP da
-  sua rede local/LAN). Defina o endereço real **antes** de rodar o build:
+- O valor padrão do código agora aponta para o **servidor público** hospedado
+  no Render (`https://aps-olhovivo.onrender.com`). Por isso o APK já funciona
+  **sem** precisar definir essa variável no build: a variável
+  `EXPO_PUBLIC_API_BASE_URL` é **opcional** e serve apenas como **override** do
+  endereço padrão.
+- Observação sobre o Render (plano gratuito): o servidor "dorme" após um período
+  de inatividade e a **primeira** requisição pode levar de 30 a 60 segundos para
+  "acordar" o serviço. O cliente já tolera isso com um tempo de espera maior e
+  novas tentativas automáticas; basta aguardar alguns segundos na primeira carga.
+- Defina `EXPO_PUBLIC_API_BASE_URL` apenas quando quiser apontar para **outro**
+  servidor (por exemplo, o seu back-end local no emulador `http://10.0.2.2:8000`,
+  `http://localhost:8000` no iOS/web, ou o IP da LAN em um celular físico). Para
+  isso, informe o endereço **antes** de rodar o build:
 
   ```bash
   # Linux/macOS (define a variavel apenas para o comando de build)
@@ -161,11 +168,14 @@ O aplicativo é a parte **cliente** de um sistema distribuído: ele precisa de u
 **servidor FastAPI** no ar para funcionar de ponta a ponta (regiões, medições,
 relatórios e alertas vêm da API).
 
-- **Sem um servidor remoto**, o app só consegue falar com o servidor **local**
-  através do **emulador Android** (usando o padrão `http://10.0.2.2:8000` com o
-  back-end rodando na sua máquina). Nesse caso, prefira rodar o app pelo emulador.
-- **Para um APK em celular físico**, hospede o servidor em um endereço acessível
-  (internet ou IP da LAN) e aponte `EXPO_PUBLIC_API_BASE_URL` para ele **antes**
+- **Por padrão**, o app aponta para o servidor público no Render
+  (`https://aps-olhovivo.onrender.com`), então o APK funciona sem configuração
+  adicional (lembrando do "acordar" do plano gratuito na primeira requisição).
+- **Para usar o servidor local** através do **emulador Android**, aponte
+  `EXPO_PUBLIC_API_BASE_URL` para `http://10.0.2.2:8000` com o back-end rodando
+  na sua máquina.
+- **Para apontar para outro servidor** (seu próprio deploy ou IP da LAN em um
+  celular físico), defina `EXPO_PUBLIC_API_BASE_URL` com esse endereço **antes**
   do build (Passo 5). As instruções para subir o servidor estão no `README.md` da
   raiz do repositório.
 

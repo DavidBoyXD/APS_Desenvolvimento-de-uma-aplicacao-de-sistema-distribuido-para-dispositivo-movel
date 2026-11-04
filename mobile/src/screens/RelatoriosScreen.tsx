@@ -56,10 +56,13 @@ export default function RelatoriosScreen({ route }: Props) {
   const [relatorio, setRelatorio] = useState<RelatorioRegiao | null>(null);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
+  // Detalhe técnico da falha (URL chamada e causa), exibido para diagnóstico.
+  const [detalheErro, setDetalheErro] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro(null);
+    setDetalheErro(null);
     try {
       const dados = await getRelatorio(regiaoId);
       setRelatorio(dados);
@@ -69,6 +72,7 @@ export default function RelatoriosScreen({ route }: Props) {
           ? e.mensagem
           : 'Ocorreu um erro inesperado ao carregar o relatorio.';
       setErro(msg);
+      setDetalheErro(e instanceof ApiError ? e.detalhe ?? null : null);
     } finally {
       setCarregando(false);
     }
@@ -83,7 +87,13 @@ export default function RelatoriosScreen({ route }: Props) {
   }
 
   if (erro) {
-    return <EstadoErro mensagem={erro} aoTentarNovamente={carregar} />;
+    return (
+      <EstadoErro
+        mensagem={erro}
+        detalhe={detalheErro}
+        aoTentarNovamente={carregar}
+      />
+    );
   }
 
   if (!relatorio || relatorio.resumos.length === 0) {

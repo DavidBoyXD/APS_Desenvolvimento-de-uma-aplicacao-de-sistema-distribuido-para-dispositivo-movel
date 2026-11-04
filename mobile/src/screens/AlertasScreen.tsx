@@ -51,6 +51,8 @@ export default function AlertasScreen(_props: Props) {
   const [regioes, setRegioes] = useState<Regiao[]>([]);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
+  // Detalhe técnico da falha (URL chamada e causa), exibido para diagnóstico.
+  const [detalheErro, setDetalheErro] = useState<string | null>(null);
 
   // Estado do formulário de criação.
   const [regiaoId, setRegiaoId] = useState<number | null>(null);
@@ -70,6 +72,7 @@ export default function AlertasScreen(_props: Props) {
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro(null);
+    setDetalheErro(null);
     try {
       const [listaAlertas, listaRegioes] = await Promise.all([
         getAlertas(),
@@ -86,6 +89,7 @@ export default function AlertasScreen(_props: Props) {
           ? e.mensagem
           : 'Ocorreu um erro inesperado ao carregar os alertas.';
       setErro(msg);
+      setDetalheErro(e instanceof ApiError ? e.detalhe ?? null : null);
     } finally {
       setCarregando(false);
     }
@@ -173,7 +177,13 @@ export default function AlertasScreen(_props: Props) {
   }
 
   if (erro) {
-    return <EstadoErro mensagem={erro} aoTentarNovamente={carregar} />;
+    return (
+      <EstadoErro
+        mensagem={erro}
+        detalhe={detalheErro}
+        aoTentarNovamente={carregar}
+      />
+    );
   }
 
   return (

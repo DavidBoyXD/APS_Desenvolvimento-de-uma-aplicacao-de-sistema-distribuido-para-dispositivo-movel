@@ -23,15 +23,23 @@ export function EstadoCarregando({ texto }: { texto?: string }) {
 
 export function EstadoErro({
   mensagem,
+  detalhe,
   aoTentarNovamente,
 }: {
   mensagem: string;
+  /**
+   * Detalhe técnico opcional (ex.: URL base chamada e causa da falha). Quando
+   * presente, aparece em uma linha menor abaixo da mensagem amigável para
+   * ajudar no diagnóstico direto na tela do app, sem precisar de logcat.
+   */
+  detalhe?: string | null;
   aoTentarNovamente?: () => void;
 }) {
   return (
     <View style={styles.centro}>
       <Text style={styles.icone}>⚠️</Text>
       <Text style={styles.textoErro}>{mensagem}</Text>
+      {detalhe ? <Text style={styles.textoDetalhe}>{detalhe}</Text> : null}
       {aoTentarNovamente ? (
         <Pressable
           style={styles.botao}
@@ -72,6 +80,11 @@ const styles = StyleSheet.create({
   textoErro: {
     color: '#B00020',
     fontSize: 15,
+    textAlign: 'center',
+  },
+  textoDetalhe: {
+    color: '#8A8A8A',
+    fontSize: 12,
     textAlign: 'center',
   },
   botao: {

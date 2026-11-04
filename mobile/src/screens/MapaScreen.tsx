@@ -29,10 +29,13 @@ export default function MapaScreen({ navigation }: Props) {
   const [regioes, setRegioes] = useState<Regiao[]>([]);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
+  // Detalhe técnico da falha (URL chamada e causa), exibido para diagnóstico.
+  const [detalheErro, setDetalheErro] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro(null);
+    setDetalheErro(null);
     try {
       const dados = await getRegioes();
       setRegioes(dados);
@@ -42,6 +45,7 @@ export default function MapaScreen({ navigation }: Props) {
           ? e.mensagem
           : 'Ocorreu um erro inesperado ao carregar as regioes.';
       setErro(msg);
+      setDetalheErro(e instanceof ApiError ? e.detalhe ?? null : null);
     } finally {
       setCarregando(false);
     }
@@ -66,7 +70,13 @@ export default function MapaScreen({ navigation }: Props) {
   }
 
   if (erro) {
-    return <EstadoErro mensagem={erro} aoTentarNovamente={carregar} />;
+    return (
+      <EstadoErro
+        mensagem={erro}
+        detalhe={detalheErro}
+        aoTentarNovamente={carregar}
+      />
+    );
   }
 
   if (regioes.length === 0) {

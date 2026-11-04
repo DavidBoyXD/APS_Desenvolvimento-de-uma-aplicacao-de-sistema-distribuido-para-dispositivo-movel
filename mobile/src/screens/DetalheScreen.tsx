@@ -52,6 +52,8 @@ export default function DetalheScreen({ route, navigation }: Props) {
   const [medicoes, setMedicoes] = useState<Medicao[]>([]);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
+  // Detalhe técnico da falha (URL chamada e causa), exibido para diagnóstico.
+  const [detalheErro, setDetalheErro] = useState<string | null>(null);
   // Tipo em atualização (null quando ocioso), para desabilitar só o botão ativo.
   const [atualizandoTipo, setAtualizandoTipo] = useState<TipoMedicao | null>(
     null,
@@ -61,6 +63,7 @@ export default function DetalheScreen({ route, navigation }: Props) {
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro(null);
+    setDetalheErro(null);
     try {
       const dados = await getMedicoes({ regiao_id: regiaoId });
       setMedicoes(dados);
@@ -70,6 +73,7 @@ export default function DetalheScreen({ route, navigation }: Props) {
           ? e.mensagem
           : 'Ocorreu um erro inesperado ao carregar as medicoes.';
       setErro(msg);
+      setDetalheErro(e instanceof ApiError ? e.detalhe ?? null : null);
     } finally {
       setCarregando(false);
     }
@@ -128,7 +132,13 @@ export default function DetalheScreen({ route, navigation }: Props) {
   }
 
   if (erro) {
-    return <EstadoErro mensagem={erro} aoTentarNovamente={carregar} />;
+    return (
+      <EstadoErro
+        mensagem={erro}
+        detalhe={detalheErro}
+        aoTentarNovamente={carregar}
+      />
+    );
   }
 
   return (

@@ -42,7 +42,7 @@
  * "Ver no mapa" em MapaScreen (regioes) e LinhasScreen (veiculos de uma linha).
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -52,6 +52,7 @@ import { RootStackParamList } from '../navigation';
 import { EstadoCarregando, EstadoErro, EstadoVazio } from '../ui/estados';
 import {
   AVISO_DADO_EXEMPLO,
+  formatarHora,
   formatarTimestamp,
   rotuloAcessivel,
 } from '../ui/rotulos';
@@ -64,6 +65,14 @@ const SP_LAT = -23.55;
 const SP_LON = -46.63;
 /** Zoom inicial adequado para mostrar a mancha urbana e os marcadores. */
 const SP_ZOOM = 11;
+
+/**
+ * Intervalos (em segundos) oferecidos ao usuario para o auto-refresh da posicao
+ * dos veiculos no mapa. O padrao e 15s: um equilibrio entre dado atual e numero
+ * de requisicoes feitas ao servidor.
+ */
+const INTERVALOS_SEGUNDOS = [10, 15, 30] as const;
+const INTERVALO_PADRAO_SEGUNDOS = 15;
 
 /** Ponto generico plotado no mapa (um marcador do Leaflet). */
 interface PontoMapa {
@@ -139,10 +148,15 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
           attribution: '&copy; colaboradores do OpenStreetMap'
         }).addTo(mapa);
 
-        var grupo = [];
-        pontos.forEach(function (p) {
-          var marcador = L.marker([p.lat, p.lon]).addTo(mapa);
-          grupo.push(marcador);
+        // Camada SOMENTE dos marcadores de veiculo: isolamos os veiculos numa
+        // LayerGroup propria para que o auto-refresh (window.atualizarVeiculos)
+        // possa remover e recriar os veiculos sem recriar o mapa inteiro, sem
+        // piscar e sem resetar o zoom/centro escolhido pelo usuario.
+        var camadaVeiculos = L.layerGroup().addTo(mapa);
+
+        // Cria o balao (popup) de um ponto. Para REGIOES (com regiaoId) inclui
+        // o link "Ver detalhe", que avisa o React via postMessage.
+        function criarPopup(p) {
           var cont = document.createElement('div');
           var titulo = document.createElement('strong');
           titulo.textContent = p.titulo;
@@ -169,16 +183,65 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
             });
             cont.appendChild(link);
           }
-          marcador.bindPopup(cont);
+          return cont;
+        }
+
+        // Desenha marcadores de veiculo na camada propria (usada no 1o render e
+        // a cada atualizacao). Retorna a lista de marcadores criados.
+        function desenharVeiculos(lista) {
+          var criados = [];
+          lista.forEach(function (p) {
+            var marcador = L.marker([p.lat, p.lon]);
+            marcador.bindPopup(criarPopup(p));
+            marcador.addTo(camadaVeiculos);
+            criados.push(marcador);
+          });
+          return criados;
+        }
+
+        var regiaoPontos = pontos.filter(function (p) {
+          return typeof p.regiaoId === 'number';
+        });
+        var veiculoPontos = pontos.filter(function (p) {
+          return typeof p.regiaoId !== 'number';
         });
 
-        // Enquadra todos os marcadores quando ha mais de um ponto.
+        // Regioes sao estaticas: desenhadas diretamente no mapa (fora da camada
+        // de veiculos), pois nao sofrem auto-refresh.
+        var grupo = [];
+        regiaoPontos.forEach(function (p) {
+          var marcador = L.marker([p.lat, p.lon]).addTo(mapa);
+          marcador.bindPopup(criarPopup(p));
+          grupo.push(marcador);
+        });
+        desenharVeiculos(veiculoPontos).forEach(function (m) {
+          grupo.push(m);
+        });
+
+        // Enquadra todos os marcadores APENAS na primeira carga. Atualizacoes
+        // posteriores de veiculo nao mexem no zoom/centro (ver atualizarVeiculos).
         if (grupo.length > 1) {
           var limites = L.featureGroup(grupo).getBounds();
           mapa.fitBounds(limites.pad(0.2));
         } else if (grupo.length === 1) {
-          mapa.setView([pontos[0].lat, pontos[0].lon], 14);
+          var primeiro = regiaoPontos.concat(veiculoPontos)[0];
+          mapa.setView([primeiro.lat, primeiro.lon], 14);
         }
+
+        // Ponte React -> WebView: o React chama window.atualizarVeiculos(json)
+        // (via injectJavaScript) a cada ciclo de auto-refresh. Substituimos APENAS
+        // os marcadores de veiculo, preservando o zoom/centro atual do usuario.
+        // O 'json' chega como string serializada (com "<" ja escapado no React).
+        window.atualizarVeiculos = function (json) {
+          try {
+            var novos = JSON.parse(json);
+            camadaVeiculos.clearLayers();
+            desenharVeiculos(novos);
+          } catch (e) {
+            // JSON invalido: ignora para nao derrubar o mapa.
+          }
+          return true;
+        };
       })();
     </script>
   </body>
@@ -192,6 +255,14 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
 
   // Carrega o componente WebView de forma protegida (null = indisponivel).
   const [WebView] = useState(() => carregarWebView());
+  // Ref do WebView: usada para enviar atualizacoes de veiculo via
+  // injectJavaScript sem recriar o HTML (evita piscar e resetar o zoom).
+  const webviewRef = useRef<any>(null);
+  // Sinaliza que o WebView terminou de carregar o HTML (window.atualizarVeiculos
+  // ja existe). Evita injetar JS antes de a pagina estar pronta.
+  const webviewPronto = useRef<boolean>(false);
+  // Flag de montagem: impede setState apos o unmount (sem vazamento).
+  const montado = useRef<boolean>(true);
 
   const [regioes, setRegioes] = useState<Regiao[]>([]);
   const [veiculos, setVeiculos] = useState<VeiculoPosicaoRead[]>([]);
@@ -202,6 +273,28 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
   // Erro de carregamento do proprio WebView (ex.: pagina/CDN nao carregou).
   const [erroWebView, setErroWebView] = useState<string | null>(null);
 
+  // Estado do auto-refresh (apenas no modo veiculos).
+  const [pausado, setPausado] = useState<boolean>(false);
+  const [intervaloSegundos, setIntervaloSegundos] = useState<number>(
+    INTERVALO_PADRAO_SEGUNDOS,
+  );
+  // Horario da ultima atualizacao bem-sucedida das posicoes (null = nenhuma).
+  const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date | null>(null);
+
+  // Monta os pontos de VEICULO a partir de uma lista de posicoes. Extraida para
+  // reuso: o 1o render usa no HTML inicial e o auto-refresh injeta via JS.
+  const montarPontosVeiculos = useCallback(
+    (lista: VeiculoPosicaoRead[]): PontoMapa[] =>
+      lista.map((veiculo) => ({
+        lat: veiculo.latitude,
+        lon: veiculo.longitude,
+        titulo: `${linhaRotulo ? linhaRotulo + ' - ' : ''}Prefixo ${veiculo.prefixo}`,
+        subtitulo: `${rotuloAcessivel(veiculo.acessivel)} - ${formatarTimestamp(veiculo.timestamp)}`,
+      })),
+    [linhaRotulo],
+  );
+
+  // Carga INICIAL (bloqueante): mostra os estados de carregando/erro/vazio.
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro(null);
@@ -210,13 +303,23 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     try {
       if (modoVeiculos && typeof codigoLinha === 'number') {
         const dados = await getPosicoesLinha(codigoLinha);
+        if (!montado.current) {
+          return;
+        }
         setVeiculos(dados.veiculos);
         setTempoReal(dados.tempo_real);
+        setUltimaAtualizacao(new Date());
       } else {
         const dados = await getRegioes();
+        if (!montado.current) {
+          return;
+        }
         setRegioes(dados);
       }
     } catch (e) {
+      if (!montado.current) {
+        return;
+      }
       const msg =
         e instanceof ApiError
           ? e.mensagem
@@ -224,7 +327,9 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
       setErro(msg);
       setDetalheErro(e instanceof ApiError ? e.detalhe ?? null : null);
     } finally {
-      setCarregando(false);
+      if (montado.current) {
+        setCarregando(false);
+      }
     }
   }, [codigoLinha, modoVeiculos]);
 
@@ -232,21 +337,82 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     carregar();
   }, [carregar]);
 
+  // Controla a flag de montagem (cleanup no unmount).
+  useEffect(() => {
+    montado.current = true;
+    return () => {
+      montado.current = false;
+    };
+  }, []);
+
+  // Atualizacao SILENCIOSA das posicoes (auto-refresh): rebusca e injeta os
+  // novos marcadores no WebView via window.atualizarVeiculos, sem recriar o
+  // HTML (nao pisca, mantem zoom/centro). Nao mexe nos estados de
+  // carregando/erro de tela cheia para nao interromper a visualizacao.
+  const atualizarPosicoes = useCallback(async () => {
+    if (!modoVeiculos || typeof codigoLinha !== 'number') {
+      return;
+    }
+    try {
+      const dados = await getPosicoesLinha(codigoLinha);
+      if (!montado.current) {
+        return;
+      }
+      setVeiculos(dados.veiculos);
+      setTempoReal(dados.tempo_real);
+      setUltimaAtualizacao(new Date());
+      if (webviewRef.current && webviewPronto.current) {
+        const pontosVeiculos = montarPontosVeiculos(dados.veiculos);
+        // Serializa e escapa "<" como no HTML inicial (evita quebra de contexto).
+        const json = JSON.stringify(pontosVeiculos).replace(/</g, '\\u003c');
+        webviewRef.current.injectJavaScript(
+          `window.atualizarVeiculos && window.atualizarVeiculos(${JSON.stringify(
+            json,
+          )}); true;`,
+        );
+      }
+    } catch {
+      // Falha transitoria de rede num ciclo de refresh: ignora e tenta no
+      // proximo ciclo. A carga inicial ja trata o erro de tela cheia.
+    }
+  }, [codigoLinha, modoVeiculos, montarPontosVeiculos]);
+
+  // Timer do auto-refresh: ativo somente no modo veiculos, sem erro, nao
+  // pausado e com o WebView disponivel. Cleanup limpa o setInterval ao
+  // desmontar, ao pausar, ao trocar o intervalo ou ao sair da tela.
+  useEffect(() => {
+    if (!modoVeiculos || pausado || erro || !WebView) {
+      return;
+    }
+    const id = setInterval(() => {
+      atualizarPosicoes();
+    }, intervaloSegundos * 1000);
+    return () => clearInterval(id);
+  }, [
+    modoVeiculos,
+    pausado,
+    erro,
+    WebView,
+    intervaloSegundos,
+    atualizarPosicoes,
+  ]);
+
   const voltar = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
+  const alternarPausa = useCallback(() => {
+    setPausado((atual) => !atual);
+  }, []);
+
   // Monta os pontos a plotar a partir dos dados ja carregados. Regioes ganham
   // `regiaoId` (balao com link para o Detalhe); veiculos mostram prefixo,
-  // acessibilidade e horario.
+  // acessibilidade e horario. ATENCAO: no modo veiculos, usamos o PRIMEIRO
+  // conjunto de veiculos apenas para o HTML INICIAL; as atualizacoes seguintes
+  // vao por injectJavaScript (ver atualizarPosicoes) para nao recriar o mapa.
   const pontos = useMemo<PontoMapa[]>(() => {
     if (modoVeiculos) {
-      return veiculos.map((veiculo) => ({
-        lat: veiculo.latitude,
-        lon: veiculo.longitude,
-        titulo: `${linhaRotulo ? linhaRotulo + ' - ' : ''}Prefixo ${veiculo.prefixo}`,
-        subtitulo: `${rotuloAcessivel(veiculo.acessivel)} - ${formatarTimestamp(veiculo.timestamp)}`,
-      }));
+      return montarPontosVeiculos(veiculos);
     }
     return regioes.map((regiao) => ({
       lat: regiao.latitude,
@@ -255,9 +421,23 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
       subtitulo: `${regiao.cidade} - ${regiao.uf}`,
       regiaoId: regiao.id,
     }));
-  }, [modoVeiculos, veiculos, linhaRotulo, regioes]);
+  }, [modoVeiculos, veiculos, montarPontosVeiculos, regioes]);
 
-  const html = useMemo(() => montarHtmlMapa(pontos), [pontos]);
+  // HTML do mapa montado UMA VEZ por carga inicial no modo veiculos. Guardamos
+  // o HTML "semente" num ref para que ele NAO mude a cada refresh (se mudasse,
+  // o WebView recarregaria e piscaria/resetaria o zoom). As atualizacoes de
+  // posicao posteriores passam por injectJavaScript (ver atualizarPosicoes).
+  const htmlSemente = useRef<string | null>(null);
+  if (modoVeiculos && htmlSemente.current === null && !carregando) {
+    htmlSemente.current = montarHtmlMapa(pontos);
+  }
+  // No modo regioes o HTML acompanha os pontos de regiao (dado estatico, sem
+  // auto-refresh). No modo veiculos usamos a semente congelada.
+  const htmlRegioes = useMemo(
+    () => (modoVeiculos ? '' : montarHtmlMapa(pontos)),
+    [modoVeiculos, pontos],
+  );
+  const html = modoVeiculos ? htmlSemente.current ?? '' : htmlRegioes;
 
   // Recebe mensagens do HTML (toque em "Ver detalhe" de uma regiao) e navega.
   const aoReceberMensagem = useCallback(
@@ -370,13 +550,66 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
           <Text style={styles.faixaAvisoTexto}>{AVISO_DADO_EXEMPLO}</Text>
         </View>
       ) : null}
+      {/* Barra de auto-refresh (apenas no modo veiculos). */}
+      {modoVeiculos ? (
+        <View style={styles.barraRefresh}>
+          <View style={styles.barraRefreshInfo}>
+            <Text style={styles.barraRefreshTexto}>
+              {pausado
+                ? 'Pausado'
+                : `Atualizando a cada ${intervaloSegundos}s`}
+            </Text>
+            {ultimaAtualizacao ? (
+              <Text style={styles.barraRefreshSub}>
+                Ultima atualizacao: {formatarHora(ultimaAtualizacao)}
+              </Text>
+            ) : null}
+          </View>
+          <View style={styles.barraRefreshControles}>
+            {INTERVALOS_SEGUNDOS.map((opcao) => (
+              <Pressable
+                key={opcao}
+                style={[
+                  styles.chipIntervalo,
+                  intervaloSegundos === opcao && styles.chipIntervaloAtivo,
+                ]}
+                onPress={() => setIntervaloSegundos(opcao)}
+                accessibilityRole="button"
+              >
+                <Text
+                  style={[
+                    styles.chipIntervaloTexto,
+                    intervaloSegundos === opcao &&
+                      styles.chipIntervaloTextoAtivo,
+                  ]}
+                >
+                  {opcao}s
+                </Text>
+              </Pressable>
+            ))}
+            <Pressable
+              style={styles.botaoPausar}
+              onPress={alternarPausa}
+              accessibilityRole="button"
+            >
+              <Text style={styles.botaoPausarTexto}>
+                {pausado ? 'Retomar' : 'Pausar'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
       <WebView
+        ref={webviewRef}
         style={styles.mapa}
         originWhitelist={['*']}
         source={{ html }}
         javaScriptEnabled
         domStorageEnabled
         onMessage={aoReceberMensagem}
+        onLoadEnd={() => {
+          webviewPronto.current = true;
+        }}
         onError={() =>
           setErroWebView('Falha ao carregar o conteudo do mapa.')
         }
@@ -402,6 +635,66 @@ const styles = StyleSheet.create({
   faixaAvisoTexto: {
     fontSize: 12,
     color: '#B45309',
+  },
+  barraRefresh: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    gap: 8,
+  },
+  barraRefreshInfo: {
+    gap: 2,
+  },
+  barraRefreshTexto: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  barraRefreshSub: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  barraRefreshControles: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  chipIntervalo: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
+  },
+  chipIntervaloAtivo: {
+    backgroundColor: '#0B6E4F',
+    borderColor: '#0B6E4F',
+  },
+  chipIntervaloTexto: {
+    fontSize: 13,
+    color: '#334155',
+    fontWeight: '600',
+  },
+  chipIntervaloTextoAtivo: {
+    color: '#FFFFFF',
+  },
+  botaoPausar: {
+    marginLeft: 'auto',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#0B6E4F',
+    backgroundColor: '#E6F2ED',
+  },
+  botaoPausarTexto: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0B6E4F',
   },
   centro: {
     flex: 1,

@@ -55,6 +55,7 @@ import {
   formatarTimestamp,
   rotuloAcessivel,
   rotuloSentido,
+  rotuloVeiculosEmOperacao,
 } from '../ui/rotulos';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Linhas'>;
@@ -353,9 +354,30 @@ function Posicoes({
    */
   aoVerNoMapa?: () => void;
 }) {
+  const quantidade = posicoes.veiculos.length;
+  const temVeiculos = quantidade > 0;
   return (
     <View style={styles.detalheBloco}>
       <Text style={styles.detalheTitulo}>Posicao dos veiculos</Text>
+      {/* Selo com a contagem de veiculos em operacao: verde quando ha veiculos,
+          neutro (cinza) quando a linha nao tem veiculos no momento. O numero vem
+          do tamanho da lista retornada por getPosicoesLinha; quando o dado e de
+          EXEMPLO (sem token), o rotulo deixa isso explicito com "(exemplo)". */}
+      <View
+        style={[
+          styles.selo,
+          temVeiculos ? styles.seloVerde : styles.seloNeutro,
+        ]}
+      >
+        <Text
+          style={[
+            styles.seloTexto,
+            temVeiculos ? styles.seloTextoVerde : styles.seloTextoNeutro,
+          ]}
+        >
+          {rotuloVeiculosEmOperacao(quantidade, posicoes.tempo_real)}
+        </Text>
+      </View>
       <Text style={styles.detalheMeta}>
         Horario de referencia: {formatarTimestamp(posicoes.horario_referencia)}
       </Text>
@@ -601,6 +623,34 @@ const styles = StyleSheet.create({
   },
   detalheBloco: {
     gap: 2,
+  },
+  selo: {
+    alignSelf: 'flex-start',
+    borderRadius: 14,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  seloVerde: {
+    backgroundColor: '#E6F2ED',
+    borderWidth: 1,
+    borderColor: '#0B6E4F',
+  },
+  seloNeutro: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  seloTexto: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  seloTextoVerde: {
+    color: '#0B6E4F',
+  },
+  seloTextoNeutro: {
+    color: '#64748B',
   },
   botaoMapa: {
     backgroundColor: '#0B6E4F',

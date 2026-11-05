@@ -81,3 +81,30 @@ export function formatarTimestamp(iso: string): string {
   }
   return data.toLocaleString('pt-BR');
 }
+
+/** Formata apenas a HORA (hh:mm:ss) de uma data local no padrão pt-BR. */
+export function formatarHora(data: Date): string {
+  if (Number.isNaN(data.getTime())) {
+    return '-';
+  }
+  return data.toLocaleTimeString('pt-BR');
+}
+
+/**
+ * Rótulo PT-BR da contagem de veículos em operação de uma linha. Deixa claro
+ * quando o dado é de EXEMPLO (servidor sem token da SPTrans), para manter a
+ * coerência com o restante do app.
+ */
+export function rotuloVeiculosEmOperacao(
+  quantidade: number,
+  tempoReal: boolean,
+): string {
+  const sufixo = tempoReal ? '' : ' (exemplo)';
+  if (quantidade <= 0) {
+    return `Sem veiculos no momento${sufixo}`;
+  }
+  if (quantidade === 1) {
+    return `1 em operacao${sufixo}`;
+  }
+  return `${quantidade} em operacao${sufixo}`;
+}

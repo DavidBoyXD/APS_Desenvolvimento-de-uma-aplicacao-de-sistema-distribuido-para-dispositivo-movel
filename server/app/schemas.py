@@ -147,3 +147,134 @@ class RelatorioRegiao(BaseModel):
     regiao: RegiaoRead
     total_medicoes: int
     resumos: list[ResumoParametro]
+
+
+# ---------------------------------------------------------------------------
+# Acompanhamento de ônibus e busca (SPTrans Olho Vivo - itens B e C)
+# ---------------------------------------------------------------------------
+# Todos os schemas de saída abaixo são construídos a partir das dataclasses do
+# serviço ``app.services.sptrans`` (ConfigDict(from_attributes=True)). O campo
+# ``tempo_real`` indica se o dado veio do Olho Vivo em tempo real (True) ou do
+# fallback de EXEMPLO quando não há token SPTRANS_TOKEN (False); ``fonte``
+# descreve a origem (oficial vs. exemplo não tempo real).
+class LinhaRead(BaseModel):
+    """Linha de ônibus (``/Linha/Buscar``)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    codigo_linha: int = Field(
+        ..., description="Codigo da linha (cl), usado em posicoes/previsao."
+    )
+    letreiro: str = Field(..., description="Letreiro/numero da linha (lt).")
+    sentido: int = Field(
+        ..., description="Sentido da linha (sl): 1 = ida; 2 = volta."
+    )
+    tipo: int = Field(..., description="Codigo do tipo de linha (tl).")
+    terminal_principal: str = Field(
+        ..., description="Terminal principal/origem (tp)."
+    )
+    terminal_secundario: str = Field(
+        ..., description="Terminal secundario/destino (ts)."
+    )
+    circular: bool = Field(..., description="Indica se a linha e circular (lc).")
+    tempo_real: bool = Field(
+        ..., description="True se tempo real (Olho Vivo); False se EXEMPLO."
+    )
+    fonte: str = Field(..., description="Origem do dado (oficial ou exemplo).")
+
+
+class VeiculoPosicaoRead(BaseModel):
+    """Posição de um veículo (ônibus) de uma linha."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    prefixo: str = Field(..., description="Prefixo do veiculo (p).")
+    acessivel: bool = Field(
+        ..., description="Veiculo acessivel para pessoas com deficiencia (a)."
+    )
+    timestamp: str = Field(
+        ..., description="Instante da posicao em ISO 8601 UTC (ta)."
+    )
+    latitude: float = Field(..., description="Latitude do veiculo (py).")
+    longitude: float = Field(..., description="Longitude do veiculo (px).")
+
+
+class PosicaoLinhaRead(BaseModel):
+    """Posições dos veículos de uma linha (``/Posicao/Linha``)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    horario_referencia: str = Field(
+        ..., description="Horario de referencia da consulta (hr)."
+    )
+    veiculos: list[VeiculoPosicaoRead] = Field(
+        ..., description="Lista de veiculos com posicao reportada."
+    )
+    tempo_real: bool = Field(
+        ..., description="True se tempo real (Olho Vivo); False se EXEMPLO."
+    )
+    fonte: str = Field(..., description="Origem do dado (oficial ou exemplo).")
+
+
+class PrevisaoVeiculoRead(BaseModel):
+    """Previsão de chegada de um veículo a uma parada."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    prefixo: str = Field(..., description="Prefixo do veiculo (p).")
+    horario_previsto: str = Field(
+        ..., description="Horario previsto de chegada HH:MM (t)."
+    )
+    acessivel: bool = Field(..., description="Veiculo acessivel (a).")
+    timestamp: str = Field(
+        ..., description="Instante da posicao do veiculo em ISO 8601 UTC (ta)."
+    )
+    latitude: float = Field(..., description="Latitude do veiculo (py).")
+    longitude: float = Field(..., description="Longitude do veiculo (px).")
+
+
+class ParadaPrevisaoRead(BaseModel):
+    """Parada com as previsões dos veículos de uma linha."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    codigo_parada: int = Field(..., description="Codigo da parada (cp).")
+    nome: str = Field(..., description="Nome da parada (np).")
+    latitude: float = Field(..., description="Latitude da parada (py).")
+    longitude: float = Field(..., description="Longitude da parada (px).")
+    veiculos: list[PrevisaoVeiculoRead] = Field(
+        ..., description="Veiculos com previsao de chegada nesta parada."
+    )
+
+
+class PrevisaoLinhaRead(BaseModel):
+    """Previsão de chegada por parada de uma linha (``/Previsao/Linha``)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    horario_referencia: str = Field(
+        ..., description="Horario de referencia da consulta (hr)."
+    )
+    paradas: list[ParadaPrevisaoRead] = Field(
+        ..., description="Paradas com previsoes de chegada."
+    )
+    tempo_real: bool = Field(
+        ..., description="True se tempo real (Olho Vivo); False se EXEMPLO."
+    )
+    fonte: str = Field(..., description="Origem do dado (oficial ou exemplo).")
+
+
+class ParadaRead(BaseModel):
+    """Parada de ônibus (``/Parada/Buscar``)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    codigo: int = Field(..., description="Codigo da parada (cp).")
+    nome: str = Field(..., description="Nome da parada (np).")
+    endereco: str = Field(..., description="Endereco/descricao da parada (ed).")
+    latitude: float = Field(..., description="Latitude da parada (py).")
+    longitude: float = Field(..., description="Longitude da parada (px).")
+    tempo_real: bool = Field(
+        ..., description="True se tempo real (Olho Vivo); False se EXEMPLO."
+    )
+    fonte: str = Field(..., description="Origem do dado (oficial ou exemplo).")

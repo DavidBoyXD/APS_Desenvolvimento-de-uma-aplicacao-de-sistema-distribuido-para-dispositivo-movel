@@ -77,6 +77,16 @@ OLHOVIVO_BASE_URL = "https://api.olhovivo.sptrans.com.br/v2.1"
 CAMINHO_AUTENTICAR = "/Login/Autenticar"
 CAMINHO_POSICAO = "/Posicao"
 
+# Caminhos de acompanhamento de ônibus e busca (itens B e C).
+# - /Linha/Buscar?termosBusca=...   -> busca de linhas por texto;
+# - /Posicao/Linha?codigoLinha=...  -> posição dos veículos de uma linha;
+# - /Previsao/Linha?codigoLinha=... -> previsão de chegada por parada da linha;
+# - /Parada/Buscar?termosBusca=...  -> busca de paradas por texto.
+CAMINHO_LINHA_BUSCAR = "/Linha/Buscar"
+CAMINHO_POSICAO_LINHA = "/Posicao/Linha"
+CAMINHO_PREVISAO_LINHA = "/Previsao/Linha"
+CAMINHO_PARADA_BUSCAR = "/Parada/Buscar"
+
 # Nome da variável de ambiente que guarda o token (NUNCA hardcode o token).
 ENV_TOKEN = "SPTRANS_TOKEN"
 
@@ -120,6 +130,96 @@ class LeituraTransporte:
     valor: float
     unidade: str
     detalhe: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Dataclasses de acompanhamento de ônibus e busca (itens B e C)
+# ---------------------------------------------------------------------------
+# Cada dataclass é construída por uma função de mapeamento pura (payload ->
+# dataclass) e carrega um indicador ``tempo_real`` e uma ``fonte`` para deixar
+# EXPLÍCITO se o dado veio do Olho Vivo (tempo real) ou do fallback de exemplo.
+
+
+@dataclass
+class LinhaOnibus:
+    """Uma linha de ônibus retornada por ``/Linha/Buscar`` do Olho Vivo."""
+
+    codigo_linha: int  # cl - código usado nas chamadas de posição/previsão.
+    letreiro: str  # lt - letreiro/número da linha (ex.: "8000").
+    sentido: int  # sl - sentido (1 = terminal principal->secundário; 2 = volta).
+    tipo: int  # tl - código do tipo de linha.
+    terminal_principal: str  # tp - terminal principal (origem).
+    terminal_secundario: str  # ts - terminal secundário (destino).
+    circular: bool  # lc - indica se a linha é circular.
+    tempo_real: bool = True
+    fonte: str = ""
+
+
+@dataclass
+class VeiculoPosicao:
+    """Posição de um veículo (ônibus) em ``/Posicao/Linha`` do Olho Vivo."""
+
+    prefixo: str  # p - prefixo do veículo.
+    acessivel: bool  # a - veículo acessível para pessoas com deficiência.
+    timestamp: str  # ta - instante da posição (ISO 8601 UTC).
+    latitude: float  # py - latitude.
+    longitude: float  # px - longitude.
+
+
+@dataclass
+class PosicaoLinha:
+    """Conjunto de posições dos veículos de uma linha (``/Posicao/Linha``)."""
+
+    horario_referencia: str  # hr - horário de referência da consulta.
+    veiculos: list  # list[VeiculoPosicao]
+    tempo_real: bool = True
+    fonte: str = ""
+
+
+@dataclass
+class PrevisaoVeiculo:
+    """Previsão de chegada de um veículo a uma parada (``/Previsao/Linha``)."""
+
+    prefixo: str  # p - prefixo do veículo.
+    horario_previsto: str  # t - horário previsto de chegada (HH:MM).
+    acessivel: bool  # a - veículo acessível.
+    timestamp: str  # ta - instante da posição do veículo (ISO 8601 UTC).
+    latitude: float  # py - latitude do veículo.
+    longitude: float  # px - longitude do veículo.
+
+
+@dataclass
+class ParadaPrevisao:
+    """Uma parada com as previsões dos veículos de uma linha."""
+
+    codigo_parada: int  # cp - código da parada.
+    nome: str  # np - nome da parada.
+    latitude: float  # py - latitude da parada.
+    longitude: float  # px - longitude da parada.
+    veiculos: list  # list[PrevisaoVeiculo]
+
+
+@dataclass
+class PrevisaoLinha:
+    """Previsão de chegada por parada de uma linha (``/Previsao/Linha``)."""
+
+    horario_referencia: str  # hr - horário de referência da consulta.
+    paradas: list  # list[ParadaPrevisao]
+    tempo_real: bool = True
+    fonte: str = ""
+
+
+@dataclass
+class Parada:
+    """Uma parada de ônibus retornada por ``/Parada/Buscar`` do Olho Vivo."""
+
+    codigo: int  # cp - código da parada.
+    nome: str  # np - nome da parada.
+    endereco: str  # ed - endereço/descrição da parada.
+    latitude: float  # py - latitude.
+    longitude: float  # px - longitude.
+    tempo_real: bool = True
+    fonte: str = ""
 
 
 def obter_token() -> Optional[str]:
@@ -191,6 +291,275 @@ def mapear_payload(payload: dict) -> list[LeituraTransporte]:
                 f"Veiculos (onibus) com posicao reportada em tempo real"
                 f"{detalhe_hora}."
             ),
+        ),
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Funções de mapeamento puras (payload -> dataclasses) dos itens B e C
+# ---------------------------------------------------------------------------
+# Mesma filosofia de ``mapear_payload``: validam o formato e levantam
+# ``SPTransError`` para payloads inválidos, sem tocar a rede.
+
+
+def _como_str(valor) -> str:
+    """Normaliza um campo para str (prefixos podem vir como int na API)."""
+    if valor is None:
+        return ""
+    return str(valor)
+
+
+def mapear_linhas(payload) -> list[LinhaOnibus]:
+    """Mapeia a resposta de ``/Linha/Buscar`` para uma lista de ``LinhaOnibus``.
+
+    O endpoint devolve uma LISTA de linhas no formato (resumido):
+    ``[{"cl": int, "lt": str, "sl": int, "tl": int, "tp": str, "ts": str,
+    "lc": bool}, ...]``. Levanta ``SPTransError`` se não for uma lista.
+    """
+    if not isinstance(payload, list):
+        raise SPTransError(
+            "Resposta de /Linha/Buscar da SPTrans nao e uma lista valida."
+        )
+    linhas: list[LinhaOnibus] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        linhas.append(
+            LinhaOnibus(
+                codigo_linha=int(item.get("cl", 0)),
+                letreiro=_como_str(item.get("lt")),
+                sentido=int(item.get("sl", 0)),
+                tipo=int(item.get("tl", 0)),
+                terminal_principal=_como_str(item.get("tp")),
+                terminal_secundario=_como_str(item.get("ts")),
+                circular=bool(item.get("lc", False)),
+                tempo_real=True,
+                fonte=FONTE,
+            )
+        )
+    return linhas
+
+
+def _mapear_veiculo(item: dict) -> VeiculoPosicao:
+    """Mapeia um item de veículo (``vs``) para ``VeiculoPosicao``."""
+    return VeiculoPosicao(
+        prefixo=_como_str(item.get("p")),
+        acessivel=bool(item.get("a", False)),
+        timestamp=_como_str(item.get("ta")),
+        latitude=float(item.get("py") or 0.0),
+        longitude=float(item.get("px") or 0.0),
+    )
+
+
+def mapear_posicao_linha(payload) -> PosicaoLinha:
+    """Mapeia a resposta de ``/Posicao/Linha`` para ``PosicaoLinha``.
+
+    Formato (resumido): ``{"hr": str, "vs": [{"p", "a", "ta", "py", "px"}, ...]}``.
+    Levanta ``SPTransError`` se faltar o bloco de veículos ``vs`` (lista).
+    """
+    if not isinstance(payload, dict):
+        raise SPTransError(
+            "Resposta de /Posicao/Linha da SPTrans nao e um objeto JSON valido."
+        )
+    veiculos = payload.get("vs")
+    if not isinstance(veiculos, list):
+        raise SPTransError(
+            "Resposta de /Posicao/Linha da SPTrans sem o bloco de veiculos ('vs')."
+        )
+    return PosicaoLinha(
+        horario_referencia=_como_str(payload.get("hr")),
+        veiculos=[_mapear_veiculo(v) for v in veiculos if isinstance(v, dict)],
+        tempo_real=True,
+        fonte=FONTE,
+    )
+
+
+def mapear_previsao_linha(payload) -> PrevisaoLinha:
+    """Mapeia a resposta de ``/Previsao/Linha`` para ``PrevisaoLinha``.
+
+    Formato (resumido): ``{"hr": str, "ps": [{"cp", "np", "py", "px",
+    "vs": [{"p", "t", "a", "ta", "py", "px"}, ...]}, ...]}``. Levanta
+    ``SPTransError`` se faltar o bloco de paradas ``ps`` (lista).
+    """
+    if not isinstance(payload, dict):
+        raise SPTransError(
+            "Resposta de /Previsao/Linha da SPTrans nao e um objeto JSON valido."
+        )
+    paradas_raw = payload.get("ps")
+    if not isinstance(paradas_raw, list):
+        raise SPTransError(
+            "Resposta de /Previsao/Linha da SPTrans sem o bloco de paradas ('ps')."
+        )
+    paradas: list[ParadaPrevisao] = []
+    for parada in paradas_raw:
+        if not isinstance(parada, dict):
+            continue
+        veiculos_raw = parada.get("vs")
+        veiculos: list[PrevisaoVeiculo] = []
+        if isinstance(veiculos_raw, list):
+            for v in veiculos_raw:
+                if not isinstance(v, dict):
+                    continue
+                veiculos.append(
+                    PrevisaoVeiculo(
+                        prefixo=_como_str(v.get("p")),
+                        horario_previsto=_como_str(v.get("t")),
+                        acessivel=bool(v.get("a", False)),
+                        timestamp=_como_str(v.get("ta")),
+                        latitude=float(v.get("py") or 0.0),
+                        longitude=float(v.get("px") or 0.0),
+                    )
+                )
+        paradas.append(
+            ParadaPrevisao(
+                codigo_parada=int(parada.get("cp", 0)),
+                nome=_como_str(parada.get("np")),
+                latitude=float(parada.get("py") or 0.0),
+                longitude=float(parada.get("px") or 0.0),
+                veiculos=veiculos,
+            )
+        )
+    return PrevisaoLinha(
+        horario_referencia=_como_str(payload.get("hr")),
+        paradas=paradas,
+        tempo_real=True,
+        fonte=FONTE,
+    )
+
+
+def mapear_paradas(payload) -> list[Parada]:
+    """Mapeia a resposta de ``/Parada/Buscar`` para uma lista de ``Parada``.
+
+    O endpoint devolve uma LISTA no formato (resumido):
+    ``[{"cp": int, "np": str, "ed": str, "py": float, "px": float}, ...]``.
+    Levanta ``SPTransError`` se não for uma lista.
+    """
+    if not isinstance(payload, list):
+        raise SPTransError(
+            "Resposta de /Parada/Buscar da SPTrans nao e uma lista valida."
+        )
+    paradas: list[Parada] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        paradas.append(
+            Parada(
+                codigo=int(item.get("cp", 0)),
+                nome=_como_str(item.get("np")),
+                endereco=_como_str(item.get("ed")),
+                latitude=float(item.get("py") or 0.0),
+                longitude=float(item.get("px") or 0.0),
+                tempo_real=True,
+                fonte=FONTE,
+            )
+        )
+    return paradas
+
+
+# ---------------------------------------------------------------------------
+# Fallbacks de EXEMPLO (sem token) para acompanhamento e busca - NÃO tempo real
+# ---------------------------------------------------------------------------
+# Reaproveitam LINHAS_EXEMPLO quando faz sentido. Todos marcam tempo_real=False
+# e usam FONTE_FALLBACK para deixar explícito que NÃO são dados em tempo real.
+
+
+def _linhas_fallback() -> list[LinhaOnibus]:
+    """Linhas de EXEMPLO (sem token) derivadas de ``LINHAS_EXEMPLO``."""
+    linhas: list[LinhaOnibus] = []
+    for indice, exemplo in enumerate(LINHAS_EXEMPLO, start=1):
+        letreiro = exemplo["letreiro"].split("-")[0]
+        nome = exemplo["nome"]
+        terminais = nome.split(" - ")
+        principal = terminais[0] if terminais else nome
+        secundario = terminais[1] if len(terminais) > 1 else nome
+        linhas.append(
+            LinhaOnibus(
+                codigo_linha=indice,
+                letreiro=letreiro,
+                sentido=1,
+                tipo=10,
+                terminal_principal=principal,
+                terminal_secundario=secundario,
+                circular=False,
+                tempo_real=False,
+                fonte=FONTE_FALLBACK,
+            )
+        )
+    return linhas
+
+
+def _posicao_linha_fallback() -> PosicaoLinha:
+    """Posição de EXEMPLO (sem token) com 1-2 veículos NÃO em tempo real."""
+    return PosicaoLinha(
+        horario_referencia="00:00",
+        veiculos=[
+            VeiculoPosicao(
+                prefixo="00000",
+                acessivel=True,
+                timestamp="1970-01-01T00:00:00Z",
+                latitude=-23.550,
+                longitude=-46.633,
+            ),
+            VeiculoPosicao(
+                prefixo="00001",
+                acessivel=False,
+                timestamp="1970-01-01T00:00:00Z",
+                latitude=-23.561,
+                longitude=-46.656,
+            ),
+        ],
+        tempo_real=False,
+        fonte=FONTE_FALLBACK,
+    )
+
+
+def _previsao_linha_fallback() -> PrevisaoLinha:
+    """Previsão de EXEMPLO (sem token) com 1 parada e 1 veículo NÃO tempo real."""
+    return PrevisaoLinha(
+        horario_referencia="00:00",
+        paradas=[
+            ParadaPrevisao(
+                codigo_parada=1,
+                nome="Parada de EXEMPLO (nao tempo real)",
+                latitude=-23.550,
+                longitude=-46.633,
+                veiculos=[
+                    PrevisaoVeiculo(
+                        prefixo="00000",
+                        horario_previsto="00:00",
+                        acessivel=True,
+                        timestamp="1970-01-01T00:00:00Z",
+                        latitude=-23.550,
+                        longitude=-46.633,
+                    )
+                ],
+            )
+        ],
+        tempo_real=False,
+        fonte=FONTE_FALLBACK,
+    )
+
+
+def _paradas_fallback() -> list[Parada]:
+    """Paradas de EXEMPLO (sem token) NÃO em tempo real."""
+    return [
+        Parada(
+            codigo=1,
+            nome="Parada Praca da Se (EXEMPLO)",
+            endereco="Praca da Se, Se - exemplo (nao tempo real)",
+            latitude=-23.550,
+            longitude=-46.633,
+            tempo_real=False,
+            fonte=FONTE_FALLBACK,
+        ),
+        Parada(
+            codigo=2,
+            nome="Parada Largo da Batata (EXEMPLO)",
+            endereco="Largo da Batata, Pinheiros - exemplo (nao tempo real)",
+            latitude=-23.567,
+            longitude=-46.700,
+            tempo_real=False,
+            fonte=FONTE_FALLBACK,
         ),
     ]
 
@@ -286,3 +655,104 @@ def buscar_transporte_publico(
             client.close()
 
     return mapear_payload(payload)
+
+
+def _consultar_olhovivo(
+    caminho: str,
+    params: dict,
+    client: Optional[httpx.Client],
+):
+    """Autentica e faz um GET autenticado no Olho Vivo, devolvendo o JSON.
+
+    Centraliza o fluxo comum das buscas (itens B e C): lê o token, abre/reutiliza
+    o ``httpx.Client``, autentica (``_autenticar``), faz o GET no ``caminho`` com
+    os ``params`` informados, aplica ``raise_for_status`` e devolve ``.json()``.
+    Converte qualquer ``httpx.HTTPError`` em ``SPTransError`` e fecha o client
+    somente se ele foi criado internamente (padrão ``proprio_client``).
+    """
+    token = obter_token()  # chamador já tratou o caso None (fallback).
+    proprio_client = client is None
+    if proprio_client:
+        client = httpx.Client(timeout=TIMEOUT_SEGUNDOS)
+    try:
+        _autenticar(client, token)
+        url = f"{OLHOVIVO_BASE_URL}{caminho}"
+        resposta = client.get(url, params=params)
+        resposta.raise_for_status()
+        return resposta.json()
+    except httpx.HTTPError as exc:
+        raise SPTransError(
+            f"Falha ao consultar a SPTrans Olho Vivo: {exc}"
+        ) from exc
+    finally:
+        if proprio_client:
+            client.close()
+
+
+def buscar_linhas(
+    termo: str, client: Optional[httpx.Client] = None
+) -> list[LinhaOnibus]:
+    """Busca linhas de ônibus por texto (``GET /Linha/Buscar?termosBusca=...``).
+
+    - Sem ``SPTRANS_TOKEN``: retorna linhas de EXEMPLO claramente rotuladas como
+      NÃO tempo real (``tempo_real=False``), SEM tocar a rede.
+    - Com token: autentica no Olho Vivo e mapeia a resposta real para
+      ``LinhaOnibus``. Erros de rede/HTTP viram ``SPTransError``.
+    """
+    if obter_token() is None:
+        return _linhas_fallback()
+    payload = _consultar_olhovivo(
+        CAMINHO_LINHA_BUSCAR, {"termosBusca": termo}, client
+    )
+    return mapear_linhas(payload)
+
+
+def buscar_posicoes_linha(
+    codigo_linha: int, client: Optional[httpx.Client] = None
+) -> PosicaoLinha:
+    """Posições dos veículos de uma linha (``GET /Posicao/Linha?codigoLinha=...``).
+
+    - Sem ``SPTRANS_TOKEN``: retorna posição de EXEMPLO rotulada como NÃO tempo
+      real, SEM tocar a rede.
+    - Com token: autentica e mapeia a resposta real para ``PosicaoLinha``.
+    """
+    if obter_token() is None:
+        return _posicao_linha_fallback()
+    payload = _consultar_olhovivo(
+        CAMINHO_POSICAO_LINHA, {"codigoLinha": codigo_linha}, client
+    )
+    return mapear_posicao_linha(payload)
+
+
+def buscar_previsao_linha(
+    codigo_linha: int, client: Optional[httpx.Client] = None
+) -> PrevisaoLinha:
+    """Previsão de chegada de uma linha (``GET /Previsao/Linha?codigoLinha=...``).
+
+    - Sem ``SPTRANS_TOKEN``: retorna previsão de EXEMPLO rotulada como NÃO tempo
+      real, SEM tocar a rede.
+    - Com token: autentica e mapeia a resposta real para ``PrevisaoLinha``.
+    """
+    if obter_token() is None:
+        return _previsao_linha_fallback()
+    payload = _consultar_olhovivo(
+        CAMINHO_PREVISAO_LINHA, {"codigoLinha": codigo_linha}, client
+    )
+    return mapear_previsao_linha(payload)
+
+
+def buscar_paradas(
+    termo: str, client: Optional[httpx.Client] = None
+) -> list[Parada]:
+    """Busca paradas de ônibus por texto (``GET /Parada/Buscar?termosBusca=...``).
+
+    - Sem ``SPTRANS_TOKEN``: retorna paradas de EXEMPLO rotuladas como NÃO tempo
+      real, SEM tocar a rede.
+    - Com token: autentica e mapeia a resposta real para ``Parada``.
+    """
+    if obter_token() is None:
+        return _paradas_fallback()
+    payload = _consultar_olhovivo(
+        CAMINHO_PARADA_BUSCAR, {"termosBusca": termo}, client
+    )
+    return mapear_paradas(payload)

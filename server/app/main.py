@@ -28,7 +28,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import models  # noqa: F401 - importa para registrar as tabelas na Base
 from .database import Base, SessionLocal, engine
 from .errors import registrar_handlers
-from .routers import alertas, localidades, medicoes, regioes, relatorios, saude
+from .routers import (
+    alertas,
+    linhas,
+    localidades,
+    medicoes,
+    regioes,
+    relatorios,
+    saude,
+)
 from .seed import executar_seed
 
 
@@ -51,8 +59,10 @@ app = FastAPI(
         "de Sao Paulo. A fonte de medicoes e real e verificavel: SPTrans Olho "
         "Vivo (frota de onibus da capital em tempo real). A base geografica "
         "(municipio/UF) e validada pela API de Localidades do IBGE. Oferece "
-        "consulta por regiao (para o mapa), relatorios agregados, alertas por "
-        "limiar e tratamento de erros padronizado."
+        "consulta por regiao (para o mapa), acompanhamento de onibus (posicao "
+        "dos veiculos e previsao de chegada) e busca de linhas/paradas, "
+        "relatorios agregados, alertas por limiar e tratamento de erros "
+        "padronizado."
     ),
     version="1.0.0",
     lifespan=lifespan,
@@ -79,6 +89,7 @@ app.include_router(saude.router)
 app.include_router(regioes.router)
 app.include_router(localidades.router)
 app.include_router(medicoes.router)
+app.include_router(linhas.router)
 app.include_router(relatorios.router)
 app.include_router(alertas.router)
 

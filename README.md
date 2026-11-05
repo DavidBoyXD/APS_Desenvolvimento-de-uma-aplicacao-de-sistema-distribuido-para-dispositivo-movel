@@ -27,7 +27,11 @@ de dados, caracterizando o sistema distribuído:
 - Cliente móvel (React Native / Expo) que exibe a lista de regiões de SP e as
   medições e inclui uma tela de **Linhas de ônibus** (busca de linhas/paradas,
   posição dos veículos e previsão de chegada), acessível pelo botão "Linhas de
-  onibus" na tela inicial.
+  onibus" na tela inicial. A tela de Linhas traz ainda uma **navegação assistida
+  (catálogo)** com sugestões de linhas populares e atalhos quando o campo de busca
+  está vazio (**sem remover a busca livre**, que continua permitindo pesquisar
+  qualquer linha) e **favoritos salvos localmente no aparelho** (estrela em cada
+  linha) para voltar rápido às linhas acompanhadas.
 - Servidor de API REST (Python / FastAPI) que expõe os dados e a lógica e consome
   as fontes externas de SP.
 - Banco de dados (SQLite) que persiste regiões, medições e alertas.

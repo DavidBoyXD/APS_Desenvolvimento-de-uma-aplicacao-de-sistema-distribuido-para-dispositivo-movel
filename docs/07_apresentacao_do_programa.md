@@ -199,6 +199,24 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    - Na aba **Paradas**, busque por um termo (ex.: `Av. Paulista`) para listar
      paradas com nome, endereço e coordenadas (`GET /api/v1/paradas/buscar`).
 
+   **Navegação assistida (catálogo).** Enquanto o campo de busca estiver vazio,
+   a tela mostra uma seção de **sugestões** para ajudar quem ainda não sabe o que
+   pesquisar: uma lista curada de **Linhas populares** de São Paulo, uma faixa de
+   **chips "Começar por número"** (1 a 9) e, quando houver, a lista de
+   **Favoritos**. Tocar em qualquer sugestão **preenche o campo** com o letreiro
+   e dispara a busca normal (a API devolve o `codigo_linha` real). Essas
+   sugestões são apenas atalhos: a **busca livre continua disponível** e permite
+   pesquisar **qualquer linha**, inclusive linhas pouco utilizadas que não
+   aparecem na lista curada. A seção some assim que há termo digitado ou
+   resultados, para não poluir a tela.
+
+   **Favoritos (salvos no aparelho).** Cada linha nos resultados tem uma
+   **estrela** para favoritar/desfavoritar. Os favoritos ficam salvos
+   **localmente no dispositivo** (não dependem do servidor) e reaparecem na seção
+   "Favoritos" da navegação assistida; tocar em um favorito reabre a linha pelo
+   mesmo fluxo de busca. Se o armazenamento local não estiver disponível, a tela
+   continua funcionando normalmente (apenas sem persistir entre sessões).
+
    Ainda na posição dos veículos, o botão **"Ver no mapa"** abre o mapa visual
    com os ônibus plotados. Nesse modo, a posição é **atualizada automaticamente**
    a cada intervalo (padrão de 15 segundos, selecionável entre 10s, 15s e 30s),

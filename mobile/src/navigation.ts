@@ -17,4 +17,6 @@ export type RootStackParamList = {
   Relatorios: { regiaoId: number; regiaoNome: string };
   /** Alertas: listar regras, criar e avaliar. */
   Alertas: undefined;
+  /** Linhas de ônibus: buscar linha/parada, ver posição e previsão (SPTrans). */
+  Linhas: undefined;
 };

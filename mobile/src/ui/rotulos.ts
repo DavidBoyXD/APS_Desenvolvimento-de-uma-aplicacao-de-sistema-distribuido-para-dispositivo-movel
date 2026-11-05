@@ -50,6 +50,29 @@ export function formatarNumero(valor: number): string {
   });
 }
 
+/**
+ * Aviso padrão exibido quando um dado da SPTrans Olho Vivo veio do fallback de
+ * EXEMPLO (servidor sem token SPTRANS_TOKEN), ou seja, não é tempo real.
+ */
+export const AVISO_DADO_EXEMPLO =
+  'Dado de EXEMPLO (nao e tempo real): o servidor esta sem token da SPTrans.';
+
+/** Rótulo PT-BR do sentido de uma linha (1 = ida, 2 = volta). */
+export function rotuloSentido(sentido: number): string {
+  if (sentido === 1) {
+    return 'Ida';
+  }
+  if (sentido === 2) {
+    return 'Volta';
+  }
+  return `Sentido ${sentido}`;
+}
+
+/** Rótulo PT-BR de acessibilidade de um veículo (ex.: piso baixo/elevador). */
+export function rotuloAcessivel(acessivel: boolean): string {
+  return acessivel ? 'Acessivel' : 'Nao acessivel';
+}
+
 /** Formata um timestamp ISO 8601 para data/hora local legível (pt-BR). */
 export function formatarTimestamp(iso: string): string {
   const data = new Date(iso);

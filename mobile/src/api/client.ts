@@ -19,7 +19,11 @@ import {
   AlertaCreate,
   AlertaDisparado,
   ErroResposta,
+  LinhaRead,
   Medicao,
+  ParadaRead,
+  PosicaoLinhaRead,
+  PrevisaoLinhaRead,
   Regiao,
   RelatorioRegiao,
   TipoMedicao,
@@ -340,4 +344,44 @@ export function criarAlerta(payload: AlertaCreate): Promise<Alerta> {
  */
 export function avaliarAlertas(regiaoId: number): Promise<AlertaDisparado[]> {
   return requisitar<AlertaDisparado[]>(`/alertas/avaliar/${regiaoId}`);
+}
+
+/**
+ * GET /api/v1/linhas/buscar?termo= -> busca linhas de ônibus da SPTrans Olho
+ * Vivo (tempo real quando o servidor tem token; fallback de exemplo caso
+ * contrário). O termo é obrigatório (422 se ausente).
+ */
+export function buscarLinhas(termo: string): Promise<LinhaRead[]> {
+  return requisitar<LinhaRead[]>('/linhas/buscar', { query: { termo } });
+}
+
+/**
+ * GET /api/v1/linhas/{codigo_linha}/posicoes -> posição em tempo real dos
+ * veículos de uma linha (SPTrans Olho Vivo). Sem token no servidor, retorna
+ * fallback de exemplo (tempo_real=false).
+ */
+export function getPosicoesLinha(
+  codigoLinha: number,
+): Promise<PosicaoLinhaRead> {
+  return requisitar<PosicaoLinhaRead>(`/linhas/${codigoLinha}/posicoes`);
+}
+
+/**
+ * GET /api/v1/linhas/{codigo_linha}/previsao -> previsão de chegada por parada
+ * de uma linha (SPTrans Olho Vivo). Sem token no servidor, retorna fallback de
+ * exemplo (tempo_real=false).
+ */
+export function getPrevisaoLinha(
+  codigoLinha: number,
+): Promise<PrevisaoLinhaRead> {
+  return requisitar<PrevisaoLinhaRead>(`/linhas/${codigoLinha}/previsao`);
+}
+
+/**
+ * GET /api/v1/paradas/buscar?termo= -> busca paradas de ônibus da SPTrans Olho
+ * Vivo (tempo real quando o servidor tem token; fallback de exemplo caso
+ * contrário). O termo é obrigatório (422 se ausente).
+ */
+export function buscarParadas(termo: string): Promise<ParadaRead[]> {
+  return requisitar<ParadaRead[]>('/paradas/buscar', { query: { termo } });
 }

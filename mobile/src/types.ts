@@ -119,3 +119,105 @@ export interface ErroResposta {
   mensagem: string;
   detalhe?: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Acompanhamento de ônibus (SPTrans Olho Vivo): busca de linhas/paradas,
+// posição dos veículos e previsão de chegada por parada. Fonte da verdade dos
+// formatos: schemas LinhaRead, VeiculoPosicaoRead, PosicaoLinhaRead,
+// PrevisaoVeiculoRead, ParadaPrevisaoRead, PrevisaoLinhaRead e ParadaRead em
+// server/app/schemas.py. Quando `tempo_real` for false, o back-end devolveu um
+// fallback de EXEMPLO (servidor sem token SPTRANS_TOKEN): a UI deve rotular.
+// ---------------------------------------------------------------------------
+
+/**
+ * Linha de ônibus retornada pela busca (GET /api/v1/linhas/buscar).
+ * Espelha o schema LinhaRead da API.
+ */
+export interface LinhaRead {
+  codigo_linha: number;
+  letreiro: string;
+  /** Sentido da linha: 1 = ida, 2 = volta. */
+  sentido: number;
+  tipo: number;
+  terminal_principal: string;
+  terminal_secundario: string;
+  circular: boolean;
+  tempo_real: boolean;
+  fonte: string;
+}
+
+/**
+ * Posição de um veículo (ônibus) em operação. Espelha o schema
+ * VeiculoPosicaoRead da API. O campo timestamp é uma string ISO 8601.
+ */
+export interface VeiculoPosicaoRead {
+  prefixo: string;
+  acessivel: boolean;
+  timestamp: string;
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Posição em tempo real dos veículos de uma linha
+ * (GET /api/v1/linhas/{codigo_linha}/posicoes). Espelha o schema
+ * PosicaoLinhaRead da API.
+ */
+export interface PosicaoLinhaRead {
+  horario_referencia: string;
+  veiculos: VeiculoPosicaoRead[];
+  tempo_real: boolean;
+  fonte: string;
+}
+
+/**
+ * Previsão de chegada de um veículo a uma parada. Espelha o schema
+ * PrevisaoVeiculoRead da API. O campo horario_previsto é o horário estimado
+ * de chegada (texto curto, ex.: "00:03"); timestamp é uma string ISO 8601.
+ */
+export interface PrevisaoVeiculoRead {
+  prefixo: string;
+  horario_previsto: string;
+  acessivel: boolean;
+  timestamp: string;
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Previsão de chegada agrupada por parada. Espelha o schema ParadaPrevisaoRead
+ * da API.
+ */
+export interface ParadaPrevisaoRead {
+  codigo_parada: number;
+  nome: string;
+  latitude: number;
+  longitude: number;
+  veiculos: PrevisaoVeiculoRead[];
+}
+
+/**
+ * Previsão de chegada de uma linha, por parada
+ * (GET /api/v1/linhas/{codigo_linha}/previsao). Espelha o schema
+ * PrevisaoLinhaRead da API.
+ */
+export interface PrevisaoLinhaRead {
+  horario_referencia: string;
+  paradas: ParadaPrevisaoRead[];
+  tempo_real: boolean;
+  fonte: string;
+}
+
+/**
+ * Parada de ônibus retornada pela busca (GET /api/v1/paradas/buscar).
+ * Espelha o schema ParadaRead da API.
+ */
+export interface ParadaRead {
+  codigo: number;
+  nome: string;
+  endereco: string;
+  latitude: number;
+  longitude: number;
+  tempo_real: boolean;
+  fonte: string;
+}

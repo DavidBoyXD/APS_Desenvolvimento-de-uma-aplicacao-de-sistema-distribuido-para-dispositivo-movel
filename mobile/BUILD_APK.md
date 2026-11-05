@@ -183,12 +183,101 @@ relatórios e alertas vêm da API).
 
 A tela inicial do app é a **lista de regiões monitoradas em São Paulo**: uma
 lista clicável em que cada item leva ao detalhe da região (transporte público),
-com acesso rápido aos alertas pelo botão "Ver alertas" e à tela de **Linhas de
+com acesso rápido aos alertas pelo botão "Ver alertas", à tela de **Linhas de
 ônibus** pelo botão "Linhas de onibus" (busca de linhas/paradas, posição dos
-veículos e previsão de chegada via SPTrans Olho Vivo).
+veículos e previsão de chegada via SPTrans Olho Vivo) e ao **mapa visual** pelo
+botão "Ver no mapa".
 
-O app **não depende de nenhum módulo nativo de mapa** nem de uma chave do Google
-Maps. Não há nada a configurar: o APK abre direto na lista de regiões, e a
-navegação (Detalhe, Relatórios e Alertas) funciona normalmente. Por isso o
-`mobile/app.json` **não** precisa de `expo.android.config.googleMaps` nem de
-qualquer chave de API de mapa.
+A tela inicial **não depende de nenhum módulo nativo de mapa** nem de uma chave
+do Google Maps. O APK **sempre abre** direto na lista de regiões, e a navegação
+(Detalhe, Relatórios, Alertas e Linhas) funciona normalmente **mesmo sem a chave
+do Google Maps**. Apenas a tela de mapa visual (opcional e separada) depende da
+chave, conforme a seção a seguir.
+
+## Mapa visual (tela opcional) e a chave do Google Maps
+
+O app agora tem um **mapa visual**, numa tela **separada e opcional** (rota
+`MapaVisual`), aberta pelo botão **"Ver no mapa"**:
+
+- A partir da **tela inicial**, "Ver no mapa" plota as **regiões monitoradas**
+  como marcadores (tocar no balão de uma região abre o Detalhe dela).
+- A partir da tela de **Linhas de ônibus**, depois de **"Ver posicao"** de uma
+  linha, o botão **"Ver no mapa"** plota a **posição em tempo real dos veículos**
+  daquela linha como marcadores (prefixo, acessibilidade e horário no balão).
+
+**Por que o mapa fica numa tela separada:** o mapa usa o **Google Maps nativo**
+no Android. Se a chave da API estiver ausente/inválida no binário, o módulo
+nativo pode falhar. Mantendo o mapa fora da inicialização, **o app continua
+abrindo sempre** (na lista); no pior caso, só a tela de mapa fica indisponível e
+o usuário volta para a lista.
+
+### Onde entra a chave do Google Maps
+
+Para o mapa **renderizar**, é preciso informar uma chave do Google Maps no
+`mobile/app.json`, no **config plugin** do `react-native-maps`. O repositório já
+traz a estrutura com um **placeholder**:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "react-native-maps",
+        {
+          "androidGoogleMapsApiKey": "SUA_CHAVE_DO_GOOGLE_MAPS"
+        }
+      ]
+    ]
+  }
+}
+```
+
+> Observação: nesta versão do Expo, a chave do Google Maps é configurada pelo
+> **config plugin** `react-native-maps` (campo `androidGoogleMapsApiKey`), e não
+> mais por `expo.android.config.googleMaps.apiKey`. O `app.json` não lê variáveis
+> de ambiente: substitua o texto do placeholder diretamente pela chave.
+
+### Passo a passo para colocar a chave e gerar o APK com mapa
+
+1. **Obter a chave no Google Cloud.** No
+   [Google Cloud Console](https://console.cloud.google.com/), crie (ou use) um
+   projeto, habilite o **Maps SDK for Android** e garanta que o **faturamento
+   (billing)** está ativo. Em **APIs e serviços > Credenciais**, clique em
+   **Criar credenciais > Chave de API** e copie a chave gerada.
+2. **Colocar a chave no `app.json`.** Abra `mobile/app.json` e troque o
+   placeholder `"SUA_CHAVE_DO_GOOGLE_MAPS"` (em
+   `plugins > react-native-maps > androidGoogleMapsApiKey`) pela sua chave real.
+   **Não** faça commit da chave em repositórios públicos.
+3. **Instalar a dependência do mapa.** Na pasta `mobile/`, rode:
+
+   ```bash
+   npx expo install react-native-maps
+   ```
+
+   Esse comando resolve a versão compatível com a versão do Expo do projeto e a
+   grava em `node_modules` (o `package.json` já referencia a versão esperada).
+4. **Gerar o APK.** Rode o build normalmente (Passo 6 deste guia):
+
+   ```bash
+   eas build -p android --profile preview
+   ```
+
+   Uma forma rápida de validar a configuração é instalar o APK e abrir
+   **"Ver no mapa"**: se o mapa aparecer, a chave está correta.
+
+### Segurança da chave (recomendado após validar)
+
+- **Enquanto valida**, a chave pode ficar **sem restrição** para facilitar o
+  teste.
+- **Depois de confirmar** que o mapa funciona, **restrinja a chave** no Google
+  Cloud (em **Credenciais > sua chave > Restrições do aplicativo > Apps do
+  Android**): adicione o **nome do pacote** `br.unip.aps.transportepublicosp` e a
+  **impressão digital SHA-1** do certificado de assinatura do app. Com o EAS, você
+  obtém o SHA-1 rodando, na pasta `mobile/`:
+
+  ```bash
+  eas credentials
+  ```
+
+  (selecione a plataforma **Android** e veja o SHA-1 do keystore gerenciado pelo
+  Expo). Restringir por SHA-1 + nome do pacote evita o uso indevido da sua chave.

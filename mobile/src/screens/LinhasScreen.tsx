@@ -4,10 +4,13 @@
  * linha, é possível ver a POSIÇÃO dos veículos em operação e a PREVISÃO de
  * chegada por parada.
  *
- * Todo o conteúdo é exibido em LISTA (latitude/longitude em texto); NÃO há
- * módulo de mapa nativo, garantindo que a tela SEMPRE abra em qualquer
- * plataforma. Quando o back-end sinaliza `tempo_real === false`, a tela rotula
- * visivelmente que o dado é de EXEMPLO (servidor sem token da SPTrans).
+ * Todo o conteúdo é exibido em LISTA (latitude/longitude em texto), garantindo
+ * que a tela SEMPRE abra em qualquer plataforma sem depender de módulo nativo.
+ * Ao ver a POSIÇÃO dos veículos, a tela oferece ainda um botão OPCIONAL "Ver no
+ * mapa", que abre a tela de mapa visual (rota "MapaVisual") com os veículos
+ * plotados — se o mapa falhar, a lista continua funcionando normalmente. Quando
+ * o back-end sinaliza `tempo_real === false`, a tela rotula visivelmente que o
+ * dado é de EXEMPLO (servidor sem token da SPTrans).
  *
  * Endpoints consumidos (prefixo /api/v1): /linhas/buscar, /paradas/buscar,
  * /linhas/{codigo}/posicoes e /linhas/{codigo}/previsao.
@@ -72,7 +75,7 @@ function detalheDeErro(e: unknown): string | null {
   return e instanceof ApiError ? e.detalhe ?? null : null;
 }
 
-export default function LinhasScreen(_props: Props) {
+export default function LinhasScreen({ navigation }: Props) {
   const [aba, setAba] = useState<Aba>('linhas');
   const [termo, setTermo] = useState<string>('');
 
@@ -289,7 +292,18 @@ export default function LinhasScreen(_props: Props) {
                       }
                     />
                   ) : detalhe === 'posicoes' && posicoes ? (
-                    <Posicoes posicoes={posicoes} />
+                    <Posicoes
+                      posicoes={posicoes}
+                      aoVerNoMapa={
+                        posicoes.veiculos.length > 0
+                          ? () =>
+                              navigation.navigate('MapaVisual', {
+                                codigoLinha: linha.codigo_linha,
+                                linhaRotulo: linha.letreiro,
+                              })
+                          : undefined
+                      }
+                    />
                   ) : detalhe === 'previsao' && previsao ? (
                     <Previsao previsao={previsao} />
                   ) : null}
@@ -327,7 +341,18 @@ export default function LinhasScreen(_props: Props) {
 }
 
 /** Lista a posição dos veículos de uma linha (prefixo, acessibilidade, etc.). */
-function Posicoes({ posicoes }: { posicoes: PosicaoLinhaRead }) {
+function Posicoes({
+  posicoes,
+  aoVerNoMapa,
+}: {
+  posicoes: PosicaoLinhaRead;
+  /**
+   * Abre a tela de mapa visual com os veículos desta linha plotados. Opcional:
+   * só é passada quando há veículos a mostrar. A lista continua sendo a forma
+   * garantida de ver os dados; o mapa é um complemento opcional.
+   */
+  aoVerNoMapa?: () => void;
+}) {
   return (
     <View style={styles.detalheBloco}>
       <Text style={styles.detalheTitulo}>Posicao dos veiculos</Text>
@@ -336,6 +361,15 @@ function Posicoes({ posicoes }: { posicoes: PosicaoLinhaRead }) {
       </Text>
       {!posicoes.tempo_real ? (
         <Text style={styles.avisoExemplo}>{AVISO_DADO_EXEMPLO}</Text>
+      ) : null}
+      {aoVerNoMapa ? (
+        <Pressable
+          style={styles.botaoMapa}
+          onPress={aoVerNoMapa}
+          accessibilityRole="button"
+        >
+          <Text style={styles.botaoMapaTexto}>Ver no mapa</Text>
+        </Pressable>
       ) : null}
       {posicoes.veiculos.length === 0 ? (
         <Text style={styles.vazio}>Nenhum veiculo em operacao no momento.</Text>
@@ -567,6 +601,20 @@ const styles = StyleSheet.create({
   },
   detalheBloco: {
     gap: 2,
+  },
+  botaoMapa: {
+    backgroundColor: '#0B6E4F',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  botaoMapaTexto: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 13,
   },
   detalheTitulo: {
     fontSize: 14,

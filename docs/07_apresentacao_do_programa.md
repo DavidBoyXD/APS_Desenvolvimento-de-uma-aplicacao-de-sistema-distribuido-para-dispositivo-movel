@@ -128,11 +128,17 @@ Descubra o IP da máquina com `ipconfig` (Windows) ou `ifconfig`/`ip addr`
 ### 7.4.2 Tela inicial no Android (lista de regiões de São Paulo)
 
 A tela inicial do app é a **lista de regiões monitoradas em São Paulo**: uma
-lista clicável em que cada item abre o detalhe da região. O app **não depende de
-nenhum módulo nativo de mapa** nem de uma chave do Google Maps, portanto não há
-nada a configurar no Android para a tela inicial abrir. A lista garante a
-navegação e a demonstração de todas as funcionalidades (detalhe, relatórios e
-alertas).
+lista clicável em que cada item abre o detalhe da região. A **tela inicial não
+depende de nenhum módulo nativo de mapa** nem de uma chave do Google Maps,
+portanto o app **sempre abre** e a lista garante a navegação e a demonstração de
+todas as funcionalidades (detalhe, relatórios e alertas).
+
+Há ainda um **mapa visual** em uma tela **separada e opcional** (botão "Ver no
+mapa"), que plota as regiões como marcadores e, a partir das Linhas de ônibus,
+a posição em tempo real dos veículos de uma linha. Essa tela usa o Google Maps e
+depende de uma chave de API configurada no `app.json` (ver `mobile/BUILD_APK.md`);
+por ser separada e opcional, mesmo que o mapa não esteja configurado, o app
+continua abrindo normalmente na lista.
 
 > Nota sobre o ambiente de desenvolvimento deste trabalho: não havia emulador
 > disponível no ambiente onde o código foi construído. Por isso, o cliente foi

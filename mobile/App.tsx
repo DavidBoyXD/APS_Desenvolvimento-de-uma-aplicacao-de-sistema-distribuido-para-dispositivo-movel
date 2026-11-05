@@ -2,7 +2,8 @@
  * Componente raiz do app "Monitor Ambiental Urbano".
  *
  * Configura a navegacao em pilha (native stack) do React Navigation e registra
- * as quatro telas do sistema: Mapa, Detalhe, Relatorios e Alertas.
+ * as telas do sistema: Mapa (lista inicial), Detalhe, Relatorios, Alertas,
+ * Linhas e MapaVisual (mapa opcional e separado, nunca a tela inicial).
  *
  * Referencias:
  *   - React Navigation (getting started): https://reactnavigation.org/docs/getting-started
@@ -22,6 +23,7 @@ import DetalheScreen from './src/screens/DetalheScreen';
 import RelatoriosScreen from './src/screens/RelatoriosScreen';
 import AlertasScreen from './src/screens/AlertasScreen';
 import LinhasScreen from './src/screens/LinhasScreen';
+import MapaVisualScreen from './src/screens/MapaVisualScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -64,6 +66,15 @@ export default function App() {
             name="Linhas"
             component={LinhasScreen}
             options={{ title: 'Linhas de onibus' }}
+          />
+          <Stack.Screen
+            name="MapaVisual"
+            component={MapaVisualScreen}
+            options={({ route }) => ({
+              title: route.params?.linhaRotulo
+                ? `Mapa: ${route.params.linhaRotulo}`
+                : 'Mapa',
+            })}
           />
         </Stack.Navigator>
       </NavigationContainer>

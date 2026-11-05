@@ -90,6 +90,18 @@ export default function MapaScreen({ navigation }: Props) {
       <View style={styles.listaCabecalho}>
         <Text style={styles.listaTitulo}>Regioes monitoradas em Sao Paulo</Text>
         <View style={styles.cabecalhoAcoes}>
+          {/*
+            "Ver no mapa" abre a tela de mapa visual (OPCIONAL e SEPARADA). Se o
+            mapa falhar, o usuario volta para esta lista, que e a tela inicial e
+            nunca depende do modulo nativo de mapa.
+          */}
+          <Pressable
+            style={styles.botaoAlertas}
+            onPress={() => navigation.navigate('MapaVisual')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.botaoAlertasTexto}>Ver no mapa</Text>
+          </Pressable>
           <Pressable
             style={styles.botaoAlertas}
             onPress={() => navigation.navigate('Linhas')}

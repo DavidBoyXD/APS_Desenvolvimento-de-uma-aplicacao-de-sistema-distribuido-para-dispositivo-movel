@@ -230,9 +230,12 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:8000 npx expo start
 Nota sobre o mapa no Android: o mapa visual (tela opcional "Ver no mapa") é
 desenhado com o **OpenStreetMap via WebView** (`react-native-webview` + Leaflet),
 portanto **não precisa de chave do Google Maps** nem de billing; requer apenas
-internet para carregar os tiles. O aplicativo mantém uma lista de regiões de SP
-clicável como tela inicial, de modo que a navegação funciona mesmo que o mapa não
-carregue. O passo a passo detalhado está em
+internet para carregar os tiles. Quando aberto a partir de uma linha de ônibus,
+o mapa **atualiza automaticamente** a posição dos veículos (padrão de 15s,
+selecionável entre 10s, 15s e 30s, com botão de pausar), trocando os marcadores
+sem recarregar o mapa (preserva o zoom/centro). O aplicativo mantém uma lista de
+regiões de SP clicável como tela inicial, de modo que a navegação funciona mesmo
+que o mapa não carregue. O passo a passo detalhado está em
 [docs/07_apresentacao_do_programa.md](docs/07_apresentacao_do_programa.md) e em
 [mobile/BUILD_APK.md](mobile/BUILD_APK.md).
 

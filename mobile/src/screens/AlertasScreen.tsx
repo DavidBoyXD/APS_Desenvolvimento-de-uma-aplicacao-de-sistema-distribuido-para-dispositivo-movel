@@ -10,7 +10,7 @@
  * Onde é aplicado: rota "Alertas" em App.tsx.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -98,6 +98,21 @@ export default function AlertasScreen(_props: Props) {
   useEffect(() => {
     carregar();
   }, [carregar]);
+
+  // Mapa id -> nome das regioes carregadas, usado para exibir o NOME da regiao
+  // (em vez do numero/id cru) nas regras cadastradas e nos alertas disparados.
+  const nomePorRegiao = useMemo(() => {
+    const mapa = new Map<number, string>();
+    regioes.forEach((r) => mapa.set(r.id, r.nome));
+    return mapa;
+  }, [regioes]);
+
+  // Retorna o nome da regiao correspondente ao id; se nao encontrar (ex.: regra
+  // de uma regiao que nao esta na lista carregada), cai num rotulo legivel.
+  const nomeRegiao = useCallback(
+    (id: number) => nomePorRegiao.get(id) ?? `Regiao ${id}`,
+    [nomePorRegiao],
+  );
 
   const onCriar = useCallback(async () => {
     setFeedbackForm(null);
@@ -203,7 +218,7 @@ export default function AlertasScreen(_props: Props) {
               {a.parametro} {a.condicao} {formatarNumero(a.limiar)}
             </Text>
             <Text style={styles.cardMeta}>
-              {rotuloTipo(a.tipo)} · regiao {a.regiao_id} ·{' '}
+              {rotuloTipo(a.tipo)} · {nomeRegiao(a.regiao_id)} ·{' '}
               {a.ativo ? 'ativa' : 'inativa'}
             </Text>
             <Text style={styles.cardMensagem}>{a.mensagem}</Text>
@@ -314,8 +329,9 @@ export default function AlertasScreen(_props: Props) {
             <View key={`${d.alerta_id}-${indice}`} style={styles.cardDisparado}>
               <Text style={styles.cardDisparadoTitulo}>⚠️ {d.mensagem}</Text>
               <Text style={styles.cardMeta}>
-                {d.parametro} = {formatarNumero(d.valor_observado)} (regra:{' '}
-                {d.condicao} {formatarNumero(d.limiar)})
+                {nomeRegiao(d.regiao_id)} · {d.parametro} ={' '}
+                {formatarNumero(d.valor_observado)} (regra: {d.condicao}{' '}
+                {formatarNumero(d.limiar)})
               </Text>
             </View>
           ))

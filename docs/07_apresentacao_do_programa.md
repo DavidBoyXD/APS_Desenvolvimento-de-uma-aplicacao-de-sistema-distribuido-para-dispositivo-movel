@@ -135,7 +135,8 @@ todas as funcionalidades (detalhe, relatórios e alertas).
 
 Há ainda um **mapa visual** em uma tela **separada e opcional** (botão "Ver no
 mapa"), que plota as regiões como marcadores e, a partir das Linhas de ônibus,
-a posição em tempo real dos veículos de uma linha. Essa tela desenha o mapa com
+a posição em tempo real dos veículos de uma linha (com **atualização automática**
+periódica e botão de pausar). Essa tela desenha o mapa com
 o **OpenStreetMap via WebView** (biblioteca Leaflet dentro de um
 `react-native-webview`), portanto **não precisa de chave de API** nem de billing
 (ver `mobile/BUILD_APK.md`); requer apenas internet para carregar os tiles. Por
@@ -190,9 +191,21 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
      terminais e o sentido. Toque em "Ver posicao" para listar a posição dos
      veículos em operação (`GET /api/v1/linhas/{codigo_linha}/posicoes`) ou em "Ver
      previsao" para a previsão de chegada por parada
-     (`GET /api/v1/linhas/{codigo_linha}/previsao`).
+     (`GET /api/v1/linhas/{codigo_linha}/previsao`). Ao ver a posição, um **selo**
+     destaca o **número de veículos em operação** da linha (verde com a contagem,
+     ex.: "7 em operacao", ou neutro "Sem veiculos no momento" quando a lista vem
+     vazia); quando o dado é de EXEMPLO (servidor sem token), o selo acrescenta
+     "(exemplo)".
    - Na aba **Paradas**, busque por um termo (ex.: `Av. Paulista`) para listar
      paradas com nome, endereço e coordenadas (`GET /api/v1/paradas/buscar`).
+
+   Ainda na posição dos veículos, o botão **"Ver no mapa"** abre o mapa visual
+   com os ônibus plotados. Nesse modo, a posição é **atualizada automaticamente**
+   a cada intervalo (padrão de 15 segundos, selecionável entre 10s, 15s e 30s),
+   com um botão **"Pausar"/"Retomar"** e um indicador do estado
+   ("Atualizando a cada 15s" / "Pausado") e do horário da última atualização. Os
+   marcadores são trocados sem recarregar o mapa, preservando o zoom e o centro
+   escolhidos pelo usuário.
 
    Todos esses dados vêm da **SPTrans Olho Vivo**, a fonte OFICIAL da Prefeitura
    de São Paulo. Com `SPTRANS_TOKEN` definido, são em tempo real; sem token, a
@@ -200,9 +213,11 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
 
 6. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
    regra (escolha região, tipo, parâmetro, condição `>`/`<` e limiar) e toque em
-   "Avaliar região selecionada". Os alertas disparados aparecem destacados com o
-   valor observado. Dica: crie uma regra com limiar baixo (ex.: veículos em
-   operação > 1) para forçar um disparo.
+   "Avaliar região selecionada". Tanto as regras cadastradas quanto os alertas
+   disparados identificam a região pelo **nome** (ex.: "Sé", "Lapa"), e não pelo
+   número interno. Os alertas disparados aparecem destacados com o valor
+   observado. Dica: crie uma regra com limiar baixo (ex.: veículos em operação >
+   1) para forçar um disparo.
 
 7. **Tratamento de erros (demonstração).** Pare o servidor (encerre o uvicorn) e
    tente recarregar uma tela no app: em vez de travar, o app exibe uma mensagem

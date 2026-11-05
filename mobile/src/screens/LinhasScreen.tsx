@@ -340,8 +340,10 @@ function Posicoes({ posicoes }: { posicoes: PosicaoLinhaRead }) {
       {posicoes.veiculos.length === 0 ? (
         <Text style={styles.vazio}>Nenhum veiculo em operacao no momento.</Text>
       ) : (
-        posicoes.veiculos.map((veiculo) => (
-          <View key={veiculo.prefixo} style={styles.itemVeiculo}>
+        posicoes.veiculos.map((veiculo, indice) => (
+          // Compoe a key com o indice: dois veiculos podem compartilhar o mesmo
+          // prefixo na mesma lista, o que geraria keys duplicadas no React.
+          <View key={`${veiculo.prefixo}-${indice}`} style={styles.itemVeiculo}>
             <Text style={styles.itemTitulo}>Prefixo {veiculo.prefixo}</Text>
             <Text style={styles.itemMeta}>
               {rotuloAcessivel(veiculo.acessivel)} ·{' '}
@@ -382,8 +384,13 @@ function Previsao({ previsao }: { previsao: PrevisaoLinhaRead }) {
             {parada.veiculos.length === 0 ? (
               <Text style={styles.vazio}>Sem previsao para esta parada.</Text>
             ) : (
-              parada.veiculos.map((veiculo) => (
-                <Text key={veiculo.prefixo} style={styles.itemPrevisao}>
+              parada.veiculos.map((veiculo, indice) => (
+                // Compoe a key com o indice: o mesmo prefixo pode aparecer mais
+                // de uma vez na mesma parada, evitando keys duplicadas no React.
+                <Text
+                  key={`${veiculo.prefixo}-${indice}`}
+                  style={styles.itemPrevisao}
+                >
                   • Prefixo {veiculo.prefixo} · chega em{' '}
                   {veiculo.horario_previsto} · {rotuloAcessivel(veiculo.acessivel)}
                 </Text>

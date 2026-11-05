@@ -474,6 +474,9 @@ def _linhas_fallback() -> list[LinhaOnibus]:
         secundario = terminais[1] if len(terminais) > 1 else nome
         linhas.append(
             LinhaOnibus(
+                # codigo_linha de EXEMPLO (indice sequencial 1..N): NAO e o `cl`
+                # real do Olho Vivo. Serve apenas para o fallback sem token (que
+                # nao consulta a rede); nao use estes valores como codigo real.
                 codigo_linha=indice,
                 letreiro=letreiro,
                 sentido=1,
@@ -661,16 +664,17 @@ def _consultar_olhovivo(
     caminho: str,
     params: dict,
     client: Optional[httpx.Client],
+    token: str,
 ):
     """Autentica e faz um GET autenticado no Olho Vivo, devolvendo o JSON.
 
-    Centraliza o fluxo comum das buscas (itens B e C): lê o token, abre/reutiliza
+    Centraliza o fluxo comum das buscas (itens B e C): recebe o ``token`` JÁ lido
+    pelo chamador (que também tratou o caso ``None`` -> fallback), abre/reutiliza
     o ``httpx.Client``, autentica (``_autenticar``), faz o GET no ``caminho`` com
     os ``params`` informados, aplica ``raise_for_status`` e devolve ``.json()``.
     Converte qualquer ``httpx.HTTPError`` em ``SPTransError`` e fecha o client
     somente se ele foi criado internamente (padrão ``proprio_client``).
     """
-    token = obter_token()  # chamador já tratou o caso None (fallback).
     proprio_client = client is None
     if proprio_client:
         client = httpx.Client(timeout=TIMEOUT_SEGUNDOS)
@@ -699,10 +703,11 @@ def buscar_linhas(
     - Com token: autentica no Olho Vivo e mapeia a resposta real para
       ``LinhaOnibus``. Erros de rede/HTTP viram ``SPTransError``.
     """
-    if obter_token() is None:
+    token = obter_token()
+    if token is None:
         return _linhas_fallback()
     payload = _consultar_olhovivo(
-        CAMINHO_LINHA_BUSCAR, {"termosBusca": termo}, client
+        CAMINHO_LINHA_BUSCAR, {"termosBusca": termo}, client, token
     )
     return mapear_linhas(payload)
 
@@ -716,10 +721,11 @@ def buscar_posicoes_linha(
       real, SEM tocar a rede.
     - Com token: autentica e mapeia a resposta real para ``PosicaoLinha``.
     """
-    if obter_token() is None:
+    token = obter_token()
+    if token is None:
         return _posicao_linha_fallback()
     payload = _consultar_olhovivo(
-        CAMINHO_POSICAO_LINHA, {"codigoLinha": codigo_linha}, client
+        CAMINHO_POSICAO_LINHA, {"codigoLinha": codigo_linha}, client, token
     )
     return mapear_posicao_linha(payload)
 
@@ -733,10 +739,11 @@ def buscar_previsao_linha(
       real, SEM tocar a rede.
     - Com token: autentica e mapeia a resposta real para ``PrevisaoLinha``.
     """
-    if obter_token() is None:
+    token = obter_token()
+    if token is None:
         return _previsao_linha_fallback()
     payload = _consultar_olhovivo(
-        CAMINHO_PREVISAO_LINHA, {"codigoLinha": codigo_linha}, client
+        CAMINHO_PREVISAO_LINHA, {"codigoLinha": codigo_linha}, client, token
     )
     return mapear_previsao_linha(payload)
 
@@ -750,9 +757,10 @@ def buscar_paradas(
       real, SEM tocar a rede.
     - Com token: autentica e mapeia a resposta real para ``Parada``.
     """
-    if obter_token() is None:
+    token = obter_token()
+    if token is None:
         return _paradas_fallback()
     payload = _consultar_olhovivo(
-        CAMINHO_PARADA_BUSCAR, {"termosBusca": termo}, client
+        CAMINHO_PARADA_BUSCAR, {"termosBusca": termo}, client, token
     )
     return mapear_paradas(payload)

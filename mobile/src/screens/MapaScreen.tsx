@@ -89,13 +89,22 @@ export default function MapaScreen({ navigation }: Props) {
     <View style={styles.container}>
       <View style={styles.listaCabecalho}>
         <Text style={styles.listaTitulo}>Regioes monitoradas em Sao Paulo</Text>
-        <Pressable
-          style={styles.botaoAlertas}
-          onPress={() => navigation.navigate('Alertas')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.botaoAlertasTexto}>Ver alertas</Text>
-        </Pressable>
+        <View style={styles.cabecalhoAcoes}>
+          <Pressable
+            style={styles.botaoAlertas}
+            onPress={() => navigation.navigate('Linhas')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.botaoAlertasTexto}>Linhas de onibus</Text>
+          </Pressable>
+          <Pressable
+            style={styles.botaoAlertas}
+            onPress={() => navigation.navigate('Alertas')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.botaoAlertasTexto}>Ver alertas</Text>
+          </Pressable>
+        </View>
       </View>
 
       <FlatList
@@ -128,17 +137,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F7F6',
   },
   listaCabecalho: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
+    gap: 10,
   },
   listaTitulo: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
+  },
+  cabecalhoAcoes: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   botaoAlertas: {
     backgroundColor: '#0B6E4F',

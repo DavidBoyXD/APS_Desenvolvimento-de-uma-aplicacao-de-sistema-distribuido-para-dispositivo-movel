@@ -183,7 +183,9 @@ relatórios e alertas vêm da API).
 
 A tela inicial do app é a **lista de regiões monitoradas em São Paulo**: uma
 lista clicável em que cada item leva ao detalhe da região (transporte público),
-com acesso rápido aos alertas pelo botão "Ver alertas".
+com acesso rápido aos alertas pelo botão "Ver alertas" e à tela de **Linhas de
+ônibus** pelo botão "Linhas de onibus" (busca de linhas/paradas, posição dos
+veículos e previsão de chegada via SPTrans Olho Vivo).
 
 O app **não depende de nenhum módulo nativo de mapa** nem de uma chave do Google
 Maps. Não há nada a configurar: o APK abre direto na lista de regiões, e a

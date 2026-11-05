@@ -171,7 +171,13 @@ são efetivamente consumidos em runtime.
   [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
   Endpoint base: `https://api.olhovivo.sptrans.com.br/v2.1`.
   Aplicado em: `server/app/services/sptrans.py`, consumido pelo endpoint
-  `POST /api/v1/regioes/{id}/atualizar-transporte`.
+  `POST /api/v1/regioes/{id}/atualizar-transporte` (métricas agregadas da frota) e
+  pelos endpoints de **acompanhamento de ônibus e busca** em
+  `server/app/routers/linhas.py`: `GET /api/v1/linhas/buscar` (busca de linhas,
+  `/Linha/Buscar`), `GET /api/v1/linhas/{codigo_linha}/posicoes` (posição dos
+  veículos, `/Posicao/Linha`), `GET /api/v1/linhas/{codigo_linha}/previsao`
+  (previsão de chegada por parada, `/Previsao/Linha`) e `GET /api/v1/paradas/buscar`
+  (busca de paradas, `/Parada/Buscar`).
 - **Autenticação com token gratuito:** a API Olho Vivo exige um **token** de
   acesso. O fluxo é um `POST /Login/Autenticar?token=SEU_TOKEN` que estabelece uma
   sessão (cookie `apManager`), reutilizada nas chamadas seguintes (ex.:
@@ -186,6 +192,14 @@ são efetivamente consumidos em runtime.
   própria SPTrans), claramente ROTULADO como NÃO tempo real (parâmetro
   `linhas_exemplo`, e o campo `fonte` deixa isso explícito). Assim o app funciona
   de ponta a ponta mesmo sem o token.
+- **Acompanhamento de ônibus e busca (mesmo padrão):** os endpoints de busca de
+  linhas/paradas e de posição/previsão seguem o mesmo contrato - com token,
+  retornam dados em tempo real do Olho Vivo; sem token, devolvem um conjunto de
+  EXEMPLO rotulado como NÃO tempo real (campo `tempo_real=false` e `fonte`
+  explícita). Esses dados são apresentados no app pela tela de **Linhas de
+  ônibus** (`mobile/src/screens/LinhasScreen.tsx`), acessível pelo botão "Linhas
+  de onibus" na tela inicial, que exibe a posição dos veículos e a previsão de
+  chegada por parada em lista e avisa quando o dado é de exemplo.
 - **GTFS da SPTrans:** a mesma seção de desenvolvedores do portal da SPTrans
   também disponibiliza os dados em formato **GTFS estático** (sem token), citados
   como base/espírito do conjunto de linhas de exemplo do fallback.

@@ -111,8 +111,11 @@ Com o serviço **Live**, abra no navegador (trocando `SEU_SERVIDOR` pela sua URL
 
 - `https://SEU_SERVIDOR/health` — deve responder `{"status":"ok"}`.
 - `https://SEU_SERVIDOR/docs` — abre o Swagger (documentação interativa da API).
-- `https://SEU_SERVIDOR/api/v1/regioes` — lista as 5 regiões de São Paulo criadas
+- `https://SEU_SERVIDOR/api/v1/regioes` — lista as 12 regiões de São Paulo criadas
   pelo seed no startup.
+- `https://SEU_SERVIDOR/api/v1/linhas/buscar?termo=8000` — busca de linhas de
+  ônibus na SPTrans Olho Vivo (tempo real com `SPTRANS_TOKEN`; caso contrário,
+  retorna linhas de exemplo com `tempo_real=false`).
 
 Se esses três endereços responderem, o servidor está pronto para o APK.
 
@@ -156,10 +159,19 @@ Os planos gratuitos usam **disco efêmero**: o arquivo SQLite
 (`server/data/app.db`) é **recriado a cada restart ou novo deploy**. Isso é
 aceitável para esta demonstração acadêmica porque:
 
-- o **seed idempotente** roda no startup e recria as 5 regiões de São Paulo
+- o **seed idempotente** roda no startup e recria as 12 regiões de São Paulo
   automaticamente;
-- as métricas de transporte são buscadas **em runtime** nas fontes oficiais
-  (SPTrans Olho Vivo e IBGE), não dependendo de dados antigos no banco.
+- as métricas de transporte, a posição/previsão dos ônibus e a busca de
+  linhas/paradas são buscadas **em runtime** nas fontes oficiais (SPTrans Olho
+  Vivo e IBGE), não dependendo de dados antigos no banco.
+
+Token da SPTrans (opcional): o transporte em tempo real e os endpoints de
+acompanhamento/busca de ônibus usam a SPTrans Olho Vivo, que exige um token
+gratuito lido apenas da variável de ambiente `SPTRANS_TOKEN`. No serviço de
+hospedagem, defina essa variável (ex.: em **Environment** no Render) para ter
+dados em tempo real; sem ela, o servidor responde com o fallback de exemplo
+(`tempo_real=false`), de modo que o deploy funciona mesmo sem o token. Nunca
+comite o token no repositório.
 
 Se, mais adiante, você quiser **persistência real** (dados sobrevivendo a
 redeploys), isso é **opcional** e fora do escopo mínimo: basta provisionar um

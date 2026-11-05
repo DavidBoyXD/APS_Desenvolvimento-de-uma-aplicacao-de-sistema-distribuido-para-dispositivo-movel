@@ -25,7 +25,9 @@ O trabalho é composto por dois programas que se comunicam pela rede, mais um ba
 de dados, caracterizando o sistema distribuído:
 
 - Cliente móvel (React Native / Expo) que exibe a lista de regiões de SP e as
-  medições.
+  medições e inclui uma tela de **Linhas de ônibus** (busca de linhas/paradas,
+  posição dos veículos e previsão de chegada), acessível pelo botão "Linhas de
+  onibus" na tela inicial.
 - Servidor de API REST (Python / FastAPI) que expõe os dados e a lógica e consome
   as fontes externas de SP.
 - Banco de dados (SQLite) que persiste regiões, medições e alertas.
@@ -71,7 +73,10 @@ Links reais:
   frota de ônibus; a mesma seção disponibiliza o GTFS estático usado como base do
   fallback): [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
   Aplicada em `server/app/services/sptrans.py`, consumida por
-  `POST /api/v1/regioes/{id}/atualizar-transporte`.
+  `POST /api/v1/regioes/{id}/atualizar-transporte` (métricas da frota) e pelos
+  endpoints de acompanhamento de ônibus e busca em `server/app/routers/linhas.py`
+  (`/api/v1/linhas/buscar`, `/linhas/{codigo_linha}/posicoes`,
+  `/linhas/{codigo_linha}/previsao` e `/paradas/buscar`).
 - **IBGE - API de Localidades** (oficial, nacional, sem chave; código da UF 35 =
   São Paulo): [https://servicodados.ibge.gov.br/api/v1/localidades](https://servicodados.ibge.gov.br/api/v1/localidades).
   Aplicada em `server/app/services/ibge.py`, consumida por
@@ -100,6 +105,18 @@ com `codigo`, `mensagem` e `detalhe`, nunca um erro 500 cru).
   `veiculos_em_operacao` são métricas da cidade de São Paulo como um todo (frota
   do Olho Vivo), não geofiltradas por região: atualizar regiões diferentes no
   mesmo instante grava os mesmos valores.
+- `GET /api/v1/linhas/buscar?termo=` - busca linhas de ônibus de SP por texto na
+  **SPTrans Olho Vivo** (`/Linha/Buscar`). Com `SPTRANS_TOKEN` definido, retorna
+  dados em tempo real; sem o token, devolve linhas de exemplo rotuladas como NÃO
+  tempo real (`tempo_real=false`). O `termo` é obrigatório.
+- `GET /api/v1/linhas/{codigo_linha}/posicoes` - posição dos veículos de uma linha
+  (`/Posicao/Linha`). Tempo real com token; fallback de exemplo sem token.
+- `GET /api/v1/linhas/{codigo_linha}/previsao` - previsão de chegada por parada de
+  uma linha (`/Previsao/Linha`). Tempo real com token; fallback de exemplo sem
+  token.
+- `GET /api/v1/paradas/buscar?termo=` - busca paradas de ônibus de SP por texto
+  (`/Parada/Buscar`). Tempo real com token; fallback de exemplo sem token. O
+  `termo` é obrigatório.
 - `GET /api/v1/localidades/sp` - municípios de SP validados na API oficial do
   IBGE (código da UF 35).
 - `GET /api/v1/relatorios/regiao/{id}` - agregações (média, mínimo, máximo,
@@ -137,8 +154,9 @@ python -m venv .venv
 
 Notas:
 
-- No startup o servidor cria as tabelas e roda o seed idempotente com 5 regiões
-  reais de São Paulo (Sé, Pinheiros, Mooca, Santana e Itaquera), todas com
+- No startup o servidor cria as tabelas e roda o seed idempotente com 12 regiões
+  reais de São Paulo (Sé, Pinheiros, Mooca, Santana, Itaquera, Santo Amaro,
+  Butantã, Lapa, Vila Mariana, Ipiranga, Penha e Tatuapé), todas com
   `uf = "SP"` e coordenadas reais da capital.
 - Após subir, acesse:
   - `http://localhost:8000/docs` (Swagger, documentação interativa da API).
@@ -269,6 +287,13 @@ Comportamento com e sem token:
   de linhas de SP de exemplo, claramente rotulado como dado estático (GTFS /
   exemplo, NÃO é tempo real). O campo `fonte` deixa isso explícito. Assim o app
   roda de ponta a ponta mesmo sem o token.
+
+O mesmo comportamento vale para os endpoints de acompanhamento de ônibus e busca
+(`/api/v1/linhas/buscar`, `/linhas/{codigo_linha}/posicoes`,
+`/linhas/{codigo_linha}/previsao` e `/paradas/buscar`): com token, os dados são
+em tempo real; sem token, as respostas trazem `tempo_real=false` e uma `fonte`
+que identifica o dado de exemplo. O token continua sendo lido exclusivamente da
+variável de ambiente `SPTRANS_TOKEN`.
 
 Obs: Não comite um token real! O valor `seu_token` nos
 exemplos é apenas um placeholder.

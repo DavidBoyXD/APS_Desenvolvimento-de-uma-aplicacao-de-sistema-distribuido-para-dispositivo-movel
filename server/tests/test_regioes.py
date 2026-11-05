@@ -2,14 +2,35 @@
 
 
 def test_listar_regioes(client) -> None:
-    """GET /api/v1/regioes retorna as regioes do seed (>= 3)."""
+    """GET /api/v1/regioes retorna as regioes do seed (agora >= 10)."""
     resp = client.get("/api/v1/regioes")
     assert resp.status_code == 200
     dados = resp.json()
     assert isinstance(dados, list)
-    assert len(dados) >= 3
+    # O seed foi expandido de 5 para 12 distritos reais da capital de SP.
+    assert len(dados) >= 10
     # Coordenadas presentes para o mapa.
     assert all("latitude" in r and "longitude" in r for r in dados)
+
+
+def test_listar_regioes_inclui_distritos_novos(client) -> None:
+    """O seed expandido inclui os 5 originais e os novos distritos reais de SP."""
+    dados = client.get("/api/v1/regioes").json()
+    nomes = {r["nome"] for r in dados}
+    # Os 5 originais continuam presentes.
+    assert {"Se", "Pinheiros", "Mooca", "Santana", "Itaquera"} <= nomes
+    # Novos distritos reais adicionados (nomes SEM acento, padrao dos dados).
+    assert {
+        "Santo Amaro",
+        "Butanta",
+        "Lapa",
+        "Vila Mariana",
+        "Ipiranga",
+        "Penha",
+        "Tatuape",
+    } <= nomes
+    # A primeira regiao (usada por indice nos testes de transporte) e "Se".
+    assert dados[0]["nome"] == "Se"
 
 
 def test_obter_regiao_existente(client) -> None:

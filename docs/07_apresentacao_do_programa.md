@@ -32,7 +32,7 @@ Observações:
   `.venv\Scripts\python -m uvicorn ...`).
 - `--host 0.0.0.0` permite que o emulador e dispositivos na mesma rede acessem a
   API.
-- No startup, o servidor cria as tabelas e roda o seed (5 regiões reais de São
+- No startup, o servidor cria as tabelas e roda o seed (12 regiões reais de São
   Paulo/SP com medições e alertas de exemplo).
 
 Verificações rápidas (em outro terminal ou no navegador):
@@ -144,8 +144,9 @@ alertas).
 Com o servidor no ar e o app aberto, percorra o fluxo:
 
 1. **Lista e consulta por região.** A tela inicial mostra a lista clicável
-   "Regiões monitoradas em São Paulo" com as regiões (Sé, Pinheiros, Mooca,
-   Santana, Itaquera). Toque em um item da lista para abrir o detalhe.
+   "Regiões monitoradas em São Paulo" com os 12 distritos reais da capital (Sé,
+   Pinheiros, Mooca, Santana, Itaquera, Santo Amaro, Butantã, Lapa, Vila Mariana,
+   Ipiranga, Penha e Tatuapé). Toque em um item da lista para abrir o detalhe.
 
 2. **Detalhe da região.** Veja as medições de **Transporte público (SPTrans)**,
    com valor, unidade, data/hora e a fonte de cada dado.
@@ -173,13 +174,29 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    topo, um **gráfico de barras** ("Médias por parâmetro") resume visualmente os
    dados, incluindo os parâmetros de transporte público quando houver medições.
 
-5. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
+5. **Linhas de ônibus (acompanhamento e busca).** Na tela inicial, toque no botão
+   **"Linhas de onibus"** para abrir a tela de Linhas. Nela há duas abas,
+   "Linhas" e "Paradas", que compartilham o mesmo campo de busca:
+   - Na aba **Linhas**, digite um termo (ex.: `8000` ou `Lapa`) e toque em
+     "Buscar" (`GET /api/v1/linhas/buscar`). Cada resultado mostra o letreiro, os
+     terminais e o sentido. Toque em "Ver posicao" para listar a posição dos
+     veículos em operação (`GET /api/v1/linhas/{codigo_linha}/posicoes`) ou em "Ver
+     previsao" para a previsão de chegada por parada
+     (`GET /api/v1/linhas/{codigo_linha}/previsao`).
+   - Na aba **Paradas**, busque por um termo (ex.: `Av. Paulista`) para listar
+     paradas com nome, endereço e coordenadas (`GET /api/v1/paradas/buscar`).
+
+   Todos esses dados vêm da **SPTrans Olho Vivo**, a fonte OFICIAL da Prefeitura
+   de São Paulo. Com `SPTRANS_TOKEN` definido, são em tempo real; sem token, a
+   tela exibe um aviso de que o dado é de EXEMPLO (não tempo real).
+
+6. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
    regra (escolha região, tipo, parâmetro, condição `>`/`<` e limiar) e toque em
    "Avaliar região selecionada". Os alertas disparados aparecem destacados com o
    valor observado. Dica: crie uma regra com limiar baixo (ex.: veículos em
    operação > 1) para forçar um disparo.
 
-6. **Tratamento de erros (demonstração).** Pare o servidor (encerre o uvicorn) e
+7. **Tratamento de erros (demonstração).** Pare o servidor (encerre o uvicorn) e
    tente recarregar uma tela no app: em vez de travar, o app exibe uma mensagem
    amigável em PT-BR ("Nao foi possivel conectar ao servidor...") com a opção de
    "Tentar novamente". No servidor, uma região inexistente
@@ -195,8 +212,9 @@ cd server
 
 A suíte valida saúde, regiões, medições, relatórios, alertas, tratamento de erros,
 a base geográfica do IBGE e o transporte público da SPTrans (com token e
-fallback). A rede e o token são SEMPRE mockados: nenhum teste acessa a SPTrans ou o
-IBGE reais nem usa token real.
+fallback), incluindo o acompanhamento de ônibus e a busca de linhas/paradas
+(`test_linhas.py`). A rede e o token são SEMPRE mockados: nenhum teste acessa a
+SPTrans ou o IBGE reais nem usa token real.
 
 ## 7.7 Checagem de tipos do cliente (opcional na apresentação)
 

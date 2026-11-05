@@ -21,6 +21,7 @@ import MapaScreen from './src/screens/MapaScreen';
 import DetalheScreen from './src/screens/DetalheScreen';
 import RelatoriosScreen from './src/screens/RelatoriosScreen';
 import AlertasScreen from './src/screens/AlertasScreen';
+import LinhasScreen from './src/screens/LinhasScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -58,6 +59,11 @@ export default function App() {
             name="Alertas"
             component={AlertasScreen}
             options={{ title: 'Alertas ambientais' }}
+          />
+          <Stack.Screen
+            name="Linhas"
+            component={LinhasScreen}
+            options={{ title: 'Linhas de onibus' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

@@ -1,6 +1,6 @@
 """População inicial (seed) do banco, idempotente - recorte geográfico de SP.
 
-Cria as 5 regiões REAIS de São Paulo (todas uf='SP') com coordenadas
+Cria 12 regiões REAIS de São Paulo (todas uf='SP') com coordenadas
 geográficas corretas e, para cada uma, uma medição-semente de transporte
 público claramente rotulada como EXEMPLO (o valor real vem via
 POST /api/v1/regioes/{id}/atualizar-transporte, que consulta a SPTrans).
@@ -24,13 +24,29 @@ ver app/services/ibge.py.
 As coordenadas abaixo correspondem a distritos/subprefeituras reais da capital.
 O IBGE NÃO fornece lat/lon de distritos neste endpoint; por isso as coordenadas
 vêm de fontes oficiais da Prefeitura de São Paulo (GeoSampa/PMSP) e de pontos
-geográficos reconhecidos de cada distrito. NÃO há coordenadas inventadas:
+geográficos reconhecidos (praça/estação/terminal) de cada distrito. NÃO há
+coordenadas inventadas:
 
-- Sé (Centro) ..... -23.550, -46.633  (marco zero da cidade, Praça da Sé)
-- Pinheiros ........ -23.567, -46.700
-- Mooca ............ -23.560, -46.600
-- Santana .......... -23.500, -46.630
-- Itaquera ......... -23.540, -46.460
+Regiões originais (preservadas):
+- Sé (Centro) ...... -23.550, -46.633  (marco zero da cidade, Praça da Sé)
+- Pinheiros ........ -23.567, -46.700  (entorno do Largo da Batata)
+- Mooca ............ -23.560, -46.600  (centro do distrito da Mooca)
+- Santana .......... -23.500, -46.630  (entorno da estação Santana do metrô)
+- Itaquera ......... -23.540, -46.460  (entorno da estação Itaquera/Corinthians)
+
+Regiões adicionadas (distritos reais da capital, marcos reconhecidos):
+- Santo Amaro ...... -23.654, -46.709  (Largo Treze de Maio, Santo Amaro)
+- Butantã .......... -23.571, -46.708  (entorno da estação Butantã do metrô)
+- Lapa ............. -23.528, -46.705  (entorno da estação Lapa/Largo da Lapa)
+- Vila Mariana ..... -23.589, -46.634  (entorno da estação Ana Rosa/Vila Mariana)
+- Ipiranga ......... -23.586, -46.610  (entorno do Museu do Ipiranga/Parque)
+- Penha ............ -23.528, -46.542  (entorno da estação Penha do metrô)
+- Tatuapé .......... -23.540, -46.576  (entorno da estação Tatuapé do metrô)
+
+Fontes das coordenadas: pontos geográficos reconhecidos de cada distrito
+(praças, estações e terminais) consultáveis no GeoSampa/PMSP
+(https://geosampa.prefeitura.sp.gov.br). Nomes dos dados mantidos SEM acento
+(ex.: 'Butanta', 'Tatuape') para seguir o padrão já existente.
 
 Idempotência: se já houver regiões cadastradas, o seed não faz nada.
 """
@@ -53,11 +69,21 @@ FONTE_TRANSPORTE_EXEMPLO = (
 # Nome do município validável pelo IBGE (código 35 / 3550308); coordenadas dos
 # distritos oriundas de fontes oficiais da PMSP (GeoSampa) - ver docstring.
 REGIOES_SEED = [
+    # Regiões originais (preservadas na ordem; a primeira continua sendo "Se",
+    # pois alguns testes de transporte pegam a primeira região por índice).
     {"nome": "Se", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.550, "longitude": -46.633},
     {"nome": "Pinheiros", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.567, "longitude": -46.700},
     {"nome": "Mooca", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.560, "longitude": -46.600},
     {"nome": "Santana", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.500, "longitude": -46.630},
     {"nome": "Itaquera", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.540, "longitude": -46.460},
+    # Distritos reais adicionados (marcos reconhecidos; ver docstring/GeoSampa).
+    {"nome": "Santo Amaro", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.654, "longitude": -46.709},
+    {"nome": "Butanta", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.571, "longitude": -46.708},
+    {"nome": "Lapa", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.528, "longitude": -46.705},
+    {"nome": "Vila Mariana", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.589, "longitude": -46.634},
+    {"nome": "Ipiranga", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.586, "longitude": -46.610},
+    {"nome": "Penha", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.528, "longitude": -46.542},
+    {"nome": "Tatuape", "cidade": "Sao Paulo", "uf": "SP", "latitude": -23.540, "longitude": -46.576},
 ]
 
 

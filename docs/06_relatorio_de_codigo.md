@@ -388,7 +388,7 @@ Pontos-chave:
 - A tela trata os três estados de carregamento de dados: carregando, erro (com
   opção de tentar novamente) e vazio (nenhuma região cadastrada).
 - O conteúdo é a mesma lista em qualquer plataforma (Android, iOS ou web), sem
-  chave do Google Maps, garantindo que a tela sempre abra.
+  depender de nenhum módulo nativo de mapa, garantindo que a tela sempre abra.
 - Cada card mostra nome, cidade/UF e as coordenadas (latitude/longitude) da
   região, e o toque navega para o Detalhe. Referência:
   [FlatList](https://reactnative.dev/docs/flatlist).

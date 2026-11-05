@@ -227,12 +227,14 @@ EXPO_PUBLIC_API_BASE_URL=http://localhost:8000 npx expo start
 EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:8000 npx expo start
 ```
 
-Nota sobre o mapa no Android: o componente de mapa (`react-native-maps`) pode
-exigir uma chave do Google Maps para renderizar no Android; sem ela o mapa pode
-aparecer em cinza. O aplicativo mantém uma lista de regiões de SP clicável como
-alternativa (fallback), de modo que a navegação funciona mesmo sem a chave. O
-passo a passo detalhado está em
-[docs/07_apresentacao_do_programa.md](docs/07_apresentacao_do_programa.md).
+Nota sobre o mapa no Android: o mapa visual (tela opcional "Ver no mapa") é
+desenhado com o **OpenStreetMap via WebView** (`react-native-webview` + Leaflet),
+portanto **não precisa de chave do Google Maps** nem de billing; requer apenas
+internet para carregar os tiles. O aplicativo mantém uma lista de regiões de SP
+clicável como tela inicial, de modo que a navegação funciona mesmo que o mapa não
+carregue. O passo a passo detalhado está em
+[docs/07_apresentacao_do_programa.md](docs/07_apresentacao_do_programa.md) e em
+[mobile/BUILD_APK.md](mobile/BUILD_APK.md).
 
 Nota sobre o gráfico dos relatórios: a tela de Relatórios exibe, além da lista de
 cards, um gráfico de barras ("Médias por parâmetro") desenhado com a biblioteca

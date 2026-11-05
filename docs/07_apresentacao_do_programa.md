@@ -135,10 +135,12 @@ todas as funcionalidades (detalhe, relatórios e alertas).
 
 Há ainda um **mapa visual** em uma tela **separada e opcional** (botão "Ver no
 mapa"), que plota as regiões como marcadores e, a partir das Linhas de ônibus,
-a posição em tempo real dos veículos de uma linha. Essa tela usa o Google Maps e
-depende de uma chave de API configurada no `app.json` (ver `mobile/BUILD_APK.md`);
-por ser separada e opcional, mesmo que o mapa não esteja configurado, o app
-continua abrindo normalmente na lista.
+a posição em tempo real dos veículos de uma linha. Essa tela desenha o mapa com
+o **OpenStreetMap via WebView** (biblioteca Leaflet dentro de um
+`react-native-webview`), portanto **não precisa de chave de API** nem de billing
+(ver `mobile/BUILD_APK.md`); requer apenas internet para carregar os tiles. Por
+ser separada e opcional, mesmo que o mapa não carregue (ex.: sem internet), o
+app continua abrindo normalmente na lista.
 
 > Nota sobre o ambiente de desenvolvimento deste trabalho: não havia emulador
 > disponível no ambiente onde o código foi construído. Por isso, o cliente foi

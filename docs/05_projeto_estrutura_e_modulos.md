@@ -83,7 +83,7 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
         │   └── MapaVisualScreen.tsx # mapa visual opcional (regioes/veiculos)
         └── ui/
             ├── estados.tsx         # EstadoCarregando/EstadoErro/EstadoVazio
-            ├── mapaNativo.ts       # carregamento defensivo do react-native-maps
+            ├── webview.ts          # carregamento defensivo do react-native-webview
             └── rotulos.ts          # rotulos PT-BR (transporte_publico)
 ```
 

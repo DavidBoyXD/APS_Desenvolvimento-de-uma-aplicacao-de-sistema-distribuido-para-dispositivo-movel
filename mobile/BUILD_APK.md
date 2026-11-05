@@ -190,94 +190,66 @@ botão "Ver no mapa".
 
 A tela inicial **não depende de nenhum módulo nativo de mapa** nem de uma chave
 do Google Maps. O APK **sempre abre** direto na lista de regiões, e a navegação
-(Detalhe, Relatórios, Alertas e Linhas) funciona normalmente **mesmo sem a chave
-do Google Maps**. Apenas a tela de mapa visual (opcional e separada) depende da
-chave, conforme a seção a seguir.
+(Detalhe, Relatórios, Alertas e Linhas) funciona normalmente. O mapa visual
+(opcional e separado) usa o **OpenStreetMap via WebView** e também **não precisa
+de chave**, conforme a seção a seguir.
 
-## Mapa visual (tela opcional) e a chave do Google Maps
+## Mapa visual (tela opcional) com OpenStreetMap via WebView
 
-O app agora tem um **mapa visual**, numa tela **separada e opcional** (rota
+O app tem um **mapa visual**, numa tela **separada e opcional** (rota
 `MapaVisual`), aberta pelo botão **"Ver no mapa"**:
 
 - A partir da **tela inicial**, "Ver no mapa" plota as **regiões monitoradas**
-  como marcadores (tocar no balão de uma região abre o Detalhe dela).
+  como marcadores (tocar no marcador abre um balão com o nome e um link **"Ver
+  detalhe"** que leva ao Detalhe daquela região).
 - A partir da tela de **Linhas de ônibus**, depois de **"Ver posicao"** de uma
   linha, o botão **"Ver no mapa"** plota a **posição em tempo real dos veículos**
   daquela linha como marcadores (prefixo, acessibilidade e horário no balão).
 
-**Por que o mapa fica numa tela separada:** o mapa usa o **Google Maps nativo**
-no Android. Se a chave da API estiver ausente/inválida no binário, o módulo
-nativo pode falhar. Mantendo o mapa fora da inicialização, **o app continua
-abrindo sempre** (na lista); no pior caso, só a tela de mapa fica indisponível e
-o usuário volta para a lista.
+**Como o mapa é desenhado:** a tela renderiza um **WebView** (do
+`react-native-webview`) que carrega a biblioteca **Leaflet** e os tiles do
+**OpenStreetMap**. Essa abordagem:
 
-### Onde entra a chave do Google Maps
+- **Não precisa de chave de API nem de billing** (não usa Google Maps).
+- **Não traz a dependência nativa que quebrava a inicialização do app.** O mapa
+  nativo anterior (`react-native-maps`) arrastava, como dependência transitiva,
+  o `androidx.work`/WorkManager, que falhava ao inicializar no startup do
+  Android e derrubava o processo **antes mesmo do JavaScript rodar** — por isso
+  nenhuma tela de erro conseguia proteger. A dependência nativa do mapa foi
+  **substituída** por esta solução em WebView para eliminar esse crash.
+- **Requer internet** para baixar os tiles do OpenStreetMap e a Leaflet por CDN.
+  O app já depende de internet para falar com a API, então isso é esperado.
+  Offline, o mapa não carrega (a tela mostra uma mensagem amigável), mas a
+  **lista de regiões** (tela inicial) continua funcionando normalmente.
 
-Para o mapa **renderizar**, é preciso informar uma chave do Google Maps no
-`mobile/app.json`, no **config plugin** do `react-native-maps`. O repositório já
-traz a estrutura com um **placeholder**:
+### Dependência do mapa
 
-```json
-{
-  "expo": {
-    "plugins": [
-      [
-        "react-native-maps",
-        {
-          "androidGoogleMapsApiKey": "SUA_CHAVE_DO_GOOGLE_MAPS"
-        }
-      ]
-    ]
-  }
-}
+O mapa usa o pacote `react-native-webview` (módulo padrão e suportado pelo Expo,
+incluído no Expo Go). O `package.json` já referencia a versão esperada; na pasta
+`mobile/`, instale-o com:
+
+```bash
+npx expo install react-native-webview
 ```
 
-> Observação: nesta versão do Expo, a chave do Google Maps é configurada pelo
-> **config plugin** `react-native-maps` (campo `androidGoogleMapsApiKey`), e não
-> mais por `expo.android.config.googleMaps.apiKey`. O `app.json` não lê variáveis
-> de ambiente: substitua o texto do placeholder diretamente pela chave.
+Esse comando resolve a versão compatível com a versão do Expo do projeto e a
+grava em `node_modules`. **Não é necessário** nenhum config plugin, chave do
+Google Maps, conta no Google Cloud nem impressão digital SHA-1 para o mapa.
 
-### Passo a passo para colocar a chave e gerar o APK com mapa
+### Passo a passo para gerar o APK com o mapa
 
-1. **Obter a chave no Google Cloud.** No
-   [Google Cloud Console](https://console.cloud.google.com/), crie (ou use) um
-   projeto, habilite o **Maps SDK for Android** e garanta que o **faturamento
-   (billing)** está ativo. Em **APIs e serviços > Credenciais**, clique em
-   **Criar credenciais > Chave de API** e copie a chave gerada.
-2. **Colocar a chave no `app.json`.** Abra `mobile/app.json` e troque o
-   placeholder `"SUA_CHAVE_DO_GOOGLE_MAPS"` (em
-   `plugins > react-native-maps > androidGoogleMapsApiKey`) pela sua chave real.
-   **Não** faça commit da chave em repositórios públicos.
-3. **Instalar a dependência do mapa.** Na pasta `mobile/`, rode:
+1. **Instalar a dependência do mapa.** Na pasta `mobile/`, rode:
 
    ```bash
-   npx expo install react-native-maps
+   npx expo install react-native-webview
    ```
 
-   Esse comando resolve a versão compatível com a versão do Expo do projeto e a
-   grava em `node_modules` (o `package.json` já referencia a versão esperada).
-4. **Gerar o APK.** Rode o build normalmente (Passo 6 deste guia):
+2. **Gerar o APK.** Rode o build normalmente (Passo 6 deste guia):
 
    ```bash
    eas build -p android --profile preview
    ```
 
-   Uma forma rápida de validar a configuração é instalar o APK e abrir
-   **"Ver no mapa"**: se o mapa aparecer, a chave está correta.
-
-### Segurança da chave (recomendado após validar)
-
-- **Enquanto valida**, a chave pode ficar **sem restrição** para facilitar o
-  teste.
-- **Depois de confirmar** que o mapa funciona, **restrinja a chave** no Google
-  Cloud (em **Credenciais > sua chave > Restrições do aplicativo > Apps do
-  Android**): adicione o **nome do pacote** `br.unip.aps.transportepublicosp` e a
-  **impressão digital SHA-1** do certificado de assinatura do app. Com o EAS, você
-  obtém o SHA-1 rodando, na pasta `mobile/`:
-
-  ```bash
-  eas credentials
-  ```
-
-  (selecione a plataforma **Android** e veja o SHA-1 do keystore gerenciado pelo
-  Expo). Restringir por SHA-1 + nome do pacote evita o uso indevido da sua chave.
+   Uma forma rápida de validar é instalar o APK, abrir **"Ver no mapa"** com o
+   dispositivo conectado à internet e verificar se o mapa do OpenStreetMap
+   aparece com os marcadores.

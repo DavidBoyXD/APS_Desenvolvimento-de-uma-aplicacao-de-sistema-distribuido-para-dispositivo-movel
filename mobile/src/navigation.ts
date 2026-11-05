@@ -19,4 +19,14 @@ export type RootStackParamList = {
   Alertas: undefined;
   /** Linhas de ônibus: buscar linha/parada, ver posição e previsão (SPTrans). */
   Linhas: undefined;
+  /**
+   * Mapa visual (tela OPCIONAL e SEPARADA, nunca a inicial). Sem parâmetros,
+   * plota as regiões monitoradas como marcadores. Com `codigoLinha`, plota a
+   * posição em tempo real dos veículos daquela linha (SPTrans); `linhaRotulo`
+   * é apenas o letreiro usado no título/legenda.
+   *
+   * É intencionalmente separada da tela inicial (a LISTA de regiões em "Mapa"):
+   * se o mapa nativo falhar, só esta tela é afetada e o app continua abrindo.
+   */
+  MapaVisual: { codigoLinha?: number; linhaRotulo?: string } | undefined;
 };

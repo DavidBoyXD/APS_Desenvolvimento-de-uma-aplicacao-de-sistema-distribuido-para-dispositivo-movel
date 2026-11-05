@@ -79,9 +79,11 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
         │   ├── DetalheScreen.tsx    # transporte publico + botao "Atualizar transporte"
         │   ├── RelatoriosScreen.tsx # grafico de barras + transporte_publico
         │   ├── AlertasScreen.tsx
-        │   └── LinhasScreen.tsx     # busca de linhas/paradas + posicao/previsao
+        │   ├── LinhasScreen.tsx     # busca de linhas/paradas + posicao/previsao
+        │   └── MapaVisualScreen.tsx # mapa visual opcional (regioes/veiculos)
         └── ui/
             ├── estados.tsx         # EstadoCarregando/EstadoErro/EstadoVazio
+            ├── mapaNativo.ts       # carregamento defensivo do react-native-maps
             └── rotulos.ts          # rotulos PT-BR (transporte_publico)
 ```
 

@@ -23,7 +23,7 @@
  * Onde é aplicado: rota "Linhas" em App.tsx.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -57,6 +57,16 @@ import {
   rotuloSentido,
   rotuloVeiculosEmOperacao,
 } from '../ui/rotulos';
+import {
+  ATALHOS_INICIAIS,
+  LINHAS_POPULARES,
+  PARADAS_REFERENCIA,
+} from '../ui/catalogo';
+import {
+  LinhaFavorita,
+  alternarFavoritoLinha,
+  carregarFavoritosLinhas,
+} from '../ui/favoritos';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Linhas'>;
 
@@ -100,6 +110,25 @@ export default function LinhasScreen({ navigation }: Props) {
     null,
   );
 
+  // Linhas favoritas salvas localmente no aparelho (ver src/ui/favoritos.ts).
+  // Mantemos uma cópia em estado para refletir a estrela nos resultados e para
+  // listar os favoritos na navegação assistida (campo de busca vazio).
+  const [favoritos, setFavoritos] = useState<LinhaFavorita[]>([]);
+
+  // Carrega os favoritos uma vez ao abrir a tela. Tolerante a falha: se o
+  // storage não estiver disponível, carregarFavoritosLinhas devolve [].
+  useEffect(() => {
+    let ativo = true;
+    void carregarFavoritosLinhas().then((lista) => {
+      if (ativo) {
+        setFavoritos(lista);
+      }
+    });
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
   /** Troca a aba ativa e limpa os resultados/seleção anteriores. */
   const trocarAba = useCallback((nova: Aba) => {
     setAba(nova);
@@ -115,38 +144,92 @@ export default function LinhasScreen({ navigation }: Props) {
     setDetalheErroDetalhe(null);
   }, []);
 
-  const onBuscar = useCallback(async () => {
-    const termoLimpo = termo.trim();
-    if (termoLimpo.length === 0) {
-      setErroBusca('Informe um termo para buscar.');
-      setDetalheBusca(null);
-      return;
-    }
-    setBuscando(true);
-    setErroBusca(null);
-    setDetalheBusca(null);
-    // Fecha qualquer detalhe de linha aberto antes de uma nova busca.
-    setLinhaSelecionada(null);
-    setDetalhe(null);
-    setPosicoes(null);
-    setPrevisao(null);
-    try {
-      if (aba === 'linhas') {
-        const resultado = await buscarLinhas(termoLimpo);
-        setLinhas(resultado);
-        setParadas(null);
-      } else {
-        const resultado = await buscarParadas(termoLimpo);
-        setParadas(resultado);
-        setLinhas(null);
+  /**
+   * Executa a busca. Aceita um termo EXPLÍCITO (usado pelos atalhos da
+   * navegação assistida: linhas populares, favoritos e chips iniciais) ou, se
+   * omitido, usa o termo digitado no campo. Em ambos os casos reutiliza o mesmo
+   * fluxo (buscarLinhas/buscarParadas), preservando a liberdade da busca livre.
+   */
+  const executarBusca = useCallback(
+    async (termoAlvo?: string) => {
+      const termoLimpo = (termoAlvo ?? termo).trim();
+      if (termoLimpo.length === 0) {
+        setErroBusca('Informe um termo para buscar.');
+        setDetalheBusca(null);
+        return;
       }
-    } catch (e) {
-      setErroBusca(mensagemDeErro(e, 'Nao foi possivel realizar a busca.'));
-      setDetalheBusca(detalheDeErro(e));
-    } finally {
-      setBuscando(false);
-    }
-  }, [aba, termo]);
+      // Reflete no campo o termo efetivamente buscado (útil para atalhos).
+      if (termoAlvo !== undefined && termoAlvo !== termo) {
+        setTermo(termoAlvo);
+      }
+      setBuscando(true);
+      setErroBusca(null);
+      setDetalheBusca(null);
+      // Fecha qualquer detalhe de linha aberto antes de uma nova busca.
+      setLinhaSelecionada(null);
+      setDetalhe(null);
+      setPosicoes(null);
+      setPrevisao(null);
+      try {
+        if (aba === 'linhas') {
+          const resultado = await buscarLinhas(termoLimpo);
+          setLinhas(resultado);
+          setParadas(null);
+        } else {
+          const resultado = await buscarParadas(termoLimpo);
+          setParadas(resultado);
+          setLinhas(null);
+        }
+      } catch (e) {
+        setErroBusca(mensagemDeErro(e, 'Nao foi possivel realizar a busca.'));
+        setDetalheBusca(detalheDeErro(e));
+      } finally {
+        setBuscando(false);
+      }
+    },
+    [aba, termo],
+  );
+
+  /** Handler do botão/campo de busca: usa o termo digitado. */
+  const onBuscar = useCallback(() => {
+    void executarBusca();
+  }, [executarBusca]);
+
+  /**
+   * Atalho da navegação assistida: preenche o campo com o termo da sugestão e
+   * dispara a busca de LINHAS reutilizando o fluxo normal.
+   */
+  const buscarPorTermo = useCallback(
+    (termoAlvo: string) => {
+      void executarBusca(termoAlvo);
+    },
+    [executarBusca],
+  );
+
+  /**
+   * Alterna o favorito de uma linha (estrela) e atualiza o estado local. Nunca
+   * lança: favoritos.ts trata erros de storage internamente.
+   */
+  const alternarFavorito = useCallback(async (linha: LinhaRead) => {
+    const atualizada = await alternarFavoritoLinha(linha);
+    setFavoritos(atualizada);
+  }, []);
+
+  /**
+   * Verificação SÍNCRONA (para renderizar a estrela) de uma linha estar nos
+   * favoritos, comparando pelo letreiro normalizado (mesma identidade usada em
+   * src/ui/favoritos.ts). A verificação assíncrona isLinhaFavorita existe para
+   * usos fora da renderização.
+   */
+  const favoritada = useCallback(
+    (letreiro: string): boolean => {
+      const alvo = letreiro.trim().toLowerCase();
+      return favoritos.some(
+        (item) => item.letreiro.trim().toLowerCase() === alvo,
+      );
+    },
+    [favoritos],
+  );
 
   const carregarDetalhe = useCallback(
     async (linha: LinhaRead, alvo: DetalheLinha) => {
@@ -179,6 +262,12 @@ export default function LinhasScreen({ navigation }: Props) {
     },
     [],
   );
+
+  // Mostra a navegação assistida apenas quando o campo está vazio, não há
+  // resultados carregados na aba atual e nenhuma busca está em andamento.
+  const resultadosAtuais = aba === 'linhas' ? linhas : paradas;
+  const mostrarNavegacaoAssistida =
+    termo.trim().length === 0 && resultadosAtuais === null && !buscando;
 
   return (
     <ScrollView
@@ -231,6 +320,20 @@ export default function LinhasScreen({ navigation }: Props) {
         <EstadoErro mensagem={erroBusca} detalhe={detalheBusca} />
       ) : null}
 
+      {/* NAVEGAÇÃO ASSISTIDA: aparece só quando o campo está vazio e ainda não
+          há resultados, para ajudar quem não sabe o que pesquisar. Some assim
+          que há termo digitado ou resultados, para não poluir. A busca livre
+          (abas + campo acima) continua idêntica e sempre disponível: estas são
+          apenas SUGESTÕES/atalhos; qualquer linha pode ser pesquisada no campo,
+          inclusive linhas pouco usadas que não aparecem aqui. */}
+      {mostrarNavegacaoAssistida ? (
+        <NavegacaoAssistida
+          aba={aba}
+          favoritos={favoritos}
+          onSugestao={buscarPorTermo}
+        />
+      ) : null}
+
       {/* Resultados de LINHAS */}
       {aba === 'linhas' && linhas !== null ? (
         linhas.length === 0 ? (
@@ -238,7 +341,13 @@ export default function LinhasScreen({ navigation }: Props) {
         ) : (
           linhas.map((linha) => (
             <View key={linha.codigo_linha} style={styles.card}>
-              <Text style={styles.cardTitulo}>{linha.letreiro}</Text>
+              <View style={styles.cardCabecalho}>
+                <Text style={styles.cardTitulo}>{linha.letreiro}</Text>
+                <BotaoFavorito
+                  ativo={favoritada(linha.letreiro)}
+                  onPress={() => alternarFavorito(linha)}
+                />
+              </View>
               <Text style={styles.cardMeta}>
                 {linha.terminal_principal} → {linha.terminal_secundario}
               </Text>
@@ -459,6 +568,134 @@ function Previsao({ previsao }: { previsao: PrevisaoLinhaRead }) {
   );
 }
 
+/**
+ * Botão de favoritar uma linha (estrela). Mostra ★ quando favoritada e ☆ quando
+ * não; alterna o estado ao tocar. Rotulado para leitores de tela.
+ */
+function BotaoFavorito({
+  ativo,
+  onPress,
+}: {
+  ativo: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={styles.botaoFavorito}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={
+        ativo ? 'Remover dos favoritos' : 'Adicionar aos favoritos'
+      }
+    >
+      <Text style={[styles.estrela, ativo && styles.estrelaAtiva]}>
+        {ativo ? '★' : '☆'}
+      </Text>
+    </Pressable>
+  );
+}
+
+/**
+ * Seção de NAVEGAÇÃO ASSISTIDA exibida quando o campo de busca está vazio.
+ * Oferece atalhos (favoritos salvos, linhas populares e chips por número
+ * inicial) que preenchem o campo e disparam a busca normal. Tudo aqui é
+ * SUGESTÃO: a busca livre no campo acima continua sendo a forma principal de
+ * encontrar qualquer linha. Na aba de PARADAS, mostra pontos de referência.
+ */
+function NavegacaoAssistida({
+  aba,
+  favoritos,
+  onSugestao,
+}: {
+  aba: Aba;
+  favoritos: LinhaFavorita[];
+  onSugestao: (termo: string) => void;
+}) {
+  if (aba === 'paradas') {
+    return (
+      <View style={styles.assistida}>
+        <Text style={styles.assistidaTitulo}>Pontos de referencia</Text>
+        <Text style={styles.assistidaDica}>
+          Sugestoes para comecar. Voce pode pesquisar qualquer parada pelo campo
+          acima.
+        </Text>
+        {PARADAS_REFERENCIA.map((ponto) => (
+          <Pressable
+            key={ponto.termo}
+            style={styles.sugestao}
+            onPress={() => onSugestao(ponto.termo)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.sugestaoTitulo}>{ponto.descricao}</Text>
+          </Pressable>
+        ))}
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.assistida}>
+      {/* FAVORITOS salvos no aparelho: atalho para as linhas que o usuário
+          acompanha. Tocar re-busca a linha pelo letreiro (fluxo normal). */}
+      {favoritos.length > 0 ? (
+        <View style={styles.assistidaBloco}>
+          <Text style={styles.assistidaTitulo}>Favoritos</Text>
+          {favoritos.map((fav) => (
+            <Pressable
+              key={`fav-${fav.letreiro}`}
+              style={styles.sugestao}
+              onPress={() => onSugestao(fav.letreiro)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.sugestaoTitulo}>★ {fav.letreiro}</Text>
+              <Text style={styles.sugestaoMeta}>
+                {fav.terminal_principal} → {fav.terminal_secundario}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
+      {/* LINHAS POPULARES: lista curada apenas como ponto de partida. */}
+      <View style={styles.assistidaBloco}>
+        <Text style={styles.assistidaTitulo}>Linhas populares</Text>
+        <Text style={styles.assistidaDica}>
+          Sugestoes para comecar. Voce pode pesquisar qualquer linha pelo campo
+          acima, inclusive linhas pouco usadas.
+        </Text>
+        {LINHAS_POPULARES.map((linha) => (
+          <Pressable
+            key={`pop-${linha.termo}`}
+            style={styles.sugestao}
+            onPress={() => onSugestao(linha.termo)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.sugestaoTitulo}>{linha.termo}</Text>
+            <Text style={styles.sugestaoMeta}>{linha.descricao}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {/* ATALHOS por número inicial (opcional): preenchem o campo e buscam. */}
+      <View style={styles.assistidaBloco}>
+        <Text style={styles.assistidaTitulo}>Comecar por numero</Text>
+        <View style={styles.chips}>
+          {ATALHOS_INICIAIS.map((inicial) => (
+            <Pressable
+              key={`chip-${inicial}`}
+              style={styles.chip}
+              onPress={() => onSugestao(inicial)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.chipTexto}>{inicial}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function Aba({
   texto,
   ativo,
@@ -565,10 +802,81 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     marginTop: 8,
   },
+  cardCabecalho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   cardTitulo: {
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
+    flexShrink: 1,
+  },
+  botaoFavorito: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  estrela: {
+    fontSize: 22,
+    color: '#94A3B8',
+  },
+  estrelaAtiva: {
+    color: '#F59E0B',
+  },
+  assistida: {
+    marginTop: 8,
+    gap: 12,
+  },
+  assistidaBloco: {
+    gap: 6,
+  },
+  assistidaTitulo: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  assistidaDica: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  sugestao: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  sugestaoTitulo: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  sugestaoMeta: {
+    fontSize: 12,
+    color: '#475569',
+    marginTop: 2,
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    minWidth: 44,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#0B6E4F',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFFFFF',
+  },
+  chipTexto: {
+    color: '#0B6E4F',
+    fontWeight: '700',
+    fontSize: 14,
   },
   cardMeta: {
     fontSize: 13,

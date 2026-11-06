@@ -84,6 +84,8 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
         └── ui/
             ├── estados.tsx         # EstadoCarregando/EstadoErro/EstadoVazio
             ├── webview.ts          # carregamento defensivo do react-native-webview
+            ├── catalogo.ts         # navegacao assistida (linhas populares, chips, paradas)
+            ├── favoritos.ts        # favoritos locais de linhas (AsyncStorage defensivo)
             └── rotulos.ts          # rotulos PT-BR (transporte_publico)
 ```
 
@@ -219,7 +221,24 @@ origem do dado.
   acessibilidade, horário e latitude/longitude em texto) e a previsão de chegada
   por parada. Na aba "Paradas" (`buscarParadas`) lista nome, endereço e
   coordenadas. Quando o back-end sinaliza `tempo_real === false`, a tela exibe um
-  aviso de dado de EXEMPLO. Não usa nenhum módulo nativo de mapa.
+  aviso de dado de EXEMPLO. Não usa nenhum módulo nativo de mapa. Inclui ainda a
+  **navegação assistida (catálogo)**: quando o campo de busca está vazio, mostra
+  sugestões (linhas populares curadas, chips por número inicial e, na aba de
+  paradas, pontos de referência) que preenchem o campo e disparam a busca normal,
+  **sem substituir a busca livre**; e os **favoritos locais**, com uma estrela em
+  cada linha para salvar/remover e uma seção "Favoritos" entre as sugestões.
+- **`src/ui/catalogo.ts`** - dados do catálogo da navegação assistida: lista
+  curada de linhas populares de São Paulo (`LINHAS_POPULARES`, apenas atalhos por
+  letreiro, sem fixar código interno), pontos de referência de paradas
+  (`PARADAS_REFERENCIA`) e os atalhos por número inicial (`ATALHOS_INICIAIS`).
+- **`src/ui/favoritos.ts`** - favoritos de linhas salvos **localmente no
+  aparelho** via `@react-native-async-storage/async-storage`. Isola o único ponto
+  de contato com o pacote nativo (carregamento defensivo por `require`, com
+  fallback EM MEMÓRIA se o módulo não resolver, mesmo padrão de `webview.ts`).
+  Expõe funções tipadas e tolerantes a falha: `carregarFavoritosLinhas`,
+  `adicionarFavoritoLinha`, `removerFavoritoLinha`, `alternarFavoritoLinha` e
+  `isLinhaFavorita`. Guarda o mínimo para re-exibir e re-buscar a linha (letreiro,
+  terminais e `codigo_linha`), comparando pelo letreiro normalizado.
 - **`src/screens/DetalheScreen.tsx`** - medições de transporte público da região,
   com o botão **"Atualizar transporte"** (chama
   `POST /api/v1/regioes/{id}/atualizar-transporte`) e acesso ao relatório.

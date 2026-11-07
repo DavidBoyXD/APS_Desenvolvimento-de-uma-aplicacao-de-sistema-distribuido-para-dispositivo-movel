@@ -3,13 +3,18 @@
  *
  * O mapa (WebView + Leaflet) pode ser desenhado com diferentes camadas de
  * tiles, todas CARTOGRÁFICAS (NÃO satélite) e SEM chave de API:
- *   - "Padrão": OpenStreetMap;
- *   - "Claro": CARTO Positron (fundo claro, bom contraste com os marcadores);
- *   - "Escuro": CARTO Dark Matter (fundo escuro).
+ *   - "Padrão": OpenStreetMap (mapa de ruas tradicional);
+ *   - "Humanitário": OpenStreetMap Humanitarian (HOT), visual mais limpo e
+ *     claro, com destaque para infraestrutura;
+ *   - "Topográfico": OpenTopoMap, com relevo e curvas de nível.
+ *
+ * Todos os provedores são ACESSÍVEIS SEM CHAVE de API. Em especial, NÃO usamos
+ * os basemaps da CARTO (light_all/dark_all), pois passaram a exigir uma API key
+ * em uso real ("API KEY REQUIRED"), o que quebraria os estilos no aparelho.
  *
  * Cada estilo guarda a URL de tiles, o zoom máximo e a ATRIBUIÇÃO correta do
- * provedor (OSM e/ou CARTO), exigida pelas respectivas licenças de uso e
- * exibida no canto do mapa pela Leaflet.
+ * provedor, exigida pelas respectivas licenças de uso e exibida no canto do
+ * mapa pela Leaflet.
  *
  * A troca de estilo NÃO recria o mapa: a tela injeta JS no WebView chamando
  * `window.trocarEstiloMapa(id)`, que remove a tileLayer atual e adiciona a nova
@@ -24,7 +29,7 @@
  */
 
 /** Identificador estável de cada estilo cartográfico oferecido. */
-export type EstiloMapaId = 'padrao' | 'claro' | 'escuro';
+export type EstiloMapaId = 'padrao' | 'humanitario' | 'topografico';
 
 /** Definição de um estilo cartográfico (camada de tiles do Leaflet). */
 export interface EstiloMapa {
@@ -52,20 +57,19 @@ export const ESTILOS_MAPA: EstiloMapa[] = [
     atribuicao: '&copy; colaboradores do OpenStreetMap',
   },
   {
-    id: 'claro',
-    rotulo: 'Claro',
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    maxZoom: 20,
-    atribuicao:
-      '&copy; colaboradores do OpenStreetMap &copy; CARTO',
+    id: 'humanitario',
+    rotulo: 'Humanitario',
+    url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+    maxZoom: 19,
+    atribuicao: '&copy; colaboradores do OpenStreetMap, tiles HOT',
   },
   {
-    id: 'escuro',
-    rotulo: 'Escuro',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    maxZoom: 20,
+    id: 'topografico',
+    rotulo: 'Topografico',
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    maxZoom: 17,
     atribuicao:
-      '&copy; colaboradores do OpenStreetMap &copy; CARTO',
+      '&copy; colaboradores do OpenStreetMap, SRTM | OpenTopoMap (CC-BY-SA)',
   },
 ];
 
@@ -126,7 +130,7 @@ let cacheEstilo: EstiloMapaId | null = null;
 /** Valida se um texto corresponde a um id de estilo conhecido. */
 function ehEstiloValido(valor: string | null): valor is EstiloMapaId {
   return (
-    valor === 'padrao' || valor === 'claro' || valor === 'escuro'
+    valor === 'padrao' || valor === 'humanitario' || valor === 'topografico'
   );
 }
 

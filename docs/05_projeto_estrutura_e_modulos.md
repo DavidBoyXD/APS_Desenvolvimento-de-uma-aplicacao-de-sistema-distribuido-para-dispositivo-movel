@@ -85,7 +85,8 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
         └── ui/
             ├── estados.tsx         # EstadoCarregando/EstadoErro/EstadoVazio
             ├── webview.ts          # carregamento defensivo do react-native-webview
-            ├── catalogo.ts         # navegacao assistida (linhas populares, chips, paradas)
+            ├── busca.ts            # busca aproximada (fuzzy): normalizacao + similaridade
+            ├── catalogo.ts         # navegacao assistida (pontos de referencia de paradas)
             ├── favoritos.ts        # favoritos locais de linhas (AsyncStorage defensivo)
             ├── estiloMapa.ts       # estilos cartograficos do mapa + preferencia local
             └── rotulos.ts          # rotulos PT-BR (transporte_publico)
@@ -223,16 +224,27 @@ origem do dado.
   acessibilidade, horário e latitude/longitude em texto) e a previsão de chegada
   por parada. Na aba "Paradas" (`buscarParadas`) lista nome, endereço e
   coordenadas. Quando o back-end sinaliza `tempo_real === false`, a tela exibe um
-  aviso de dado de EXEMPLO. Não usa nenhum módulo nativo de mapa. Inclui ainda a
-  **navegação assistida (catálogo)**: quando o campo de busca está vazio, mostra
-  sugestões (linhas populares curadas, chips por número inicial e, na aba de
-  paradas, pontos de referência) que preenchem o campo e disparam a busca normal,
-  **sem substituir a busca livre**; e os **favoritos locais**, com uma estrela em
-  cada linha para salvar/remover e uma seção "Favoritos" entre as sugestões.
-- **`src/ui/catalogo.ts`** - dados do catálogo da navegação assistida: lista
-  curada de linhas populares de São Paulo (`LINHAS_POPULARES`, apenas atalhos por
-  letreiro, sem fixar código interno), pontos de referência de paradas
-  (`PARADAS_REFERENCIA`) e os atalhos por número inicial (`ATALHOS_INICIAIS`).
+  aviso de dado de EXEMPLO. Não usa nenhum módulo nativo de mapa. A busca é
+  **aproximada (fuzzy)**: os resultados retornados pela API são ordenados por
+  similaridade com o termo digitado (tolerando acentos e pontuação) e, na aba de
+  paradas, uma 2ª tentativa testa uma variação abreviada do termo quando a 1ª vem
+  vazia (ver `src/ui/busca.ts`). Inclui ainda a **navegação assistida (catálogo)**:
+  quando o campo de busca está vazio, a aba de LINHAS mostra apenas os
+  **favoritos** salvos (não há mais sugestões de "linhas populares" nem atalhos
+  por número) e a aba de PARADAS mostra **pontos de referência**; tudo preenche o
+  campo e dispara a busca normal, **sem substituir a busca livre**. Cada linha tem
+  uma estrela para salvar/remover dos favoritos.
+- **`src/ui/busca.ts`** - utilitários de **busca aproximada (fuzzy)**:
+  `normalizar` (minúsculas, remoção de acentos e pontuação, colapso de espaços),
+  `levenshtein` e `similaridade` (0..1, com bônus de substring),
+  `ordenarPorSimilaridade` (reordena resultados por relevância, preservando
+  todos) e `variacoesDeTermo` (gera variações abreviadas — "avenida" -> "av",
+  "praça" -> "pca", etc. — para uma 2ª tentativa de busca de paradas). Toda a
+  fuzzy roda no CLIENTE, sobre os resultados da API, sem alterar o back-end.
+- **`src/ui/catalogo.ts`** - dados do catálogo da navegação assistida: apenas os
+  pontos de referência de paradas (`PARADAS_REFERENCIA`), com os termos nas formas
+  abreviadas que a SPTrans reconhece ("Av.", "Pça.", "Term."). As antigas
+  sugestões de linhas (`LINHAS_POPULARES` e `ATALHOS_INICIAIS`) foram removidas.
 - **`src/ui/favoritos.ts`** - favoritos de linhas salvos **localmente no
   aparelho** via `@react-native-async-storage/async-storage`. Isola o único ponto
   de contato com o pacote nativo (carregamento defensivo por `require`, com
@@ -261,13 +273,19 @@ origem do dado.
   painel, ao ser tocado, alterna entre recolhido (faixa com resumo da linha e
   contagem de veículos, ou convite a buscar) e expandido (resultados da busca e,
   com o campo vazio, a navegação assistida e os favoritos). **Reutiliza** a mesma
-  busca livre (`buscarLinhas`/`buscarParadas`), o catálogo (`catalogo.ts`) e os
-  favoritos (`favoritos.ts`), **sem duplicar a lógica**; tocar numa linha a
-  seleciona no mapa. Inclui ainda o seletor flutuante de estilo cartográfico.
+  busca livre (`buscarLinhas`/`buscarParadas`), a busca aproximada (`busca.ts`), o
+  catálogo (`catalogo.ts`) e os favoritos (`favoritos.ts`), **sem duplicar a
+  lógica**; tocar numa linha a seleciona no mapa. Respeita a **safe area** com
+  `useSafeAreaInsets`: a barra de busca soma o inset superior (status bar/notch) e
+  o painel inferior soma o inset inferior, para não ficar embaixo da barra de
+  navegação do Android (botões voltar/home/recentes) nem da home indicator do iOS.
+  Inclui ainda o seletor flutuante de estilo cartográfico.
 - **`src/ui/estiloMapa.ts`** - catálogo e persistência do **estilo cartográfico**
-  do mapa, todos SEM chave e SEM satélite: **Padrão** (OpenStreetMap), **Claro**
-  (CARTO Positron) e **Escuro** (CARTO Dark Matter), cada um com URL de tiles,
-  zoom máximo e a **atribuição** correta do provedor (exibida pela Leaflet). A
+  do mapa, todos SEM chave e SEM satélite: **Padrão** (OpenStreetMap),
+  **Humanitário** (OpenStreetMap Humanitarian / HOT) e **Topográfico**
+  (OpenTopoMap), cada um com URL de tiles, zoom máximo e a **atribuição** correta
+  do provedor (exibida pela Leaflet). Os basemaps da CARTO não são usados, pois
+  passaram a exigir API key. A
   preferência é guardada **localmente no aparelho** via AsyncStorage, no mesmo
   padrão defensivo de `favoritos.ts` (carregamento por `require` isolado, com
   fallback EM MEMÓRIA). A troca de estilo não recria o mapa: a tela injeta

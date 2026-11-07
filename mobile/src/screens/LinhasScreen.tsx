@@ -57,16 +57,16 @@ import {
   rotuloSentido,
   rotuloVeiculosEmOperacao,
 } from '../ui/rotulos';
-import {
-  ATALHOS_INICIAIS,
-  LINHAS_POPULARES,
-  PARADAS_REFERENCIA,
-} from '../ui/catalogo';
+import { PARADAS_REFERENCIA } from '../ui/catalogo';
 import {
   LinhaFavorita,
   alternarFavoritoLinha,
   carregarFavoritosLinhas,
 } from '../ui/favoritos';
+import {
+  ordenarPorSimilaridade,
+  variacoesDeTermo,
+} from '../ui/busca';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Linhas'>;
 
@@ -146,9 +146,14 @@ export default function LinhasScreen({ navigation }: Props) {
 
   /**
    * Executa a busca. Aceita um termo EXPLÍCITO (usado pelos atalhos da
-   * navegação assistida: linhas populares, favoritos e chips iniciais) ou, se
-   * omitido, usa o termo digitado no campo. Em ambos os casos reutiliza o mesmo
-   * fluxo (buscarLinhas/buscarParadas), preservando a liberdade da busca livre.
+   * navegação assistida: favoritos e pontos de referência) ou, se omitido, usa
+   * o termo digitado no campo. Em ambos os casos reutiliza o mesmo fluxo
+   * (buscarLinhas/buscarParadas), preservando a liberdade da busca livre.
+   *
+   * Busca APROXIMADA (fuzzy): os resultados retornados pela API são ORDENADOS
+   * por similaridade com o termo (do mais parecido ao menos), tolerando acentos
+   * e pontuação. Para PARADAS, se a 1ª consulta vier vazia, tenta uma variação
+   * abreviada do termo (ex.: "avenida" -> "av"), limitada a poucas tentativas.
    */
   const executarBusca = useCallback(
     async (termoAlvo?: string) => {
@@ -173,11 +178,31 @@ export default function LinhasScreen({ navigation }: Props) {
       try {
         if (aba === 'linhas') {
           const resultado = await buscarLinhas(termoLimpo);
-          setLinhas(resultado);
+          setLinhas(
+            ordenarPorSimilaridade(
+              resultado,
+              termoLimpo,
+              (linha) => linha.letreiro,
+            ),
+          );
           setParadas(null);
         } else {
-          const resultado = await buscarParadas(termoLimpo);
-          setParadas(resultado);
+          // Tenta o termo do usuário; se vier vazio, tenta variações abreviadas
+          // (no máximo 2 tentativas no total) antes de desistir.
+          let resultado: ParadaRead[] = [];
+          for (const variacao of variacoesDeTermo(termoLimpo, 2)) {
+            resultado = await buscarParadas(variacao);
+            if (resultado.length > 0) {
+              break;
+            }
+          }
+          setParadas(
+            ordenarPorSimilaridade(
+              resultado,
+              termoLimpo,
+              (parada) => parada.nome,
+            ),
+          );
           setLinhas(null);
         }
       } catch (e) {
@@ -596,11 +621,11 @@ function BotaoFavorito({
 }
 
 /**
- * Seção de NAVEGAÇÃO ASSISTIDA exibida quando o campo de busca está vazio.
- * Oferece atalhos (favoritos salvos, linhas populares e chips por número
- * inicial) que preenchem o campo e disparam a busca normal. Tudo aqui é
- * SUGESTÃO: a busca livre no campo acima continua sendo a forma principal de
- * encontrar qualquer linha. Na aba de PARADAS, mostra pontos de referência.
+ * Seção de NAVEGAÇÃO ASSISTIDA exibida quando o campo de busca está vazio. Para
+ * LINHAS, mostra apenas os FAVORITOS salvos pelo usuário (não há mais sugestões
+ * de "linhas populares" nem atalhos por número). Para PARADAS, mostra pontos de
+ * referência conhecidos. Tudo aqui é SUGESTÃO: a busca livre no campo acima
+ * continua sendo a forma principal de encontrar qualquer linha ou parada.
  */
 function NavegacaoAssistida({
   aba,
@@ -633,10 +658,10 @@ function NavegacaoAssistida({
     );
   }
 
+  // Aba de LINHAS: só FAVORITOS. Sem favoritos, nada a sugerir (a dica abaixo
+  // orienta a usar a busca livre).
   return (
     <View style={styles.assistida}>
-      {/* FAVORITOS salvos no aparelho: atalho para as linhas que o usuário
-          acompanha. Tocar re-busca a linha pelo letreiro (fluxo normal). */}
       {favoritos.length > 0 ? (
         <View style={styles.assistidaBloco}>
           <Text style={styles.assistidaTitulo}>Favoritos</Text>
@@ -654,44 +679,12 @@ function NavegacaoAssistida({
             </Pressable>
           ))}
         </View>
-      ) : null}
-
-      {/* LINHAS POPULARES: lista curada apenas como ponto de partida. */}
-      <View style={styles.assistidaBloco}>
-        <Text style={styles.assistidaTitulo}>Linhas populares</Text>
+      ) : (
         <Text style={styles.assistidaDica}>
-          Sugestoes para comecar. Voce pode pesquisar qualquer linha pelo campo
-          acima, inclusive linhas pouco usadas.
+          Digite o letreiro ou o trajeto no campo acima para buscar uma linha.
+          As linhas que voce favoritar aparecem aqui.
         </Text>
-        {LINHAS_POPULARES.map((linha) => (
-          <Pressable
-            key={`pop-${linha.termo}`}
-            style={styles.sugestao}
-            onPress={() => onSugestao(linha.termo)}
-            accessibilityRole="button"
-          >
-            <Text style={styles.sugestaoTitulo}>{linha.termo}</Text>
-            <Text style={styles.sugestaoMeta}>{linha.descricao}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* ATALHOS por número inicial (opcional): preenchem o campo e buscam. */}
-      <View style={styles.assistidaBloco}>
-        <Text style={styles.assistidaTitulo}>Comecar por numero</Text>
-        <View style={styles.chips}>
-          {ATALHOS_INICIAIS.map((inicial) => (
-            <Pressable
-              key={`chip-${inicial}`}
-              style={styles.chip}
-              onPress={() => onSugestao(inicial)}
-              accessibilityRole="button"
-            >
-              <Text style={styles.chipTexto}>{inicial}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -857,26 +850,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#475569',
     marginTop: 2,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    minWidth: 44,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#0B6E4F',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: '#FFFFFF',
-  },
-  chipTexto: {
-    color: '#0B6E4F',
-    fontWeight: '700',
-    fontSize: 14,
   },
   cardMeta: {
     fontSize: 13,

@@ -11,8 +11,8 @@
  *     e, quando o campo está vazio, a NAVEGAÇÃO ASSISTIDA (catálogo) e os
  *     FAVORITOS. Tocar numa linha a seleciona: o mapa passa a plotar seus
  *     veículos (com auto-refresh) e o painel recolhe.
- *   - um SELETOR DE ESTILO cartográfico (Padrão/Claro/Escuro), que troca a
- *     camada de tiles do Leaflet sem recriar o mapa.
+ *   - um SELETOR DE ESTILO cartográfico (Padrão/Humanitário/Topográfico), que
+ *     troca a camada de tiles do Leaflet sem recriar o mapa.
  *
  * Modos do mapa:
  *   - SEM linha selecionada: plota as REGIÕES monitoradas (getRegioes); tocar no
@@ -27,7 +27,7 @@
  * COMO O MAPA É DESENHADO (WebView + Leaflet):
  *   Renderizamos um `WebView` (do `react-native-webview`, via wrapper protegido
  *   em src/ui/webview.ts) que carrega um HTML embutido com a Leaflet (via CDN) e
- *   tiles cartográficos SEM chave (OpenStreetMap ou CARTO). Requer internet para
+ *   tiles cartográficos SEM chave (OpenStreetMap, HOT e OpenTopoMap). Requer internet para
  *   baixar tiles e a Leaflet; offline, o mapa não carrega, mas a tela de Linhas
  *   (em lista) continua funcionando.
  *
@@ -35,7 +35,8 @@
  *   - react-native-webview (SDK 58): https://docs.expo.dev/versions/v58.0.0/sdk/webview/
  *   - Leaflet: https://leafletjs.com/reference.html
  *   - OpenStreetMap (tiles): https://www.openstreetmap.org/
- *   - CARTO basemaps: https://github.com/CartoDB/basemap-styles
+ *   - OpenStreetMap Humanitarian (HOT): https://www.openstreetmap.fr/hot/
+ *   - OpenTopoMap: https://opentopomap.org/about
  *
  * Onde é aplicado: rota "MapaVisual" em App.tsx.
  */
@@ -127,7 +128,7 @@ interface LinhaAtiva {
  * Os pontos são injetados via JSON.stringify (serialização segura) e o caractere
  * "<" é escapado como "\\u003c" para impedir que um nome contendo "</script>"
  * feche o bloco <script> prematuramente. A Leaflet vem por CDN (unpkg); os tiles
- * vêm de provedores cartográficos sem chave (OpenStreetMap/CARTO).
+ * vêm de provedores cartográficos sem chave (OpenStreetMap, HOT e OpenTopoMap).
  *
  * Expõe duas funções globais usadas pelo React via injectJavaScript:
  *   - window.atualizarVeiculos(json): troca apenas os marcadores de veículo

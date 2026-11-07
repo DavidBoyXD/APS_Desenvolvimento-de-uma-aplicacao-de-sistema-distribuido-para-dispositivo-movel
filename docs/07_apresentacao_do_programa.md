@@ -139,13 +139,14 @@ acompanhar as linhas, que complementa a tela de Linhas (que continua em lista).
 O mapa ocupa a tela toda e, por cima dele (numa camada React Native sobreposta,
 nunca dentro do WebView), traz uma **barra de busca flutuante**, um **painel
 inferior expansível por toque** com o catálogo/sugestões e os favoritos, e um
-**seletor de estilo cartográfico** (Padrão, Claro ou Escuro). Sem linha
-selecionada, plota as regiões como marcadores; ao selecionar uma linha (pela
-busca na própria tela ou vindo das Linhas de ônibus), plota a posição em tempo
-real dos veículos (com **atualização automática** periódica e botão de pausar).
-Essa tela desenha o mapa com **tiles cartográficos via WebView** (biblioteca
-Leaflet dentro de um `react-native-webview`, usando OpenStreetMap ou CARTO),
-portanto **não precisa de chave de API** nem de billing (ver `mobile/BUILD_APK.md`)
+**seletor de estilo cartográfico** (Padrão, Humanitário ou Topográfico). Sem
+linha selecionada, plota as regiões como marcadores; ao selecionar uma linha
+(pela busca na própria tela ou vindo das Linhas de ônibus), plota a posição em
+tempo real dos veículos (com **atualização automática** periódica e botão de
+pausar). Essa tela desenha o mapa com **tiles cartográficos via WebView**
+(biblioteca Leaflet dentro de um `react-native-webview`, usando OpenStreetMap,
+HOT e OpenTopoMap), portanto **não precisa de chave de API** nem de billing (ver
+`mobile/BUILD_APK.md`)
 e **não usa satélite**; requer apenas internet para carregar os tiles. Por ser
 separada e opcional, mesmo que o mapa não carregue (ex.: sem internet), o app
 continua abrindo normalmente na lista.
@@ -206,16 +207,23 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    - Na aba **Paradas**, busque por um termo (ex.: `Av. Paulista`) para listar
      paradas com nome, endereço e coordenadas (`GET /api/v1/paradas/buscar`).
 
-   **Navegação assistida (catálogo).** Enquanto o campo de busca estiver vazio,
-   a tela mostra uma seção de **sugestões** para ajudar quem ainda não sabe o que
-   pesquisar: uma lista curada de **Linhas populares** de São Paulo, uma faixa de
-   **chips "Começar por número"** (1 a 9) e, quando houver, a lista de
-   **Favoritos**. Tocar em qualquer sugestão **preenche o campo** com o letreiro
-   e dispara a busca normal (a API devolve o `codigo_linha` real). Essas
-   sugestões são apenas atalhos: a **busca livre continua disponível** e permite
-   pesquisar **qualquer linha**, inclusive linhas pouco utilizadas que não
-   aparecem na lista curada. A seção some assim que há termo digitado ou
-   resultados, para não poluir a tela.
+   **Busca aproximada (fuzzy).** Não é preciso digitar o termo exatamente como no
+   Olho Vivo: a tela **normaliza** o texto (ignora acentos e pontuação) e
+   **ordena** os resultados por similaridade com o que foi digitado, trazendo o
+   mais parecido primeiro. Na aba de **Paradas**, se a primeira consulta vier
+   vazia, a tela ainda tenta automaticamente uma **variação abreviada** do termo
+   (ex.: "avenida" → "av", "praça" → "pça"), pois são as formas que a SPTrans
+   reconhece. A busca livre continua idêntica; a fuzzy apenas melhora a ordem e a
+   tolerância.
+
+   **Navegação assistida (catálogo).** Enquanto o campo de busca estiver vazio, a
+   tela mostra **sugestões** para ajudar quem ainda não sabe o que pesquisar: na
+   aba de **Linhas**, apenas a lista de **Favoritos** (quando houver); na aba de
+   **Paradas**, uma lista curada de **pontos de referência** (ex.: Av. Paulista,
+   Pça. da Sé, Term. Bandeira). Tocar numa sugestão **preenche o campo** e dispara
+   a busca normal. Essas sugestões são apenas atalhos: a **busca livre continua
+   disponível** e permite pesquisar **qualquer linha ou parada**. A seção some
+   assim que há termo digitado ou resultados, para não poluir a tela.
 
    **Favoritos (salvos no aparelho).** Cada linha nos resultados tem uma
    **estrela** para favoritar/desfavoritar. Os favoritos ficam salvos
@@ -244,15 +252,19 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    ao toque**: recolhido, mostra um resumo (a linha selecionada e o número de
    veículos em operação, ou um convite a buscar); expandido, revela os
    **resultados da busca** e, quando o campo está vazio, a **navegação assistida**
-   (linhas populares, chips por número e pontos de referência) e os **favoritos**
-   (com a estrela para salvar/remover). Toque numa linha para **plotá-la no
-   mapa**: os veículos aparecem com o mesmo **auto-refresh** (10/15/30s e botão
-   pausar) e o painel recolhe para dar espaço ao mapa. No canto, o botão
-   **"Estilo"** alterna o estilo **cartográfico** do mapa entre **Padrão**
-   (OpenStreetMap), **Claro** (CARTO Positron) e **Escuro** (CARTO Dark Matter) —
-   todos sem chave e **sem satélite**; a camada de tiles troca sem recriar o mapa
-   (os marcadores permanecem) e a preferência fica **salva no aparelho**. A
-   atribuição correta de cada provedor aparece no canto do mapa.
+   (favoritos de linhas e pontos de referência de paradas) e os **favoritos**
+   (com a estrela para salvar/remover). A mesma **busca aproximada (fuzzy)** da
+   tela de Linhas vale aqui. O painel respeita a **área segura** do aparelho: o
+   cabeçalho e os itens tocáveis ficam acima da barra de navegação do Android
+   (botões voltar/home/recentes), nunca escondidos atrás dela. Toque numa linha
+   para **plotá-la no mapa**: os veículos aparecem com o mesmo **auto-refresh**
+   (10/15/30s e botão pausar) e o painel recolhe para dar espaço ao mapa. No
+   canto, o botão **"Estilo"** alterna o estilo **cartográfico** do mapa entre
+   **Padrão** (OpenStreetMap), **Humanitário** (OpenStreetMap Humanitarian / HOT)
+   e **Topográfico** (OpenTopoMap) — todos sem chave e **sem satélite**; a camada
+   de tiles troca sem recriar o mapa (os marcadores permanecem) e a preferência
+   fica **salva no aparelho**. A atribuição correta de cada provedor aparece no
+   canto do mapa.
 
 7. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
    regra (escolha região, tipo, parâmetro, condição `>`/`<` e limiar) e toque em

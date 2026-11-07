@@ -27,15 +27,19 @@ de dados, caracterizando o sistema distribuído:
 - Cliente móvel (React Native / Expo) que exibe a lista de regiões de SP e as
   medições e inclui uma tela de **Linhas de ônibus** (busca de linhas/paradas,
   posição dos veículos e previsão de chegada), acessível pelo botão "Linhas de
-  onibus" na tela inicial. A tela de Linhas traz ainda uma **navegação assistida
-  (catálogo)** com sugestões de linhas populares e atalhos quando o campo de busca
-  está vazio (**sem remover a busca livre**, que continua permitindo pesquisar
-  qualquer linha) e **favoritos salvos localmente no aparelho** (estrela em cada
-  linha) para voltar rápido às linhas acompanhadas. A mesma busca, catálogo e
-  favoritos estão também **integrados ao mapa** (tela "Ver no mapa"), numa camada
-  flutuante sobre o mapa com um **painel expansível por toque**, permitindo
-  buscar/selecionar uma linha e vê-la plotada; o mapa ainda oferece um **seletor
-  de estilo cartográfico** (Padrão, Claro ou Escuro, sem satélite).
+  onibus" na tela inicial. A busca é **aproximada (fuzzy)**: ignora acentos e
+  pontuação e ordena os resultados por similaridade com o termo digitado, então
+  não é preciso digitar exatamente como no Olho Vivo. A tela de Linhas traz ainda
+  uma **navegação assistida (catálogo)** quando o campo de busca está vazio — para
+  linhas, apenas os favoritos; para paradas, pontos de referência conhecidos —
+  (**sem remover a busca livre**, que continua permitindo pesquisar qualquer
+  linha) e **favoritos salvos localmente no aparelho** (estrela em cada linha)
+  para voltar rápido às linhas acompanhadas. A mesma busca, catálogo e favoritos
+  estão também **integrados ao mapa** (tela "Ver no mapa"), numa camada flutuante
+  sobre o mapa com um **painel expansível por toque** que respeita a **área
+  segura** do aparelho, permitindo buscar/selecionar uma linha e vê-la plotada; o
+  mapa ainda oferece um **seletor de estilo cartográfico** (Padrão, Humanitário ou
+  Topográfico, sem satélite e sem chave de API).
 - Servidor de API REST (Python / FastAPI) que expõe os dados e a lógica e consome
   as fontes externas de SP.
 - Banco de dados (SQLite) que persiste regiões, medições e alertas.
@@ -241,10 +245,11 @@ Leaflet), portanto **não precisa de chave do Google Maps** nem de billing;
 requer apenas internet para carregar os tiles. Sobre o mapa há uma camada de
 **busca integrada** (barra flutuante + painel expansível por toque com catálogo
 e favoritos): dá para buscar e selecionar uma linha e vê-la plotada sem sair do
-mapa. Um **seletor de estilo** alterna entre **Padrão** (OpenStreetMap), **Claro**
-(CARTO Positron) e **Escuro** (CARTO Dark Matter) — todos cartográficos e **sem
-satélite** —, trocando a camada de tiles sem recriar o mapa e guardando a
-preferência no aparelho. Com uma linha selecionada (pela busca no mapa ou vinda
+mapa. Um **seletor de estilo** alterna entre **Padrão** (OpenStreetMap),
+**Humanitário** (OpenStreetMap Humanitarian / HOT) e **Topográfico**
+(OpenTopoMap) — todos cartográficos, **sem satélite** e **sem chave de API** —,
+trocando a camada de tiles sem recriar o mapa e guardando a preferência no
+aparelho. Com uma linha selecionada (pela busca no mapa ou vinda
 das Linhas de ônibus), o mapa **atualiza automaticamente** a posição dos veículos
 (padrão de 15s, selecionável entre 10s, 15s e 30s, com botão de pausar), trocando
 os marcadores sem recarregar o mapa (preserva o zoom/centro). O aplicativo mantém

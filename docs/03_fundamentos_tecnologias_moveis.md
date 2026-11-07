@@ -96,8 +96,9 @@ esforço controlado.
   Aplicado em: `mobile/src/screens/MapaVisualScreen.tsx`, que carrega um HTML
   embutido com a biblioteca **Leaflet** e **tiles cartográficos sem chave**. O
   usuário pode alternar o estilo do mapa entre **Padrão** (OpenStreetMap),
-  **Claro** (CARTO Positron) e **Escuro** (CARTO Dark Matter) — todos
-  cartográficos e **sem satélite** —, com a atribuição correta de cada provedor
+  **Humanitário** (OpenStreetMap Humanitarian / HOT) e **Topográfico**
+  (OpenTopoMap) — todos cartográficos, **sem satélite** e **sem API key** —, com
+  a atribuição correta de cada provedor
   exibida no canto do mapa. Sobre o WebView fica uma camada React Native com a
   **busca de linhas/paradas** e o catálogo/favoritos (ver `MapaBuscaOverlay.tsx`
   e `ui/estiloMapa.ts`). Essa escolha desenha o mapa **sem precisar de chave de

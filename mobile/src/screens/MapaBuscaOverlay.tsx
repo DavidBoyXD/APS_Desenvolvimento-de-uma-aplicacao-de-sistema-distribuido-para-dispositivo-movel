@@ -18,7 +18,7 @@
  *     src/ui/catalogo.ts) e os FAVORITOS (src/ui/favoritos.ts). Tocar numa linha
  *     seleciona-a: o mapa passa a plotar seus veículos.
  *
- * O seletor de ESTILO cartográfico do mapa (Padrão/Claro/Escuro) é um controle
+ * O seletor de ESTILO cartográfico do mapa (Padrão/Humanitário/Topográfico) é um controle
  * flutuante próprio (SeletorEstiloMapa), renderizado pela tela.
  *
  * Onde é aplicado: src/screens/MapaVisualScreen.tsx.
@@ -34,17 +34,15 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError, buscarLinhas, buscarParadas } from '../api/client';
 import { LinhaRead, ParadaRead } from '../types';
-import {
-  ATALHOS_INICIAIS,
-  LINHAS_POPULARES,
-  PARADAS_REFERENCIA,
-} from '../ui/catalogo';
+import { PARADAS_REFERENCIA } from '../ui/catalogo';
 import { LinhaFavorita } from '../ui/favoritos';
 import { EstiloMapa, EstiloMapaId } from '../ui/estiloMapa';
 import { AVISO_DADO_EXEMPLO, rotuloSentido } from '../ui/rotulos';
+import { ordenarPorSimilaridade, variacoesDeTermo } from '../ui/busca';
 
 /** Aba de busca ativa: linhas ou paradas (mesma semântica da tela de Linhas). */
 export type AbaBusca = 'linhas' | 'paradas';
@@ -103,6 +101,11 @@ export default function MapaBuscaOverlay({
   const [termo, setTermo] = useState<string>('');
   const [expandido, setExpandido] = useState<boolean>(false);
 
+  // Insets da safe area: usados para a barra de busca respeitar o topo (status
+  // bar/notch) e o painel inferior respeitar a barra de navegação do Android
+  // (botões voltar/home/recentes) ou a home indicator do iOS.
+  const insets = useSafeAreaInsets();
+
   // Resultados da busca (null = nenhuma busca feita ainda nesta aba).
   const [linhas, setLinhas] = useState<LinhaRead[] | null>(null);
   const [paradas, setParadas] = useState<ParadaRead[] | null>(null);
@@ -155,14 +158,35 @@ export default function MapaBuscaOverlay({
           if (!montado.ativo) {
             return;
           }
-          setLinhas(resultado);
+          // Busca aproximada (fuzzy): ordena por similaridade com o termo.
+          setLinhas(
+            ordenarPorSimilaridade(
+              resultado,
+              termoLimpo,
+              (linha) => linha.letreiro,
+            ),
+          );
           setParadas(null);
         } else {
-          const resultado = await buscarParadas(termoLimpo);
+          // Tenta o termo do usuário; se vier vazio, tenta variações abreviadas
+          // (no máximo 2 tentativas no total) antes de desistir.
+          let resultado: ParadaRead[] = [];
+          for (const variacao of variacoesDeTermo(termoLimpo, 2)) {
+            resultado = await buscarParadas(variacao);
+            if (resultado.length > 0) {
+              break;
+            }
+          }
           if (!montado.ativo) {
             return;
           }
-          setParadas(resultado);
+          setParadas(
+            ordenarPorSimilaridade(
+              resultado,
+              termoLimpo,
+              (parada) => parada.nome,
+            ),
+          );
           setLinhas(null);
         }
       } catch (e) {
@@ -237,8 +261,13 @@ export default function MapaBuscaOverlay({
         aoTrocarEstilo={aoTrocarEstilo}
       />
 
-      {/* BARRA DE BUSCA FLUTUANTE no topo, sobre o mapa. */}
-      <View style={styles.barraBusca} pointerEvents="box-none">
+      {/* BARRA DE BUSCA FLUTUANTE no topo, sobre o mapa. Soma o inset superior
+          (status bar/notch) ao padding para não ficar embaixo da barra de
+          status em aparelhos com notch. */}
+      <View
+        style={[styles.barraBusca, { paddingTop: 12 + insets.top }]}
+        pointerEvents="box-none"
+      >
         <View style={styles.barraBuscaCartao}>
           <View style={styles.abas}>
             <BotaoAba
@@ -285,8 +314,14 @@ export default function MapaBuscaOverlay({
         </View>
       </View>
 
-      {/* PAINEL INFERIOR expansível por toque, sobre o mapa. */}
-      <View style={styles.painel} pointerEvents="box-none">
+      {/* PAINEL INFERIOR expansível por toque, sobre o mapa. Soma o inset
+          inferior (barra de navegação do Android / home indicator do iOS) ao
+          padding para que o cabeçalho e os itens tocáveis NÃO fiquem embaixo
+          dos botões do sistema. */}
+      <View
+        style={[styles.painel, { paddingBottom: 12 + insets.bottom }]}
+        pointerEvents="box-none"
+      >
         <View style={styles.painelCartao}>
           <Pressable
             style={styles.painelCabecalho}
@@ -381,7 +416,7 @@ export default function MapaBuscaOverlay({
 }
 
 /**
- * Seletor flutuante do ESTILO cartográfico (Padrão/Claro/Escuro). Um botão de
+ * Seletor flutuante do ESTILO cartográfico (Padrão/Humanitário/Topográfico). Um botão de
  * "camadas" que expande chips com os estilos; tocar troca a camada de tiles do
  * mapa (sem recriar o mapa). Fica no canto superior direito, abaixo da barra.
  */
@@ -539,6 +574,8 @@ function Catalogo({
     );
   }
 
+  // Aba de LINHAS: só FAVORITOS. Sem sugestões de "linhas populares" nem
+  // atalhos por número; a busca livre cobre o restante.
   return (
     <View style={styles.catalogo}>
       {favoritos.length > 0 ? (
@@ -558,42 +595,12 @@ function Catalogo({
             </Pressable>
           ))}
         </View>
-      ) : null}
-
-      <View style={styles.catalogoBloco}>
-        <Text style={styles.catalogoTitulo}>Linhas populares</Text>
+      ) : (
         <Text style={styles.catalogoDica}>
-          Sugestoes para comecar. Voce pode pesquisar qualquer linha pelo campo
-          acima, inclusive linhas pouco usadas.
+          Digite o letreiro ou o trajeto no campo acima para buscar uma linha.
+          As linhas que voce favoritar aparecem aqui.
         </Text>
-        {LINHAS_POPULARES.map((linha) => (
-          <Pressable
-            key={`pop-${linha.termo}`}
-            style={styles.sugestao}
-            onPress={() => onSugestao(linha.termo)}
-            accessibilityRole="button"
-          >
-            <Text style={styles.sugestaoTitulo}>{linha.termo}</Text>
-            <Text style={styles.sugestaoMeta}>{linha.descricao}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={styles.catalogoBloco}>
-        <Text style={styles.catalogoTitulo}>Comecar por numero</Text>
-        <View style={styles.chips}>
-          {ATALHOS_INICIAIS.map((inicial) => (
-            <Pressable
-              key={`chip-${inicial}`}
-              style={styles.chip}
-              onPress={() => onSugestao(inicial)}
-              accessibilityRole="button"
-            >
-              <Text style={styles.chipTexto}>{inicial}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -945,25 +952,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#475569',
     marginTop: 2,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    minWidth: 44,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#0B6E4F',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: '#FFFFFF',
-  },
-  chipTexto: {
-    color: '#0B6E4F',
-    fontWeight: '700',
-    fontSize: 14,
   },
 });

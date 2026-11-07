@@ -99,14 +99,75 @@ def test_atualizar_transporte_fallback_sem_token(client, monkeypatch) -> None:
     assert dados[0]["fonte"] == FONTE_FALLBACK
 
 
-def test_atualizar_transporte_nao_acumula(client, monkeypatch) -> None:
-    """Chamar atualizar-transporte DUAS vezes substitui, nao acumula.
+def test_atualizar_transporte_acumula_historico(client, monkeypatch) -> None:
+    """Chamar atualizar-transporte DUAS vezes ACUMULA o historico.
 
-    Cada atualizacao do tipo transporte_publico deve SUBSTITUIR as medicoes
-    anteriores da regiao (mesmo tipo), de modo que a contagem apos a 2a chamada
-    seja igual a da 1a (e nao o dobro). Evita a multiplicacao de valores
-    observada ao atualizar repetidamente.
+    Cada atualizacao do tipo transporte_publico INSERE novas medicoes em vez de
+    substituir as anteriores, de modo que apos a 2a chamada a regiao tenha o
+    DOBRO de medicoes (2 leituras por chamada). Isso da ao relatorio amostras >
+    1 por parametro (estatistica real), sem a multiplicacao descontrolada
+    (limitada pela poda testada em test_atualizar_transporte_limita_historico).
     """
+    monkeypatch.setenv(ENV_TOKEN, "token-de-teste-fake")
+
+    def fake_buscar(latitude, longitude, client=None):
+        return [
+            LeituraTransporte("linhas_monitoradas", 42.0, "linhas"),
+            LeituraTransporte("veiculos_em_operacao", 318.0, "veiculos"),
+        ]
+
+    monkeypatch.setattr(
+        "app.routers.medicoes.buscar_transporte_publico", fake_buscar
+    )
+
+    # Usa a ULTIMA regiao, para nao depender do estado deixado por outros testes
+    # na primeira regiao (o banco de teste e compartilhado na sessao).
+    regiao_id = client.get("/api/v1/regioes").json()[-1]["id"]
+
+    def contar_por_parametro() -> dict:
+        medicoes = client.get("/api/v1/regioes/%d/medicoes" % regiao_id).json()
+        contagem: dict[str, int] = {}
+        for m in medicoes:
+            if m["tipo"] == "transporte_publico":
+                contagem[m["parametro"]] = contagem.get(m["parametro"], 0) + 1
+        return contagem
+
+    antes = contar_por_parametro()
+
+    primeira = client.post(f"/api/v1/regioes/{regiao_id}/atualizar-transporte")
+    assert primeira.status_code == 200
+    quantidade_primeira = len(primeira.json())
+    assert quantidade_primeira == 2
+
+    segunda = client.post(f"/api/v1/regioes/{regiao_id}/atualizar-transporte")
+    assert segunda.status_code == 200
+    # A resposta de cada chamada traz apenas as medicoes recem-inseridas.
+    assert len(segunda.json()) == quantidade_primeira
+
+    # O historico ACUMULA: cada parametro GANHA uma amostra por chamada (duas
+    # chamadas => +2 por parametro em relacao ao estado anterior).
+    depois = contar_por_parametro()
+    for parametro in ("linhas_monitoradas", "veiculos_em_operacao"):
+        assert depois.get(parametro, 0) == antes.get(parametro, 0) + 2
+        # Apos duas chamadas, ha MAIS de uma amostra por parametro.
+        assert depois[parametro] >= 2
+
+    # O relatorio reflete a contagem acumulada (amostras > 1) por parametro.
+    relatorio = client.get(f"/api/v1/relatorios/regiao/{regiao_id}").json()
+    resumos = {r["parametro"]: r for r in relatorio["resumos"]}
+    assert resumos["linhas_monitoradas"]["contagem"] >= 2
+    assert resumos["veiculos_em_operacao"]["contagem"] >= 2
+
+
+def test_atualizar_transporte_limita_historico(client, monkeypatch) -> None:
+    """Muitas atualizacoes nao fazem o historico passar do limite (50).
+
+    Apos MUITAS chamadas, a contagem por (regiao, tipo, parametro) estabiliza em
+    LIMITE_HISTORICO_POR_PARAMETRO (50), nunca crescendo indefinidamente. A poda
+    mantem as medicoes mais recentes.
+    """
+    from app.routers.medicoes import LIMITE_HISTORICO_POR_PARAMETRO
+
     monkeypatch.setenv(ENV_TOKEN, "token-de-teste-fake")
 
     def fake_buscar(latitude, longitude, client=None):
@@ -121,27 +182,32 @@ def test_atualizar_transporte_nao_acumula(client, monkeypatch) -> None:
 
     regiao_id = client.get("/api/v1/regioes").json()[0]["id"]
 
-    primeira = client.post(f"/api/v1/regioes/{regiao_id}/atualizar-transporte")
-    assert primeira.status_code == 200
-    quantidade_primeira = len(primeira.json())
+    # Faz mais chamadas que o limite para garantir que a poda estabiliza a serie.
+    total_chamadas = LIMITE_HISTORICO_POR_PARAMETRO + 10
+    for _ in range(total_chamadas):
+        resp = client.post(f"/api/v1/regioes/{regiao_id}/atualizar-transporte")
+        assert resp.status_code == 200
 
-    segunda = client.post(f"/api/v1/regioes/{regiao_id}/atualizar-transporte")
-    assert segunda.status_code == 200
-    # A resposta de cada chamada traz apenas as medicoes recem-inseridas.
-    assert len(segunda.json()) == quantidade_primeira
+    medicoes = client.get("/api/v1/regioes/%d/medicoes" % regiao_id).json()
+    transporte = [m for m in medicoes if m["tipo"] == "transporte_publico"]
 
-    # A regiao deve manter apenas a ultima leva de transporte_publico, nao a
-    # soma das duas chamadas (sem acumulo/multiplicacao).
-    medicoes = client.get(
-        "/api/v1/regioes/%d/medicoes" % regiao_id
-    ).json()
-    transporte = [
-        m for m in medicoes if m["tipo"] == "transporte_publico"
-    ]
-    assert len(transporte) == quantidade_primeira
-    # No maximo uma medicao vigente por parametro apos a substituicao.
-    parametros = [m["parametro"] for m in transporte]
-    assert len(parametros) == len(set(parametros))
+    por_parametro: dict[str, int] = {}
+    for m in transporte:
+        por_parametro[m["parametro"]] = por_parametro.get(m["parametro"], 0) + 1
+
+    # Cada parametro estabiliza exatamente no limite (nunca acima).
+    assert por_parametro["linhas_monitoradas"] == LIMITE_HISTORICO_POR_PARAMETRO
+    assert por_parametro["veiculos_em_operacao"] == LIMITE_HISTORICO_POR_PARAMETRO
+
+    # O relatorio agregado tambem reflete a contagem limitada por parametro.
+    relatorio = client.get(f"/api/v1/relatorios/regiao/{regiao_id}").json()
+    resumos = {r["parametro"]: r for r in relatorio["resumos"]}
+    assert resumos["linhas_monitoradas"]["contagem"] == (
+        LIMITE_HISTORICO_POR_PARAMETRO
+    )
+    assert resumos["veiculos_em_operacao"]["contagem"] == (
+        LIMITE_HISTORICO_POR_PARAMETRO
+    )
 
 
 def test_atualizar_transporte_falha_rede_tratada(client, monkeypatch) -> None:

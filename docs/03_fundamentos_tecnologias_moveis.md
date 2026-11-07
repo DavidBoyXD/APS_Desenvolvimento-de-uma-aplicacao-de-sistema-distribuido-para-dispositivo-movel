@@ -75,33 +75,27 @@ esforço controlado.
 - **react-native-screens** (4.26.2) e **react-native-safe-area-context** (5.7.0) -
   dependências nativas exigidas pelo React Navigation (telas nativas e áreas
   seguras). Aplicado em: `mobile/App.tsx` (envolvido por `SafeAreaProvider`).
-- **react-native-chart-kit** (7.0.4) - biblioteca de gráficos para React Native
-  (gráfico de barras, linhas, pizza etc.). Referência:
-  [https://github.com/indiespirit/react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit)
-  e [https://www.npmjs.com/package/react-native-chart-kit](https://www.npmjs.com/package/react-native-chart-kit).
-  Aplicado em: `mobile/src/screens/RelatoriosScreen.tsx`, onde um `BarChart`
-  resume visualmente as **médias por parâmetro** do relatório da região, acima da
-  lista tabular. Depende de **react-native-svg** (15.15.4) para desenhar as barras:
-  [https://github.com/software-mansion/react-native-svg](https://github.com/software-mansion/react-native-svg).
-  Justificativa da escolha: é compatível com o stack atual (Expo SDK 57, React
-  19.2.3 e React Native 0.86.3) e sua única dependência nativa é o
-  react-native-svg, módulo suportado pelo Expo (instalado via `npx expo install`).
-  As alternativas **react-native-gifted-charts** (exige react-native-linear-gradient
-  nativo) e **victory-native** (peer dependencies mais pesadas) foram descartadas
-  por adicionarem dependências nativas extras. Instalado com
-  `npx expo install react-native-chart-kit react-native-svg`.
+- **Gráfico de barras do relatório** - em `mobile/src/screens/RelatoriosScreen.tsx`,
+  as **médias por parâmetro** do relatório são resumidas num gráfico de **barras
+  horizontais renderizadas com `View`** (layout flex), e não com uma biblioteca
+  de gráficos. Cada barra traz o **rótulo textual completo** do parâmetro ao lado
+  (sem corte nem rotação ilegível), a largura é **proporcional ao maior valor** do
+  conjunto e o **valor numérico** aparece ao final. A opção por `View` em vez de um
+  gráfico de barras verticais evita rótulos cortados/ilegíveis em telas estreitas e
+  com nomes longos, além de remover uma dependência de desenho nativo.
 - **react-native-webview** - componente de WebView usado para desenhar o **mapa
   visual** (tela opcional). Referência:
   [https://docs.expo.dev/versions/v58.0.0/sdk/webview/](https://docs.expo.dev/versions/v58.0.0/sdk/webview/).
   Aplicado em: `mobile/src/screens/MapaVisualScreen.tsx`, que carrega um HTML
   embutido com a biblioteca **Leaflet** e **tiles cartográficos sem chave**. O
   usuário pode alternar o estilo do mapa entre **Padrão** (OpenStreetMap),
-  **Humanitário** (OpenStreetMap Humanitarian / HOT) e **Topográfico**
-  (OpenTopoMap) — todos cartográficos, **sem satélite** e **sem API key** —, com
-  a atribuição correta de cada provedor
+  **OSM.de** (servidor alemão oficial do OpenStreetMap, `tile.openstreetmap.de`)
+  e **Topográfico** (OpenTopoMap) — todos cartográficos, **sem satélite** e **sem
+  API key** —, com a atribuição correta de cada provedor
   exibida no canto do mapa. Sobre o WebView fica uma camada React Native com a
   **busca de linhas/paradas** e o catálogo/favoritos (ver `MapaBuscaOverlay.tsx`
-  e `ui/estiloMapa.ts`). Essa escolha desenha o mapa **sem precisar de chave de
+  e `ui/estiloMapa.ts`). Ao selecionar uma **parada** na busca, o mapa plota um
+  **marcador** nela (nome + endereço) e centraliza a visão no ponto. Essa escolha desenha o mapa **sem precisar de chave de
   API** (não usa Google Maps) e **sem a dependência nativa** que quebrava a
   inicialização do app; é um módulo padrão e suportado pelo Expo (incluído no
   Expo Go). Requer internet para baixar os tiles e a Leaflet por CDN. Instalado

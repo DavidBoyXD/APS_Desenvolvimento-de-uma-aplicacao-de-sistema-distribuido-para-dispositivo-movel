@@ -245,11 +245,14 @@ Leaflet), portanto **não precisa de chave do Google Maps** nem de billing;
 requer apenas internet para carregar os tiles. Sobre o mapa há uma camada de
 **busca integrada** (barra flutuante + painel expansível por toque com catálogo
 e favoritos): dá para buscar e selecionar uma linha e vê-la plotada sem sair do
-mapa. Um **seletor de estilo** alterna entre **Padrão** (OpenStreetMap),
-**Humanitário** (OpenStreetMap Humanitarian / HOT) e **Topográfico**
-(OpenTopoMap) — todos cartográficos, **sem satélite** e **sem chave de API** —,
-trocando a camada de tiles sem recriar o mapa e guardando a preferência no
-aparelho. Com uma linha selecionada (pela busca no mapa ou vinda
+mapa. Um **seletor de estilo** (no canto inferior direito, fora da barra de
+busca e dos controles de zoom) alterna entre **Padrão** (OpenStreetMap),
+**OSM.de** (servidor alemão oficial do OpenStreetMap, `tile.openstreetmap.de`)
+e **Topográfico** (OpenTopoMap) — todos cartográficos, **sem satélite** e **sem
+chave de API** —, trocando a camada de tiles sem recriar o mapa e guardando a
+preferência no aparelho. Ao selecionar uma **parada** na busca, o mapa plota um
+**marcador** nela (nome + endereço) e centraliza a visão no ponto. Com uma linha
+selecionada (pela busca no mapa ou vinda
 das Linhas de ônibus), o mapa **atualiza automaticamente** a posição dos veículos
 (padrão de 15s, selecionável entre 10s, 15s e 30s, com botão de pausar), trocando
 os marcadores sem recarregar o mapa (preserva o zoom/centro). O aplicativo mantém
@@ -259,11 +262,13 @@ funciona mesmo que o mapa não carregue. O passo a passo detalhado está em
 [mobile/BUILD_APK.md](mobile/BUILD_APK.md).
 
 Nota sobre o gráfico dos relatórios: a tela de Relatórios exibe, além da lista de
-cards, um gráfico de barras ("Médias por parâmetro") desenhado com a biblioteca
-`react-native-chart-kit` (que depende de `react-native-svg`). Essas dependências
-já estão no `package.json` e são instaladas com o `npm install`. Caso precise
-reinstalá-las de forma compatível com o SDK, use o gerenciador do Expo:
-`cd mobile && npx expo install react-native-chart-kit react-native-svg`.
+cards, um gráfico de **barras horizontais** ("Médias por parâmetro") desenhado
+com `View` (barras proporcionais ao maior valor, com o rótulo textual completo e
+o valor ao lado de cada barra). Não usa biblioteca de gráficos, o que mantém os
+rótulos legíveis em telas estreitas e evita dependências nativas de desenho. Com
+o histórico de medições agora **acumulado e limitado a 50** por parâmetro no
+back-end, os cards mostram **amostras maiores que 1** e média/mínimo/máximo que
+variam a cada atualização de transporte.
 
 ### Como gerar o APK (Android)
 
@@ -361,10 +366,6 @@ README.md      Este arquivo
   `server/tests/*`.
 - [Expo](https://docs.expo.dev) - plataforma e ferramentas do cliente móvel.
 - [React Native](https://reactnative.dev) - framework do aplicativo móvel.
-- [react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit) -
-  biblioteca de gráficos usada no gráfico de barras da tela de Relatórios
-  (`mobile/src/screens/RelatoriosScreen.tsx`); depende de
-  [react-native-svg](https://github.com/software-mansion/react-native-svg).
 - [SPTrans Olho Vivo](https://www.sptrans.com.br/desenvolvedores/) - fonte OFICIAL
   da Prefeitura de São Paulo para transporte público (tempo real da frota de
   ônibus; token gratuito), consumida pelo servidor em

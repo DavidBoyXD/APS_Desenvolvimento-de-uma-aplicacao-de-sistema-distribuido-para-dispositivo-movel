@@ -18,6 +18,12 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Medicao, TipoMedicao
+
+# Quantidade MÁXIMA de medições mantidas por (regiao_id, tipo, parametro). Ao
+# atualizar, as leituras são ACUMULADAS (histórico), mas a série de cada
+# parâmetro é limitada às N mais recentes. Assim o relatório tem estatística
+# real (amostras > 1, média/mínimo/máximo variando) sem crescer indefinidamente.
+LIMITE_HISTORICO_POR_PARAMETRO = 50
 from ..schemas import MedicaoRead
 from ..services.sptrans import FONTE as FONTE_TRANSPORTE
 from ..services.sptrans import FONTE_FALLBACK as FONTE_TRANSPORTE_FALLBACK
@@ -29,6 +35,41 @@ from ..services.sptrans import (
 from .regioes import obter_regiao_ou_404
 
 router = APIRouter(prefix="/api/v1", tags=["medicoes"])
+
+
+def podar_historico(
+    db: Session,
+    regiao_id: int,
+    tipo: TipoMedicao,
+    parametro: str,
+    limite: int = LIMITE_HISTORICO_POR_PARAMETRO,
+) -> int:
+    """Mantém apenas as ``limite`` medições mais recentes de uma série.
+
+    Uma "série" é o conjunto de medições de um mesmo (regiao_id, tipo,
+    parametro). As medições são ordenadas por timestamp (desc) e, como
+    critério de desempate estável, por id (desc); as que excederem o limite são
+    removidas. Retorna a quantidade de medições removidas.
+
+    É chamada após cada inserção de ``atualizar-transporte`` para que o
+    histórico acumule, porém permaneça limitado (sem crescer indefinidamente).
+    """
+    ids = list(
+        db.execute(
+            select(Medicao.id)
+            .where(Medicao.regiao_id == regiao_id)
+            .where(Medicao.tipo == tipo)
+            .where(Medicao.parametro == parametro)
+            .order_by(Medicao.timestamp.desc(), Medicao.id.desc())
+        )
+        .scalars()
+        .all()
+    )
+    excedentes = ids[limite:]
+    if not excedentes:
+        return 0
+    db.execute(delete(Medicao).where(Medicao.id.in_(excedentes)))
+    return len(excedentes)
 
 
 @router.get("/medicoes", response_model=list[MedicaoRead])
@@ -82,12 +123,14 @@ def atualizar_transporte(
     da cidade inteira e, chamadas no mesmo instante, serão idênticas para todas
     as regiões de SP. Não são dados geofiltrados por região.
 
-    ATUALIZAÇÃO SEM ACÚMULO: cada chamada SUBSTITUI as medições de
-    ``transporte_publico`` da região em vez de empilhá-las. Antes de inserir as
-    novas leituras, as medições desse tipo da região são apagadas, mantendo no
-    máximo uma medição vigente por parâmetro. Assim, repetir a atualização não
-    multiplica/acumula os valores, e os relatórios/alertas (que agregam por
-    tipo/parâmetro) passam a refletir sempre o valor atual.
+    ATUALIZAÇÃO COM ACÚMULO LIMITADO: cada chamada INSERE as novas leituras,
+    acumulando o HISTÓRICO de ``transporte_publico`` da região em vez de
+    substituí-lo. Após inserir, a série de cada parâmetro é PODADA para manter
+    apenas as ``LIMITE_HISTORICO_POR_PARAMETRO`` (50) medições mais recentes por
+    (regiao_id, tipo, parametro). Assim os relatórios passam a ter amostras > 1
+    e média/mínimo/máximo que variam ao longo do tempo, sem que a tabela cresça
+    indefinidamente. A resposta traz apenas as medições recém-inseridas nesta
+    chamada.
     """
     regiao = obter_regiao_ou_404(db, regiao_id)
 
@@ -103,16 +146,9 @@ def atualizar_transporte(
             detail=f"Nao foi possivel obter dados de transporte publico: {exc}",
         ) from exc
 
-    # Apaga as medicoes de transporte publico anteriores desta regiao para que
-    # a atualizacao SUBSTITUA os valores em vez de acumula-los. So removemos
-    # apos a busca ser bem-sucedida (acima), evitando apagar dados vigentes
-    # quando a fonte falha (502) e preservando o estado anterior nesse caso.
-    db.execute(
-        delete(Medicao)
-        .where(Medicao.regiao_id == regiao.id)
-        .where(Medicao.tipo == TipoMedicao.transporte_publico)
-    )
-
+    # Insere as novas leituras ACUMULANDO o historico (sem apagar as anteriores).
+    # So inserimos apos a busca ser bem-sucedida (acima), de modo que uma falha
+    # da fonte (502) nao altere o historico ja existente.
     agora = datetime.now(timezone.utc)
     novas: list[Medicao] = []
     for leitura in leituras:
@@ -127,6 +163,22 @@ def atualizar_transporte(
         )
         db.add(medicao)
         novas.append(medicao)
+
+    # Garante que as novas medicoes tenham id/timestamp antes de podar o
+    # historico (a poda ordena por timestamp e id).
+    db.flush()
+
+    # Poda cada serie (regiao, tipo, parametro) afetada para manter apenas as
+    # ultimas LIMITE_HISTORICO_POR_PARAMETRO medicoes, evitando crescimento
+    # indefinido sem perder a estatistica (amostras > 1).
+    parametros_afetados = {leitura.parametro for leitura in leituras}
+    for parametro in parametros_afetados:
+        podar_historico(
+            db,
+            regiao.id,
+            TipoMedicao.transporte_publico,
+            parametro,
+        )
 
     db.commit()
     for medicao in novas:

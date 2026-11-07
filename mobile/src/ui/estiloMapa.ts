@@ -4,13 +4,15 @@
  * O mapa (WebView + Leaflet) pode ser desenhado com diferentes camadas de
  * tiles, todas CARTOGRÁFICAS (NÃO satélite) e SEM chave de API:
  *   - "Padrão": OpenStreetMap (mapa de ruas tradicional);
- *   - "Humanitário": OpenStreetMap Humanitarian (HOT), visual mais limpo e
- *     claro, com destaque para infraestrutura;
+ *   - "OSM.de": servidor alemão oficial do OpenStreetMap
+ *     (tile.openstreetmap.de), estilo padrão alemão, estável e sem chave;
  *   - "Topográfico": OpenTopoMap, com relevo e curvas de nível.
  *
  * Todos os provedores são ACESSÍVEIS SEM CHAVE de API. Em especial, NÃO usamos
  * os basemaps da CARTO (light_all/dark_all), pois passaram a exigir uma API key
- * em uso real ("API KEY REQUIRED"), o que quebraria os estilos no aparelho.
+ * em uso real ("API KEY REQUIRED"), nem o OpenStreetMap Humanitarian (HOT) do
+ * servidor .fr, que aparecia em CINZA no aparelho (bloqueio por política de
+ * uso/referer), o que quebraria o estilo em uso real.
  *
  * Cada estilo guarda a URL de tiles, o zoom máximo e a ATRIBUIÇÃO correta do
  * provedor, exigida pelas respectivas licenças de uso e exibida no canto do
@@ -29,7 +31,7 @@
  */
 
 /** Identificador estável de cada estilo cartográfico oferecido. */
-export type EstiloMapaId = 'padrao' | 'humanitario' | 'topografico';
+export type EstiloMapaId = 'padrao' | 'osm_de' | 'topografico';
 
 /** Definição de um estilo cartográfico (camada de tiles do Leaflet). */
 export interface EstiloMapa {
@@ -57,11 +59,13 @@ export const ESTILOS_MAPA: EstiloMapa[] = [
     atribuicao: '&copy; colaboradores do OpenStreetMap',
   },
   {
-    id: 'humanitario',
-    rotulo: 'Humanitario',
-    url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-    maxZoom: 19,
-    atribuicao: '&copy; colaboradores do OpenStreetMap, tiles HOT',
+    id: 'osm_de',
+    rotulo: 'OSM.de',
+    // Servidor alemao oficial do OpenStreetMap (sem {s}: host unico, estavel e
+    // sem chave). Estilo padrao alemao.
+    url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+    maxZoom: 18,
+    atribuicao: '&copy; colaboradores do OpenStreetMap (OSM.de)',
   },
   {
     id: 'topografico',
@@ -129,9 +133,7 @@ let cacheEstilo: EstiloMapaId | null = null;
 
 /** Valida se um texto corresponde a um id de estilo conhecido. */
 function ehEstiloValido(valor: string | null): valor is EstiloMapaId {
-  return (
-    valor === 'padrao' || valor === 'humanitario' || valor === 'topografico'
-  );
+  return valor === 'padrao' || valor === 'osm_de' || valor === 'topografico';
 }
 
 /**

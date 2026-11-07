@@ -133,15 +133,22 @@ depende de nenhum módulo nativo de mapa** nem de uma chave do Google Maps,
 portanto o app **sempre abre** e a lista garante a navegação e a demonstração de
 todas as funcionalidades (detalhe, relatórios e alertas).
 
-Há ainda um **mapa visual** em uma tela **separada e opcional** (botão "Ver no
-mapa"), que plota as regiões como marcadores e, a partir das Linhas de ônibus,
-a posição em tempo real dos veículos de uma linha (com **atualização automática**
-periódica e botão de pausar). Essa tela desenha o mapa com
-o **OpenStreetMap via WebView** (biblioteca Leaflet dentro de um
-`react-native-webview`), portanto **não precisa de chave de API** nem de billing
-(ver `mobile/BUILD_APK.md`); requer apenas internet para carregar os tiles. Por
-ser separada e opcional, mesmo que o mapa não carregue (ex.: sem internet), o
-app continua abrindo normalmente na lista.
+Há ainda um **mapa visual com busca integrada** em uma tela **separada e
+opcional** (botão "Ver no mapa"), uma segunda porta de entrada mais visual para
+acompanhar as linhas, que complementa a tela de Linhas (que continua em lista).
+O mapa ocupa a tela toda e, por cima dele (numa camada React Native sobreposta,
+nunca dentro do WebView), traz uma **barra de busca flutuante**, um **painel
+inferior expansível por toque** com o catálogo/sugestões e os favoritos, e um
+**seletor de estilo cartográfico** (Padrão, Claro ou Escuro). Sem linha
+selecionada, plota as regiões como marcadores; ao selecionar uma linha (pela
+busca na própria tela ou vindo das Linhas de ônibus), plota a posição em tempo
+real dos veículos (com **atualização automática** periódica e botão de pausar).
+Essa tela desenha o mapa com **tiles cartográficos via WebView** (biblioteca
+Leaflet dentro de um `react-native-webview`, usando OpenStreetMap ou CARTO),
+portanto **não precisa de chave de API** nem de billing (ver `mobile/BUILD_APK.md`)
+e **não usa satélite**; requer apenas internet para carregar os tiles. Por ser
+separada e opcional, mesmo que o mapa não carregue (ex.: sem internet), o app
+continua abrindo normalmente na lista.
 
 > Nota sobre o ambiente de desenvolvimento deste trabalho: não havia emulador
 > disponível no ambiente onde o código foi construído. Por isso, o cliente foi
@@ -229,7 +236,25 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    de São Paulo. Com `SPTRANS_TOKEN` definido, são em tempo real; sem token, a
    tela exibe um aviso de que o dado é de EXEMPLO (não tempo real).
 
-6. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
+6. **Mapa com busca integrada e estilos cartográficos.** Na tela inicial, toque
+   em **"Ver no mapa"**. O mapa abre ocupando a tela toda, mostrando as regiões.
+   No topo há uma **barra de busca flutuante** (abas "Linhas"/"Paradas" + campo
+   "Buscar linha ou parada"): é a **mesma busca livre** da tela de Linhas, então
+   qualquer linha pode ser pesquisada. No rodapé há um **painel que abre e fecha
+   ao toque**: recolhido, mostra um resumo (a linha selecionada e o número de
+   veículos em operação, ou um convite a buscar); expandido, revela os
+   **resultados da busca** e, quando o campo está vazio, a **navegação assistida**
+   (linhas populares, chips por número e pontos de referência) e os **favoritos**
+   (com a estrela para salvar/remover). Toque numa linha para **plotá-la no
+   mapa**: os veículos aparecem com o mesmo **auto-refresh** (10/15/30s e botão
+   pausar) e o painel recolhe para dar espaço ao mapa. No canto, o botão
+   **"Estilo"** alterna o estilo **cartográfico** do mapa entre **Padrão**
+   (OpenStreetMap), **Claro** (CARTO Positron) e **Escuro** (CARTO Dark Matter) —
+   todos sem chave e **sem satélite**; a camada de tiles troca sem recriar o mapa
+   (os marcadores permanecem) e a preferência fica **salva no aparelho**. A
+   atribuição correta de cada provedor aparece no canto do mapa.
+
+7. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
    regra (escolha região, tipo, parâmetro, condição `>`/`<` e limiar) e toque em
    "Avaliar região selecionada". Tanto as regras cadastradas quanto os alertas
    disparados identificam a região pelo **nome** (ex.: "Sé", "Lapa"), e não pelo
@@ -237,7 +262,7 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    observado. Dica: crie uma regra com limiar baixo (ex.: veículos em operação >
    1) para forçar um disparo.
 
-7. **Tratamento de erros (demonstração).** Pare o servidor (encerre o uvicorn) e
+8. **Tratamento de erros (demonstração).** Pare o servidor (encerre o uvicorn) e
    tente recarregar uma tela no app: em vez de travar, o app exibe uma mensagem
    amigável em PT-BR ("Nao foi possivel conectar ao servidor...") com a opção de
    "Tentar novamente". No servidor, uma região inexistente

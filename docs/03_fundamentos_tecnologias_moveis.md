@@ -94,12 +94,17 @@ esforço controlado.
   visual** (tela opcional). Referência:
   [https://docs.expo.dev/versions/v58.0.0/sdk/webview/](https://docs.expo.dev/versions/v58.0.0/sdk/webview/).
   Aplicado em: `mobile/src/screens/MapaVisualScreen.tsx`, que carrega um HTML
-  embutido com a biblioteca **Leaflet** e os tiles do **OpenStreetMap**. Essa
-  escolha desenha o mapa **sem precisar de chave de API** (não usa Google Maps) e
-  **sem a dependência nativa** que quebrava a inicialização do app; é um módulo
-  padrão e suportado pelo Expo (incluído no Expo Go). Requer internet para baixar
-  os tiles e a Leaflet por CDN. Instalado com
-  `npx expo install react-native-webview`.
+  embutido com a biblioteca **Leaflet** e **tiles cartográficos sem chave**. O
+  usuário pode alternar o estilo do mapa entre **Padrão** (OpenStreetMap),
+  **Claro** (CARTO Positron) e **Escuro** (CARTO Dark Matter) — todos
+  cartográficos e **sem satélite** —, com a atribuição correta de cada provedor
+  exibida no canto do mapa. Sobre o WebView fica uma camada React Native com a
+  **busca de linhas/paradas** e o catálogo/favoritos (ver `MapaBuscaOverlay.tsx`
+  e `ui/estiloMapa.ts`). Essa escolha desenha o mapa **sem precisar de chave de
+  API** (não usa Google Maps) e **sem a dependência nativa** que quebrava a
+  inicialização do app; é um módulo padrão e suportado pelo Expo (incluído no
+  Expo Go). Requer internet para baixar os tiles e a Leaflet por CDN. Instalado
+  com `npx expo install react-native-webview`.
 
 ### Alternativas de plataforma móvel (registro)
 

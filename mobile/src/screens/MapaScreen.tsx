@@ -89,6 +89,10 @@ export default function MapaScreen({ navigation }: Props) {
     <View style={styles.container}>
       <View style={styles.listaCabecalho}>
         <Text style={styles.listaTitulo}>Regioes monitoradas em Sao Paulo</Text>
+        <Text style={styles.listaDica}>
+          No mapa voce tambem pode buscar linhas e paradas e trocar o estilo do
+          mapa (Padrao, Claro ou Escuro).
+        </Text>
         <View style={styles.cabecalhoAcoes}>
           {/*
             "Ver no mapa" abre a tela de mapa visual (OPCIONAL e SEPARADA). Se o
@@ -158,6 +162,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
+  },
+  listaDica: {
+    fontSize: 12,
+    color: '#64748B',
   },
   cabecalhoAcoes: {
     flexDirection: 'row',

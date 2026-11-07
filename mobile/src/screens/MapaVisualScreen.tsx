@@ -1,55 +1,60 @@
 /**
- * Tela de MAPA VISUAL (OPCIONAL e SEPARADA da tela inicial).
+ * Tela de MAPA VISUAL com BUSCA INTEGRADA.
  *
- * O que ela faz:
- *   - Sem parametros: carrega as regioes monitoradas (getRegioes) e plota cada
- *     uma como um marcador; tocar no marcador abre um balao com o nome e um
- *     link "Ver detalhe" que navega para o Detalhe da regiao (mesmo
- *     comportamento da lista inicial).
- *   - Com `codigoLinha` (vindo da tela de Linhas): carrega a posicao em tempo
- *     real dos veiculos daquela linha (getPosicoesLinha) e plota cada veiculo
- *     como um marcador distinto (prefixo, acessibilidade e horario no balao).
+ * Esta tela é uma segunda porta de entrada (mais visual) para o acompanhamento
+ * das linhas de ônibus de São Paulo, complementando a tela de Linhas (que segue
+ * intacta, em LISTA). O mapa ocupa a tela toda; por cima dele, numa camada React
+ * Native sobreposta (NÃO HTML dentro do WebView), ficam:
+ *   - uma BARRA DE BUSCA FLUTUANTE no topo (campo "Buscar linha ou parada" +
+ *     abas Linhas/Paradas), reutilizando a mesma busca livre da tela de Linhas;
+ *   - um PAINEL INFERIOR expansível por toque, que revela os RESULTADOS da busca
+ *     e, quando o campo está vazio, a NAVEGAÇÃO ASSISTIDA (catálogo) e os
+ *     FAVORITOS. Tocar numa linha a seleciona: o mapa passa a plotar seus
+ *     veículos (com auto-refresh) e o painel recolhe.
+ *   - um SELETOR DE ESTILO cartográfico (Padrão/Claro/Escuro), que troca a
+ *     camada de tiles do Leaflet sem recriar o mapa.
  *
- * COMO O MAPA E DESENHADO (WebView + OpenStreetMap/Leaflet):
- *   O mapa NAO usa mais um modulo nativo de mapa (Google Maps). Em vez disso,
- *   renderizamos um `WebView` (do `react-native-webview`) que carrega um HTML
- *   embutido com a biblioteca Leaflet (via CDN) apontando para os tiles do
- *   OpenStreetMap. Isso:
- *     - NAO precisa de chave de API nem de billing;
- *     - NAO traz a dependencia nativa que quebrava a inicializacao do app
- *       (o antigo mapa nativo arrastava o androidx.work/WorkManager, que falhava
- *       no startup e derrubava o processo antes mesmo do JavaScript rodar);
- *     - Requer INTERNET para baixar os tiles do OpenStreetMap e a Leaflet por
- *       CDN. O app ja depende de internet para falar com a API, entao isso e
- *       aceitavel; offline, o mapa nao carrega, mas a LISTA de regioes (tela
- *       inicial "Mapa") continua funcionando normalmente.
+ * Modos do mapa:
+ *   - SEM linha selecionada: plota as REGIÕES monitoradas (getRegioes); tocar no
+ *     marcador abre um balão com "Ver detalhe" (navega para o Detalhe).
+ *   - COM linha selecionada (por parâmetro de rota OU pela busca na tela):
+ *     carrega a posição dos veículos (getPosicoesLinha) e os plota, com
+ *     auto-refresh (padrão 15s, seletor 10/15/30s, botão pausar). O auto-refresh
+ *     atualiza os marcadores via injectJavaScript (window.atualizarVeiculos),
+ *     sem recriar o HTML (não pisca, mantém zoom/centro). O fitBounds só ocorre
+ *     ao montar um NOVO conjunto de marcadores (ex.: ao selecionar outra linha).
  *
- * COMO OS DADOS CHEGAM NO MAPA:
- *   Buscamos os dados no React (client.ts) com os estados de carregando/erro/
- *   vazio padrao do projeto. So depois que os dados chegam montamos o HTML com
- *   os pontos JA EMBUTIDOS (via JSON.stringify, que serializa com seguranca e
- *   evita quebrar o HTML) e renderizamos o WebView. Para a navegacao a partir do
- *   mapa, o HTML chama `window.ReactNativeWebView.postMessage(...)` quando o
- *   usuario toca em "Ver detalhe" de uma regiao; o React recebe em `onMessage` e
- *   chama `navigation.navigate('Detalhe', ...)`.
+ * COMO O MAPA É DESENHADO (WebView + Leaflet):
+ *   Renderizamos um `WebView` (do `react-native-webview`, via wrapper protegido
+ *   em src/ui/webview.ts) que carrega um HTML embutido com a Leaflet (via CDN) e
+ *   tiles cartográficos SEM chave (OpenStreetMap ou CARTO). Requer internet para
+ *   baixar tiles e a Leaflet; offline, o mapa não carrega, mas a tela de Linhas
+ *   (em lista) continua funcionando.
  *
- * Referencias:
+ * Referências:
  *   - react-native-webview (SDK 58): https://docs.expo.dev/versions/v58.0.0/sdk/webview/
  *   - Leaflet: https://leafletjs.com/reference.html
  *   - OpenStreetMap (tiles): https://www.openstreetmap.org/
+ *   - CARTO basemaps: https://github.com/CartoDB/basemap-styles
  *
- * Onde e aplicado: rota "MapaVisual" em App.tsx, acessivel pelos botoes
- * "Ver no mapa" em MapaScreen (regioes) e LinhasScreen (veiculos de uma linha).
+ * Onde é aplicado: rota "MapaVisual" em App.tsx.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { getRegioes, getPosicoesLinha, ApiError } from '../api/client';
-import { Regiao, VeiculoPosicaoRead } from '../types';
+import { LinhaRead, Regiao, VeiculoPosicaoRead } from '../types';
 import { RootStackParamList } from '../navigation';
-import { EstadoCarregando, EstadoErro, EstadoVazio } from '../ui/estados';
+import { EstadoCarregando, EstadoErro } from '../ui/estados';
 import {
   AVISO_DADO_EXEMPLO,
   formatarHora,
@@ -57,6 +62,19 @@ import {
   rotuloAcessivel,
 } from '../ui/rotulos';
 import { carregarWebView } from '../ui/webview';
+import {
+  LinhaFavorita,
+  alternarFavoritoLinha,
+  carregarFavoritosLinhas,
+} from '../ui/favoritos';
+import {
+  ESTILOS_MAPA,
+  ESTILO_PADRAO,
+  EstiloMapaId,
+  carregarEstiloMapa,
+  salvarEstiloMapa,
+} from '../ui/estiloMapa';
+import MapaBuscaOverlay from './MapaBuscaOverlay';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MapaVisual'>;
 
@@ -97,20 +115,30 @@ interface MensagemWebView {
   regiaoNome: string;
 }
 
+/** Identificador de linha ativa (selecionada por rota ou pela busca na tela). */
+interface LinhaAtiva {
+  codigoLinha: number;
+  rotulo?: string;
+}
+
 /**
- * Monta o HTML completo do mapa com os pontos ja embutidos.
+ * Monta o HTML completo do mapa com os pontos e o ESTILO inicial já embutidos.
  *
- * Os pontos sao injetados via JSON.stringify: isso serializa com seguranca
- * (escapa aspas e caracteres especiais) e evita que nomes com acento, aspas ou
- * caracteres de controle quebrem o HTML. A Leaflet e o CSS vem por CDN (unpkg),
- * o que exige internet; os tiles vem do OpenStreetMap.
+ * Os pontos são injetados via JSON.stringify (serialização segura) e o caractere
+ * "<" é escapado como "\\u003c" para impedir que um nome contendo "</script>"
+ * feche o bloco <script> prematuramente. A Leaflet vem por CDN (unpkg); os tiles
+ * vêm de provedores cartográficos sem chave (OpenStreetMap/CARTO).
+ *
+ * Expõe duas funções globais usadas pelo React via injectJavaScript:
+ *   - window.atualizarVeiculos(json): troca apenas os marcadores de veículo
+ *     (auto-refresh), preservando zoom/centro;
+ *   - window.trocarEstiloMapa(estiloJson): troca a camada de tiles atual pela
+ *     nova, preservando os marcadores (seletor de estilo).
  */
-function montarHtmlMapa(pontos: PontoMapa[]): string {
-  // Serializa os pontos com JSON.stringify e, em seguida, escapa o caractere
-  // "<" como "\\u003c". Isso impede que um nome de regiao contendo a sequencia
-  // "</script>" feche o bloco <script> do HTML prematuramente (quebra de
-  // contexto/injecao). O JSON resultante continua valido e equivalente.
+function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
   const pontosJson = JSON.stringify(pontos).replace(/</g, '\\u003c');
+  const estilosJson = JSON.stringify(ESTILOS_MAPA).replace(/</g, '\\u003c');
+  const estiloInicialJson = JSON.stringify(estiloId).replace(/</g, '\\u003c');
   return `<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
@@ -142,11 +170,36 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
     <script>
       (function () {
         var pontos = ${pontosJson};
+        var estilos = ${estilosJson};
+        var estiloInicial = ${estiloInicialJson};
         var mapa = L.map('mapa').setView([${SP_LAT}, ${SP_LON}], ${SP_ZOOM});
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; colaboradores do OpenStreetMap'
-        }).addTo(mapa);
+
+        // Camada de tiles atual (cartográfica, sem chave). Guardada numa variável
+        // para que o seletor de estilo possa remover e recriar sem recriar o mapa
+        // nem perder os marcadores.
+        var camadaTiles = null;
+
+        function definicaoEstilo(id) {
+          for (var i = 0; i < estilos.length; i += 1) {
+            if (estilos[i].id === id) {
+              return estilos[i];
+            }
+          }
+          return estilos[0];
+        }
+
+        function aplicarEstilo(id) {
+          var def = definicaoEstilo(id);
+          if (camadaTiles) {
+            mapa.removeLayer(camadaTiles);
+          }
+          camadaTiles = L.tileLayer(def.url, {
+            maxZoom: def.maxZoom,
+            attribution: def.atribuicao
+          }).addTo(mapa);
+        }
+
+        aplicarEstilo(estiloInicial);
 
         // Camada SOMENTE dos marcadores de veiculo: isolamos os veiculos numa
         // LayerGroup propria para que o auto-refresh (window.atualizarVeiculos)
@@ -154,8 +207,6 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
         // piscar e sem resetar o zoom/centro escolhido pelo usuario.
         var camadaVeiculos = L.layerGroup().addTo(mapa);
 
-        // Cria o balao (popup) de um ponto. Para REGIOES (com regiaoId) inclui
-        // o link "Ver detalhe", que avisa o React via postMessage.
         function criarPopup(p) {
           var cont = document.createElement('div');
           var titulo = document.createElement('strong');
@@ -186,8 +237,6 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
           return cont;
         }
 
-        // Desenha marcadores de veiculo na camada propria (usada no 1o render e
-        // a cada atualizacao). Retorna a lista de marcadores criados.
         function desenharVeiculos(lista) {
           var criados = [];
           lista.forEach(function (p) {
@@ -218,8 +267,9 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
           grupo.push(m);
         });
 
-        // Enquadra todos os marcadores APENAS na primeira carga. Atualizacoes
-        // posteriores de veiculo nao mexem no zoom/centro (ver atualizarVeiculos).
+        // Enquadra todos os marcadores APENAS na primeira carga deste HTML.
+        // Como um novo conjunto (ex.: outra linha) gera um HTML novo, o
+        // fitBounds roda de novo so quando o conjunto muda.
         if (grupo.length > 1) {
           var limites = L.featureGroup(grupo).getBounds();
           mapa.fitBounds(limites.pad(0.2));
@@ -228,10 +278,8 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
           mapa.setView([primeiro.lat, primeiro.lon], 14);
         }
 
-        // Ponte React -> WebView: o React chama window.atualizarVeiculos(json)
-        // (via injectJavaScript) a cada ciclo de auto-refresh. Substituimos APENAS
-        // os marcadores de veiculo, preservando o zoom/centro atual do usuario.
-        // O 'json' chega como string serializada (com "<" ja escapado no React).
+        // Ponte React -> WebView: auto-refresh dos veiculos. Substitui APENAS os
+        // marcadores de veiculo, preservando o zoom/centro atual do usuario.
         window.atualizarVeiculos = function (json) {
           try {
             var novos = JSON.parse(json);
@@ -242,6 +290,19 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
           }
           return true;
         };
+
+        // Ponte React -> WebView: troca de estilo cartografico. Recebe o id do
+        // estilo como string JSON e troca a camada de tiles preservando os
+        // marcadores (regioes e veiculos continuam no mapa).
+        window.trocarEstiloMapa = function (idJson) {
+          try {
+            var id = JSON.parse(idJson);
+            aplicarEstilo(id);
+          } catch (e) {
+            // Id invalido: ignora para nao derrubar o mapa.
+          }
+          return true;
+        };
       })();
     </script>
   </body>
@@ -249,19 +310,30 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
 }
 
 export default function MapaVisualScreen({ navigation, route }: Props) {
-  const codigoLinha = route.params?.codigoLinha;
-  const linhaRotulo = route.params?.linhaRotulo;
-  const modoVeiculos = typeof codigoLinha === 'number';
+  // Linha ativa: inicia a partir do parametro de rota (quando veio da tela de
+  // Linhas) e pode mudar em runtime pela busca integrada nesta tela.
+  const [linhaAtiva, setLinhaAtiva] = useState<LinhaAtiva | null>(() =>
+    typeof route.params?.codigoLinha === 'number'
+      ? {
+          codigoLinha: route.params.codigoLinha,
+          rotulo: route.params.linhaRotulo,
+        }
+      : null,
+  );
+  // Linha selecionada completa (LinhaRead), quando escolhida pela busca. Usada
+  // para refletir a seleção/estrela no overlay. Null quando a linha veio só por
+  // parametro de rota (sem o objeto completo) ou quando mostramos regioes.
+  const [linhaSelecionada, setLinhaSelecionada] = useState<LinhaRead | null>(
+    null,
+  );
+  const modoVeiculos = linhaAtiva !== null;
+  const codigoLinha = linhaAtiva?.codigoLinha;
+  const linhaRotulo = linhaAtiva?.rotulo;
 
   // Carrega o componente WebView de forma protegida (null = indisponivel).
   const [WebView] = useState(() => carregarWebView());
-  // Ref do WebView: usada para enviar atualizacoes de veiculo via
-  // injectJavaScript sem recriar o HTML (evita piscar e resetar o zoom).
   const webviewRef = useRef<any>(null);
-  // Sinaliza que o WebView terminou de carregar o HTML (window.atualizarVeiculos
-  // ja existe). Evita injetar JS antes de a pagina estar pronta.
   const webviewPronto = useRef<boolean>(false);
-  // Flag de montagem: impede setState apos o unmount (sem vazamento).
   const montado = useRef<boolean>(true);
 
   const [regioes, setRegioes] = useState<Regiao[]>([]);
@@ -270,7 +342,6 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
   const [detalheErro, setDetalheErro] = useState<string | null>(null);
-  // Erro de carregamento do proprio WebView (ex.: pagina/CDN nao carregou).
   const [erroWebView, setErroWebView] = useState<string | null>(null);
 
   // Estado do auto-refresh (apenas no modo veiculos).
@@ -278,11 +349,52 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
   const [intervaloSegundos, setIntervaloSegundos] = useState<number>(
     INTERVALO_PADRAO_SEGUNDOS,
   );
-  // Horario da ultima atualizacao bem-sucedida das posicoes (null = nenhuma).
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date | null>(null);
 
-  // Monta os pontos de VEICULO a partir de uma lista de posicoes. Extraida para
-  // reuso: o 1o render usa no HTML inicial e o auto-refresh injeta via JS.
+  // Favoritos locais (reutiliza src/ui/favoritos.ts). Carregados uma vez.
+  const [favoritos, setFavoritos] = useState<LinhaFavorita[]>([]);
+
+  // Estilo cartografico atual do mapa (reutiliza src/ui/estiloMapa.ts).
+  const [estiloMapa, setEstiloMapa] = useState<EstiloMapaId>(ESTILO_PADRAO);
+  // Ref que acompanha o estilo atual para ser aplicado assim que o WebView
+  // terminar de carregar (ex.: preferencia persistida resolvida depois do
+  // 1o render, ou um remount por nova geração de HTML).
+  const estiloMapaRef = useRef<EstiloMapaId>(ESTILO_PADRAO);
+  useEffect(() => {
+    estiloMapaRef.current = estiloMapa;
+  }, [estiloMapa]);
+  // Id de "geração" do HTML: muda quando trocamos o conjunto de marcadores
+  // (nova linha, ou alternancia regioes<->veiculos), forçando um remount do
+  // WebView com fitBounds no novo conjunto. NÃO muda a cada auto-refresh.
+  const [geracao, setGeracao] = useState<number>(0);
+
+  // Controla a flag de montagem (cleanup no unmount).
+  useEffect(() => {
+    montado.current = true;
+    return () => {
+      montado.current = false;
+    };
+  }, []);
+
+  // Carrega favoritos e a preferencia de estilo uma vez ao abrir a tela.
+  useEffect(() => {
+    let ativo = true;
+    void carregarFavoritosLinhas().then((lista) => {
+      if (ativo) {
+        setFavoritos(lista);
+      }
+    });
+    void carregarEstiloMapa().then((id) => {
+      if (ativo) {
+        setEstiloMapa(id);
+      }
+    });
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  // Monta os pontos de VEICULO a partir de uma lista de posicoes.
   const montarPontosVeiculos = useCallback(
     (lista: VeiculoPosicaoRead[]): PontoMapa[] =>
       lista.map((veiculo) => ({
@@ -294,12 +406,13 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     [linhaRotulo],
   );
 
-  // Carga INICIAL (bloqueante): mostra os estados de carregando/erro/vazio.
+  // Carga INICIAL / ao trocar de modo (regioes <-> veiculos) ou de linha.
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro(null);
     setDetalheErro(null);
     setErroWebView(null);
+    webviewPronto.current = false;
     try {
       if (modoVeiculos && typeof codigoLinha === 'number') {
         const dados = await getPosicoesLinha(codigoLinha);
@@ -315,6 +428,10 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
           return;
         }
         setRegioes(dados);
+      }
+      if (montado.current) {
+        // Novo conjunto de marcadores: nova geração de HTML (fitBounds roda).
+        setGeracao((g) => g + 1);
       }
     } catch (e) {
       if (!montado.current) {
@@ -337,18 +454,7 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     carregar();
   }, [carregar]);
 
-  // Controla a flag de montagem (cleanup no unmount).
-  useEffect(() => {
-    montado.current = true;
-    return () => {
-      montado.current = false;
-    };
-  }, []);
-
-  // Atualizacao SILENCIOSA das posicoes (auto-refresh): rebusca e injeta os
-  // novos marcadores no WebView via window.atualizarVeiculos, sem recriar o
-  // HTML (nao pisca, mantem zoom/centro). Nao mexe nos estados de
-  // carregando/erro de tela cheia para nao interromper a visualizacao.
+  // Atualizacao SILENCIOSA das posicoes (auto-refresh) via injectJavaScript.
   const atualizarPosicoes = useCallback(async () => {
     if (!modoVeiculos || typeof codigoLinha !== 'number') {
       return;
@@ -363,7 +469,6 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
       setUltimaAtualizacao(new Date());
       if (webviewRef.current && webviewPronto.current) {
         const pontosVeiculos = montarPontosVeiculos(dados.veiculos);
-        // Serializa e escapa "<" como no HTML inicial (evita quebra de contexto).
         const json = JSON.stringify(pontosVeiculos).replace(/</g, '\\u003c');
         webviewRef.current.injectJavaScript(
           `window.atualizarVeiculos && window.atualizarVeiculos(${JSON.stringify(
@@ -372,14 +477,11 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
         );
       }
     } catch {
-      // Falha transitoria de rede num ciclo de refresh: ignora e tenta no
-      // proximo ciclo. A carga inicial ja trata o erro de tela cheia.
+      // Falha transitoria de rede num ciclo de refresh: ignora e tenta depois.
     }
   }, [codigoLinha, modoVeiculos, montarPontosVeiculos]);
 
-  // Timer do auto-refresh: ativo somente no modo veiculos, sem erro, nao
-  // pausado e com o WebView disponivel. Cleanup limpa o setInterval ao
-  // desmontar, ao pausar, ao trocar o intervalo ou ao sair da tela.
+  // Timer do auto-refresh.
   useEffect(() => {
     if (!modoVeiculos || pausado || erro || !WebView) {
       return;
@@ -405,11 +507,56 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     setPausado((atual) => !atual);
   }, []);
 
-  // Monta os pontos a plotar a partir dos dados ja carregados. Regioes ganham
-  // `regiaoId` (balao com link para o Detalhe); veiculos mostram prefixo,
-  // acessibilidade e horario. ATENCAO: no modo veiculos, usamos o PRIMEIRO
-  // conjunto de veiculos apenas para o HTML INICIAL; as atualizacoes seguintes
-  // vao por injectJavaScript (ver atualizarPosicoes) para nao recriar o mapa.
+  // Seleciona uma linha pela busca integrada: troca para o modo veiculos,
+  // reinicia o auto-refresh e força uma nova geração de HTML (fitBounds).
+  const selecionarLinha = useCallback((linha: LinhaRead) => {
+    setLinhaSelecionada(linha);
+    setLinhaAtiva({ codigoLinha: linha.codigo_linha, rotulo: linha.letreiro });
+    setPausado(false);
+    setUltimaAtualizacao(null);
+  }, []);
+
+  // Alterna o favorito de uma linha (reutiliza favoritos.ts) e atualiza o estado.
+  const alternarFavorito = useCallback(async (linha: LinhaRead) => {
+    const atualizada = await alternarFavoritoLinha(linha);
+    if (montado.current) {
+      setFavoritos(atualizada);
+    }
+  }, []);
+
+  // Aplica um estilo cartografico no mapa ja carregado via injectJavaScript
+  // (sem recriar o WebView). Idempotente e seguro de chamar repetidamente.
+  const aplicarEstiloNoMapa = useCallback((id: EstiloMapaId) => {
+    if (webviewRef.current && webviewPronto.current) {
+      const json = JSON.stringify(id).replace(/</g, '\\u003c');
+      webviewRef.current.injectJavaScript(
+        `window.trocarEstiloMapa && window.trocarEstiloMapa(${JSON.stringify(
+          json,
+        )}); true;`,
+      );
+    }
+  }, []);
+
+  // Troca o estilo cartografico (acao do usuario): atualiza o estado, persiste a
+  // preferencia e aplica no mapa imediatamente.
+  const trocarEstilo = useCallback(
+    (id: EstiloMapaId) => {
+      setEstiloMapa(id);
+      void salvarEstiloMapa(id);
+      aplicarEstiloNoMapa(id);
+    },
+    [aplicarEstiloNoMapa],
+  );
+
+  // Marca o WebView como pronto e aplica o estilo atual. Cobre o caso de a
+  // preferencia persistida ter sido resolvida depois do HTML inicial (que foi
+  // montado com o estilo padrao) e o caso de remount por nova geração.
+  const aoCarregarWebView = useCallback(() => {
+    webviewPronto.current = true;
+    aplicarEstiloNoMapa(estiloMapaRef.current);
+  }, [aplicarEstiloNoMapa]);
+
+  // Monta os pontos a plotar a partir dos dados ja carregados.
   const pontos = useMemo<PontoMapa[]>(() => {
     if (modoVeiculos) {
       return montarPontosVeiculos(veiculos);
@@ -423,21 +570,17 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     }));
   }, [modoVeiculos, veiculos, montarPontosVeiculos, regioes]);
 
-  // HTML do mapa montado UMA VEZ por carga inicial no modo veiculos. Guardamos
-  // o HTML "semente" num ref para que ele NAO mude a cada refresh (se mudasse,
-  // o WebView recarregaria e piscaria/resetaria o zoom). As atualizacoes de
-  // posicao posteriores passam por injectJavaScript (ver atualizarPosicoes).
-  const htmlSemente = useRef<string | null>(null);
-  if (modoVeiculos && htmlSemente.current === null && !carregando) {
-    htmlSemente.current = montarHtmlMapa(pontos);
-  }
-  // No modo regioes o HTML acompanha os pontos de regiao (dado estatico, sem
-  // auto-refresh). No modo veiculos usamos a semente congelada.
-  const htmlRegioes = useMemo(
-    () => (modoVeiculos ? '' : montarHtmlMapa(pontos)),
-    [modoVeiculos, pontos],
-  );
-  const html = modoVeiculos ? htmlSemente.current ?? '' : htmlRegioes;
+  // HTML "semente" do mapa, memorizado por GERAÇÃO: só muda quando o conjunto de
+  // marcadores muda (nova linha, troca de modo). Assim o auto-refresh (que vai
+  // por injectJavaScript) NÃO recria o WebView. O estilo inicial embutido é o
+  // atual; trocas posteriores de estilo também vão por injectJavaScript.
+  const html = useMemo(() => {
+    if (carregando) {
+      return '';
+    }
+    return montarHtmlMapa(pontos, estiloMapa);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geracao, carregando]);
 
   // Recebe mensagens do HTML (toque em "Ver detalhe" de uma regiao) e navega.
   const aoReceberMensagem = useCallback(
@@ -461,8 +604,7 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     [navigation],
   );
 
-  // WebView indisponivel (ex.: pacote nao instalado ou plataforma sem suporte):
-  // fallback imediato, sem tentar renderizar o mapa.
+  // WebView indisponivel: fallback imediato, sem tentar renderizar o mapa.
   if (!WebView) {
     return (
       <View style={styles.centro}>
@@ -471,14 +613,14 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
           O mapa nao esta disponivel neste dispositivo.
         </Text>
         <Text style={styles.textoDetalhe}>
-          Use a lista para navegar pelas regioes e linhas.
+          Use a tela de Linhas para buscar e acompanhar as linhas em lista.
         </Text>
         <Pressable
           style={styles.botao}
           onPress={voltar}
           accessibilityRole="button"
         >
-          <Text style={styles.botaoTexto}>Voltar para a lista</Text>
+          <Text style={styles.botaoTexto}>Voltar</Text>
         </Pressable>
       </View>
     );
@@ -502,28 +644,15 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     );
   }
 
-  if (modoVeiculos && veiculos.length === 0) {
-    return (
-      <EstadoVazio mensagem="Nenhum veiculo em operacao no momento para esta linha." />
-    );
-  }
-
-  if (!modoVeiculos && regioes.length === 0) {
-    return (
-      <EstadoVazio mensagem="Nenhuma regiao de Sao Paulo cadastrada no servidor." />
-    );
-  }
-
-  // Falha ao carregar a pagina do mapa dentro do WebView (ex.: sem internet
-  // para baixar os tiles/Leaflet): mensagem amigavel + voltar + tentar de novo.
+  // Falha ao carregar a pagina do mapa dentro do WebView (ex.: sem internet).
   if (erroWebView) {
     return (
       <View style={styles.centro}>
         <Text style={styles.icone}>🗺️</Text>
         <Text style={styles.textoErro}>Nao foi possivel carregar o mapa.</Text>
         <Text style={styles.textoDetalhe}>
-          Verifique sua conexao com a internet (o mapa usa o OpenStreetMap). A
-          lista de regioes continua funcionando normalmente.
+          Verifique sua conexao com a internet (o mapa usa tiles cartograficos
+          online). A tela de Linhas continua funcionando em lista.
         </Text>
         <Pressable
           style={styles.botao}
@@ -537,69 +666,26 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
           onPress={voltar}
           accessibilityRole="button"
         >
-          <Text style={styles.botaoSecundarioTexto}>Voltar para a lista</Text>
+          <Text style={styles.botaoSecundarioTexto}>Voltar</Text>
         </Pressable>
       </View>
     );
   }
 
+  // Quantidade de veiculos em operacao (para o resumo do painel). Null quando
+  // estamos no modo regioes (sem linha selecionada).
+  const quantidadeVeiculos = modoVeiculos ? veiculos.length : null;
+
   return (
-    <View style={styles.container}>
-      {modoVeiculos && !tempoReal ? (
-        <View style={styles.faixaAviso}>
-          <Text style={styles.faixaAvisoTexto}>{AVISO_DADO_EXEMPLO}</Text>
-        </View>
-      ) : null}
-      {/* Barra de auto-refresh (apenas no modo veiculos). */}
-      {modoVeiculos ? (
-        <View style={styles.barraRefresh}>
-          <View style={styles.barraRefreshInfo}>
-            <Text style={styles.barraRefreshTexto}>
-              {pausado
-                ? 'Pausado'
-                : `Atualizando a cada ${intervaloSegundos}s`}
-            </Text>
-            {ultimaAtualizacao ? (
-              <Text style={styles.barraRefreshSub}>
-                Ultima atualizacao: {formatarHora(ultimaAtualizacao)}
-              </Text>
-            ) : null}
-          </View>
-          <View style={styles.barraRefreshControles}>
-            {INTERVALOS_SEGUNDOS.map((opcao) => (
-              <Pressable
-                key={opcao}
-                style={[
-                  styles.chipIntervalo,
-                  intervaloSegundos === opcao && styles.chipIntervaloAtivo,
-                ]}
-                onPress={() => setIntervaloSegundos(opcao)}
-                accessibilityRole="button"
-              >
-                <Text
-                  style={[
-                    styles.chipIntervaloTexto,
-                    intervaloSegundos === opcao &&
-                      styles.chipIntervaloTextoAtivo,
-                  ]}
-                >
-                  {opcao}s
-                </Text>
-              </Pressable>
-            ))}
-            <Pressable
-              style={styles.botaoPausar}
-              onPress={alternarPausa}
-              accessibilityRole="button"
-            >
-              <Text style={styles.botaoPausarTexto}>
-                {pausado ? 'Retomar' : 'Pausar'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : null}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      {/* O MAPA ocupa a tela toda, no fundo. */}
       <WebView
+        // A key muda por GERAÇÃO para forçar o remount (e o fitBounds) quando o
+        // conjunto de marcadores muda; o auto-refresh NÃO altera a geração.
+        key={`mapa-${geracao}`}
         ref={webviewRef}
         style={styles.mapa}
         originWhitelist={['*']}
@@ -607,14 +693,83 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
         javaScriptEnabled
         domStorageEnabled
         onMessage={aoReceberMensagem}
-        onLoadEnd={() => {
-          webviewPronto.current = true;
-        }}
-        onError={() =>
-          setErroWebView('Falha ao carregar o conteudo do mapa.')
-        }
+        onLoadEnd={aoCarregarWebView}
+        onError={() => setErroWebView('Falha ao carregar o conteudo do mapa.')}
       />
-    </View>
+
+      {/* Faixa de aviso de dado de EXEMPLO (fallback sem token), sobre o mapa. */}
+      {modoVeiculos && !tempoReal ? (
+        <View style={styles.faixaAviso} pointerEvents="none">
+          <Text style={styles.faixaAvisoTexto}>{AVISO_DADO_EXEMPLO}</Text>
+        </View>
+      ) : null}
+
+      {/* Barra de auto-refresh (apenas no modo veiculos), sobre o mapa, logo
+          abaixo da barra de busca. */}
+      {modoVeiculos ? (
+        <View style={styles.barraRefresh} pointerEvents="box-none">
+          <View style={styles.barraRefreshCartao}>
+            <View style={styles.barraRefreshInfo}>
+              <Text style={styles.barraRefreshTexto}>
+                {pausado
+                  ? 'Pausado'
+                  : `Atualizando a cada ${intervaloSegundos}s`}
+              </Text>
+              {ultimaAtualizacao ? (
+                <Text style={styles.barraRefreshSub}>
+                  Ultima atualizacao: {formatarHora(ultimaAtualizacao)}
+                </Text>
+              ) : null}
+            </View>
+            <View style={styles.barraRefreshControles}>
+              {INTERVALOS_SEGUNDOS.map((opcao) => (
+                <Pressable
+                  key={opcao}
+                  style={[
+                    styles.chipIntervalo,
+                    intervaloSegundos === opcao && styles.chipIntervaloAtivo,
+                  ]}
+                  onPress={() => setIntervaloSegundos(opcao)}
+                  accessibilityRole="button"
+                >
+                  <Text
+                    style={[
+                      styles.chipIntervaloTexto,
+                      intervaloSegundos === opcao &&
+                        styles.chipIntervaloTextoAtivo,
+                    ]}
+                  >
+                    {opcao}s
+                  </Text>
+                </Pressable>
+              ))}
+              <Pressable
+                style={styles.botaoPausar}
+                onPress={alternarPausa}
+                accessibilityRole="button"
+              >
+                <Text style={styles.botaoPausarTexto}>
+                  {pausado ? 'Retomar' : 'Pausar'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      ) : null}
+
+      {/* Camada de BUSCA/CATÁLOGO + seletor de estilo, sobreposta ao mapa. */}
+      <MapaBuscaOverlay
+        linhaSelecionada={linhaSelecionada}
+        linhaRotulo={linhaRotulo}
+        quantidadeVeiculos={quantidadeVeiculos}
+        favoritos={favoritos}
+        aoSelecionarLinha={selecionarLinha}
+        aoAlternarFavorito={alternarFavorito}
+        estilos={ESTILOS_MAPA}
+        estiloAtual={estiloMapa}
+        aoTrocarEstilo={trocarEstilo}
+      />
+    </KeyboardAvoidingView>
   );
 }
 
@@ -627,8 +782,15 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
   },
+  // Faixa de aviso flutuante, logo abaixo da barra de refresh.
   faixaAviso: {
+    position: 'absolute',
+    top: 212,
+    left: 12,
+    right: 12,
+    zIndex: 10,
     backgroundColor: '#FEF3C7',
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -636,13 +798,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#B45309',
   },
+  // Barra de auto-refresh flutuante (abaixo da barra de busca).
   barraRefresh: {
+    position: 'absolute',
+    top: 128,
+    left: 12,
+    right: 12,
+    zIndex: 10,
+  },
+  barraRefreshCartao: {
     backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     gap: 8,
+    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
   },
   barraRefreshInfo: {
     gap: 2,

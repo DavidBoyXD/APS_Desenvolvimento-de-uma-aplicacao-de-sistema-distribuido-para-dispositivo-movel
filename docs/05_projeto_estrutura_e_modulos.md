@@ -79,13 +79,15 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
         │   ├── DetalheScreen.tsx    # transporte publico + botao "Atualizar transporte"
         │   ├── RelatoriosScreen.tsx # grafico de barras + transporte_publico
         │   ├── AlertasScreen.tsx
-        │   ├── LinhasScreen.tsx     # busca de linhas/paradas + posicao/previsao
-        │   └── MapaVisualScreen.tsx # mapa visual opcional (regioes/veiculos)
+        │   ├── LinhasScreen.tsx     # busca de linhas/paradas + posicao/previsao (lista)
+        │   ├── MapaVisualScreen.tsx # mapa com busca integrada, catalogo e estilos
+        │   └── MapaBuscaOverlay.tsx # camada de busca/catalogo sobreposta ao mapa
         └── ui/
             ├── estados.tsx         # EstadoCarregando/EstadoErro/EstadoVazio
             ├── webview.ts          # carregamento defensivo do react-native-webview
             ├── catalogo.ts         # navegacao assistida (linhas populares, chips, paradas)
             ├── favoritos.ts        # favoritos locais de linhas (AsyncStorage defensivo)
+            ├── estiloMapa.ts       # estilos cartograficos do mapa + preferencia local
             └── rotulos.ts          # rotulos PT-BR (transporte_publico)
 ```
 
@@ -239,6 +241,38 @@ origem do dado.
   `adicionarFavoritoLinha`, `removerFavoritoLinha`, `alternarFavoritoLinha` e
   `isLinhaFavorita`. Guarda o mínimo para re-exibir e re-buscar a linha (letreiro,
   terminais e `codigo_linha`), comparando pelo letreiro normalizado.
+- **`src/screens/MapaVisualScreen.tsx`** - tela de **mapa com busca integrada**,
+  uma segunda porta de entrada (mais visual) para acompanhar as linhas,
+  complementando a tela de Linhas (que continua em LISTA). O mapa (WebView +
+  Leaflet) ocupa a tela toda; por cima dele, numa **camada React Native
+  sobreposta** (`position: absolute` + `zIndex`, nunca HTML dentro do WebView),
+  ficam uma **barra de busca flutuante** no topo (campo "Buscar linha ou parada"
+  + abas Linhas/Paradas), um **painel inferior expansível por toque** e um
+  **seletor de estilo cartográfico**. Sem linha selecionada, plota as **regiões**
+  (balão com "Ver detalhe"); ao selecionar uma linha (por parâmetro de rota OU
+  pela busca na própria tela), plota os **veículos** com **auto-refresh**
+  (10/15/30s, botão pausar). O auto-refresh atualiza os marcadores via
+  `injectJavaScript` (`window.atualizarVeiculos`) sem recriar o HTML; o
+  `fitBounds` só ocorre ao montar um **novo conjunto** de marcadores (nova linha
+  ou troca de modo), identificado por uma "geração" que também define a `key` do
+  WebView.
+- **`src/screens/MapaBuscaOverlay.tsx`** - componentes da camada sobreposta ao
+  mapa: a **barra de busca flutuante** e o **painel inferior expansível**. O
+  painel, ao ser tocado, alterna entre recolhido (faixa com resumo da linha e
+  contagem de veículos, ou convite a buscar) e expandido (resultados da busca e,
+  com o campo vazio, a navegação assistida e os favoritos). **Reutiliza** a mesma
+  busca livre (`buscarLinhas`/`buscarParadas`), o catálogo (`catalogo.ts`) e os
+  favoritos (`favoritos.ts`), **sem duplicar a lógica**; tocar numa linha a
+  seleciona no mapa. Inclui ainda o seletor flutuante de estilo cartográfico.
+- **`src/ui/estiloMapa.ts`** - catálogo e persistência do **estilo cartográfico**
+  do mapa, todos SEM chave e SEM satélite: **Padrão** (OpenStreetMap), **Claro**
+  (CARTO Positron) e **Escuro** (CARTO Dark Matter), cada um com URL de tiles,
+  zoom máximo e a **atribuição** correta do provedor (exibida pela Leaflet). A
+  preferência é guardada **localmente no aparelho** via AsyncStorage, no mesmo
+  padrão defensivo de `favoritos.ts` (carregamento por `require` isolado, com
+  fallback EM MEMÓRIA). A troca de estilo não recria o mapa: a tela injeta
+  `window.trocarEstiloMapa(id)`, que remove a camada de tiles atual e adiciona a
+  nova, **preservando os marcadores**.
 - **`src/screens/DetalheScreen.tsx`** - medições de transporte público da região,
   com o botão **"Atualizar transporte"** (chama
   `POST /api/v1/regioes/{id}/atualizar-transporte`) e acesso ao relatório.

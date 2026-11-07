@@ -31,7 +31,11 @@ de dados, caracterizando o sistema distribuído:
   (catálogo)** com sugestões de linhas populares e atalhos quando o campo de busca
   está vazio (**sem remover a busca livre**, que continua permitindo pesquisar
   qualquer linha) e **favoritos salvos localmente no aparelho** (estrela em cada
-  linha) para voltar rápido às linhas acompanhadas.
+  linha) para voltar rápido às linhas acompanhadas. A mesma busca, catálogo e
+  favoritos estão também **integrados ao mapa** (tela "Ver no mapa"), numa camada
+  flutuante sobre o mapa com um **painel expansível por toque**, permitindo
+  buscar/selecionar uma linha e vê-la plotada; o mapa ainda oferece um **seletor
+  de estilo cartográfico** (Padrão, Claro ou Escuro, sem satélite).
 - Servidor de API REST (Python / FastAPI) que expõe os dados e a lógica e consome
   as fontes externas de SP.
 - Banco de dados (SQLite) que persiste regiões, medições e alertas.
@@ -232,14 +236,20 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:8000 npx expo start
 ```
 
 Nota sobre o mapa no Android: o mapa visual (tela opcional "Ver no mapa") é
-desenhado com o **OpenStreetMap via WebView** (`react-native-webview` + Leaflet),
-portanto **não precisa de chave do Google Maps** nem de billing; requer apenas
-internet para carregar os tiles. Quando aberto a partir de uma linha de ônibus,
-o mapa **atualiza automaticamente** a posição dos veículos (padrão de 15s,
-selecionável entre 10s, 15s e 30s, com botão de pausar), trocando os marcadores
-sem recarregar o mapa (preserva o zoom/centro). O aplicativo mantém uma lista de
-regiões de SP clicável como tela inicial, de modo que a navegação funciona mesmo
-que o mapa não carregue. O passo a passo detalhado está em
+desenhado com **tiles cartográficos via WebView** (`react-native-webview` +
+Leaflet), portanto **não precisa de chave do Google Maps** nem de billing;
+requer apenas internet para carregar os tiles. Sobre o mapa há uma camada de
+**busca integrada** (barra flutuante + painel expansível por toque com catálogo
+e favoritos): dá para buscar e selecionar uma linha e vê-la plotada sem sair do
+mapa. Um **seletor de estilo** alterna entre **Padrão** (OpenStreetMap), **Claro**
+(CARTO Positron) e **Escuro** (CARTO Dark Matter) — todos cartográficos e **sem
+satélite** —, trocando a camada de tiles sem recriar o mapa e guardando a
+preferência no aparelho. Com uma linha selecionada (pela busca no mapa ou vinda
+das Linhas de ônibus), o mapa **atualiza automaticamente** a posição dos veículos
+(padrão de 15s, selecionável entre 10s, 15s e 30s, com botão de pausar), trocando
+os marcadores sem recarregar o mapa (preserva o zoom/centro). O aplicativo mantém
+uma lista de regiões de SP clicável como tela inicial, de modo que a navegação
+funciona mesmo que o mapa não carregue. O passo a passo detalhado está em
 [docs/07_apresentacao_do_programa.md](docs/07_apresentacao_do_programa.md) e em
 [mobile/BUILD_APK.md](mobile/BUILD_APK.md).
 

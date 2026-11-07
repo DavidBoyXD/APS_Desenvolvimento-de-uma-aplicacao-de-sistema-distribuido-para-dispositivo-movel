@@ -77,7 +77,7 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
         ├── screens/
         │   ├── MapaScreen.tsx       # lista de regioes de SP + botoes de acao
         │   ├── DetalheScreen.tsx    # transporte publico + botao "Atualizar transporte"
-        │   ├── RelatoriosScreen.tsx # grafico de barras + transporte_publico
+        │   ├── RelatoriosScreen.tsx # barras horizontais (View) + transporte_publico
         │   ├── AlertasScreen.tsx
         │   ├── LinhasScreen.tsx     # busca de linhas/paradas + posicao/previsao (lista)
         │   ├── MapaVisualScreen.tsx # mapa com busca integrada, catalogo e estilos
@@ -86,7 +86,7 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
             ├── estados.tsx         # EstadoCarregando/EstadoErro/EstadoVazio
             ├── webview.ts          # carregamento defensivo do react-native-webview
             ├── busca.ts            # busca aproximada (fuzzy): normalizacao + similaridade
-            ├── catalogo.ts         # navegacao assistida (pontos de referencia de paradas)
+            ├── catalogo.ts         # navegacao assistida (dica de busca de paradas)
             ├── favoritos.ts        # favoritos locais de linhas (AsyncStorage defensivo)
             ├── estiloMapa.ts       # estilos cartograficos do mapa + preferencia local
             └── rotulos.ts          # rotulos PT-BR (transporte_publico)
@@ -231,9 +231,11 @@ origem do dado.
   vazia (ver `src/ui/busca.ts`). Inclui ainda a **navegação assistida (catálogo)**:
   quando o campo de busca está vazio, a aba de LINHAS mostra apenas os
   **favoritos** salvos (não há mais sugestões de "linhas populares" nem atalhos
-  por número) e a aba de PARADAS mostra **pontos de referência**; tudo preenche o
-  campo e dispara a busca normal, **sem substituir a busca livre**. Cada linha tem
-  uma estrela para salvar/remover dos favoritos.
+  por número) e a aba de PARADAS mostra apenas uma **orientação curta** para
+  digitar o nome da parada (não há mais sugestões fixas de parada, que podiam não
+  existir na busca real); tudo preenche o campo e dispara a busca normal, **sem
+  substituir a busca livre**. Cada linha tem uma estrela para salvar/remover dos
+  favoritos.
 - **`src/ui/busca.ts`** - utilitários de **busca aproximada (fuzzy)**:
   `normalizar` (minúsculas, remoção de acentos e pontuação, colapso de espaços),
   `levenshtein` e `similaridade` (0..1, com bônus de substring),
@@ -241,10 +243,12 @@ origem do dado.
   todos) e `variacoesDeTermo` (gera variações abreviadas — "avenida" -> "av",
   "praça" -> "pca", etc. — para uma 2ª tentativa de busca de paradas). Toda a
   fuzzy roda no CLIENTE, sobre os resultados da API, sem alterar o back-end.
-- **`src/ui/catalogo.ts`** - dados do catálogo da navegação assistida: apenas os
-  pontos de referência de paradas (`PARADAS_REFERENCIA`), com os termos nas formas
-  abreviadas que a SPTrans reconhece ("Av.", "Pça.", "Term."). As antigas
-  sugestões de linhas (`LINHAS_POPULARES` e `ATALHOS_INICIAIS`) foram removidas.
+- **`src/ui/catalogo.ts`** - documentação da navegação assistida. Não há mais
+  sugestões fixas de paradas (`PARADAS_REFERENCIA` foi removida, pois alguns
+  termos eram suposições e não retornavam resultado na busca real) nem sugestões
+  de linhas (`LINHAS_POPULARES`/`ATALHOS_INICIAIS`, já removidas). Exporta apenas
+  a constante `DICA_BUSCA_PARADA`, o texto curto de orientação exibido na aba de
+  Paradas; a busca livre + aproximada é o caminho para encontrar qualquer parada.
 - **`src/ui/favoritos.ts`** - favoritos de linhas salvos **localmente no
   aparelho** via `@react-native-async-storage/async-storage`. Isola o único ponto
   de contato com o pacote nativo (carregamento defensivo por `require`, com
@@ -279,13 +283,19 @@ origem do dado.
   `useSafeAreaInsets`: a barra de busca soma o inset superior (status bar/notch) e
   o painel inferior soma o inset inferior, para não ficar embaixo da barra de
   navegação do Android (botões voltar/home/recentes) nem da home indicator do iOS.
-  Inclui ainda o seletor flutuante de estilo cartográfico.
+  Inclui ainda o seletor flutuante de estilo cartográfico, posicionado no canto
+  **inferior direito** (acima do painel inferior, respeitando a safe area) para
+  não colidir com a barra de busca (topo) nem com os controles de zoom +/- do
+  Leaflet, que foram movidos para o canto **inferior esquerdo**. Ao selecionar
+  uma **parada** nos resultados, a tela plota um **marcador** da parada no mapa
+  (nome + endereço) via `window.mostrarParada` e centraliza a visão no ponto.
 - **`src/ui/estiloMapa.ts`** - catálogo e persistência do **estilo cartográfico**
-  do mapa, todos SEM chave e SEM satélite: **Padrão** (OpenStreetMap),
-  **Humanitário** (OpenStreetMap Humanitarian / HOT) e **Topográfico**
-  (OpenTopoMap), cada um com URL de tiles, zoom máximo e a **atribuição** correta
-  do provedor (exibida pela Leaflet). Os basemaps da CARTO não são usados, pois
-  passaram a exigir API key. A
+  do mapa, todos SEM chave e SEM satélite: **Padrão** (OpenStreetMap), **OSM.de**
+  (servidor alemão oficial do OpenStreetMap, `tile.openstreetmap.de`) e
+  **Topográfico** (OpenTopoMap), cada um com URL de tiles, zoom máximo e a
+  **atribuição** correta do provedor (exibida pela Leaflet). Os basemaps da CARTO
+  não são usados (exigem API key) e o OpenStreetMap Humanitarian (HOT, `.fr`) foi
+  removido por aparecer em cinza no aparelho (bloqueio por política de uso). A
   preferência é guardada **localmente no aparelho** via AsyncStorage, no mesmo
   padrão defensivo de `favoritos.ts` (carregamento por `require` isolado, com
   fallback EM MEMÓRIA). A troca de estilo não recria o mapa: a tela injeta
@@ -295,11 +305,13 @@ origem do dado.
   com o botão **"Atualizar transporte"** (chama
   `POST /api/v1/regioes/{id}/atualizar-transporte`) e acesso ao relatório.
 - **`src/screens/RelatoriosScreen.tsx`** - consome o relatório agregado e mostra
-  média, mínimo, máximo, contagem e última leitura por parâmetro em cards. No topo,
-  apresenta um **gráfico de barras** ("Médias por parâmetro") com `BarChart` do
-  **react-native-chart-kit** (que depende de **react-native-svg**), largura
-  calculada com `useWindowDimensions` e renderizado como `ListHeaderComponent` da
-  `FlatList`. Trata dataset vazio.
+  média, mínimo, máximo, contagem (amostras) e última leitura por parâmetro em
+  cards. Com o histórico acumulado (limitado a 50 por parâmetro no back-end), as
+  amostras passam a ser **maiores que 1** e média/mínimo/máximo variam. No topo,
+  apresenta um **gráfico de barras horizontais** ("Médias por parâmetro")
+  renderizado com `View` (barras proporcionais ao maior valor, com o **rótulo
+  textual completo** e o valor ao lado de cada barra), como `ListHeaderComponent`
+  da `FlatList`. Trata carregando/erro/vazio.
 - **`src/screens/AlertasScreen.tsx`** - lista regras, formulário para criar uma
   regra (com o tipo `transporte_publico`) e botão para avaliar os alertas de uma
   região.

@@ -139,13 +139,14 @@ acompanhar as linhas, que complementa a tela de Linhas (que continua em lista).
 O mapa ocupa a tela toda e, por cima dele (numa camada React Native sobreposta,
 nunca dentro do WebView), traz uma **barra de busca flutuante**, um **painel
 inferior expansível por toque** com o catálogo/sugestões e os favoritos, e um
-**seletor de estilo cartográfico** (Padrão, Humanitário ou Topográfico). Sem
+**seletor de estilo cartográfico** (Padrão, OSM.de ou Topográfico). Sem
 linha selecionada, plota as regiões como marcadores; ao selecionar uma linha
 (pela busca na própria tela ou vindo das Linhas de ônibus), plota a posição em
 tempo real dos veículos (com **atualização automática** periódica e botão de
-pausar). Essa tela desenha o mapa com **tiles cartográficos via WebView**
-(biblioteca Leaflet dentro de um `react-native-webview`, usando OpenStreetMap,
-HOT e OpenTopoMap), portanto **não precisa de chave de API** nem de billing (ver
+pausar); ao selecionar uma **parada**, plota um marcador nela. Essa tela desenha
+o mapa com **tiles cartográficos via WebView** (biblioteca Leaflet dentro de um
+`react-native-webview`, usando OpenStreetMap, OSM.de e OpenTopoMap), portanto
+**não precisa de chave de API** nem de billing (ver
 `mobile/BUILD_APK.md`)
 e **não usa satélite**; requer apenas internet para carregar os tiles. Por ser
 separada e opcional, mesmo que o mapa não carregue (ex.: sem internet), o app
@@ -188,8 +189,12 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
 
 4. **Relatórios.** No detalhe, toque em "Ver relatório" para abrir as agregações
    por parâmetro: média, mínimo, máximo, contagem (amostras) e última leitura. No
-   topo, um **gráfico de barras** ("Médias por parâmetro") resume visualmente os
-   dados, incluindo os parâmetros de transporte público quando houver medições.
+   topo, um **gráfico de barras horizontais** ("Médias por parâmetro") resume
+   visualmente os dados, incluindo os parâmetros de transporte público quando
+   houver medições, com o **rótulo completo** de cada parâmetro ao lado da barra.
+   Como o histórico de medições é **acumulado e limitado a 50** por parâmetro
+   (ver passo 3 de "Atualizar transporte"), as **amostras passam a ser maiores
+   que 1** e média/mínimo/máximo variam a cada atualização.
 
 5. **Linhas de ônibus (acompanhamento e busca).** Na tela inicial, toque no botão
    **"Linhas de onibus"** para abrir a tela de Linhas. Nela há duas abas,
@@ -217,13 +222,12 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    tolerância.
 
    **Navegação assistida (catálogo).** Enquanto o campo de busca estiver vazio, a
-   tela mostra **sugestões** para ajudar quem ainda não sabe o que pesquisar: na
-   aba de **Linhas**, apenas a lista de **Favoritos** (quando houver); na aba de
-   **Paradas**, uma lista curada de **pontos de referência** (ex.: Av. Paulista,
-   Pça. da Sé, Term. Bandeira). Tocar numa sugestão **preenche o campo** e dispara
-   a busca normal. Essas sugestões são apenas atalhos: a **busca livre continua
-   disponível** e permite pesquisar **qualquer linha ou parada**. A seção some
-   assim que há termo digitado ou resultados, para não poluir a tela.
+   tela mostra conteúdo de apoio: na aba de **Linhas**, apenas a lista de
+   **Favoritos** (quando houver); na aba de **Paradas**, uma **orientação curta**
+   para digitar o nome da parada, avenida ou referência (não há mais sugestões
+   fixas de parada, pois alguns termos não existiam na busca real). A **busca
+   livre continua disponível** e permite pesquisar **qualquer linha ou parada**.
+   A seção some assim que há termo digitado ou resultados, para não poluir a tela.
 
    **Favoritos (salvos no aparelho).** Cada linha nos resultados tem uma
    **estrela** para favoritar/desfavoritar. Os favoritos ficam salvos
@@ -252,19 +256,22 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    ao toque**: recolhido, mostra um resumo (a linha selecionada e o número de
    veículos em operação, ou um convite a buscar); expandido, revela os
    **resultados da busca** e, quando o campo está vazio, a **navegação assistida**
-   (favoritos de linhas e pontos de referência de paradas) e os **favoritos**
-   (com a estrela para salvar/remover). A mesma **busca aproximada (fuzzy)** da
+   (favoritos de linhas na aba Linhas; uma orientação curta na aba Paradas) e os
+   **favoritos** (com a estrela para salvar/remover). A mesma **busca aproximada (fuzzy)** da
    tela de Linhas vale aqui. O painel respeita a **área segura** do aparelho: o
    cabeçalho e os itens tocáveis ficam acima da barra de navegação do Android
    (botões voltar/home/recentes), nunca escondidos atrás dela. Toque numa linha
    para **plotá-la no mapa**: os veículos aparecem com o mesmo **auto-refresh**
-   (10/15/30s e botão pausar) e o painel recolhe para dar espaço ao mapa. No
-   canto, o botão **"Estilo"** alterna o estilo **cartográfico** do mapa entre
-   **Padrão** (OpenStreetMap), **Humanitário** (OpenStreetMap Humanitarian / HOT)
-   e **Topográfico** (OpenTopoMap) — todos sem chave e **sem satélite**; a camada
-   de tiles troca sem recriar o mapa (os marcadores permanecem) e a preferência
-   fica **salva no aparelho**. A atribuição correta de cada provedor aparece no
-   canto do mapa.
+   (10/15/30s e botão pausar) e o painel recolhe para dar espaço ao mapa. Ao
+   buscar e tocar numa **parada**, o mapa plota um **marcador** nela (nome +
+   endereço) e centraliza a visão no ponto. No canto **inferior direito** (fora
+   da barra de busca e dos controles de zoom +/-, que ficam no canto inferior
+   esquerdo), o botão **"Estilo"** alterna o estilo **cartográfico** do mapa
+   entre **Padrão** (OpenStreetMap), **OSM.de** (servidor alemão oficial do
+   OpenStreetMap) e **Topográfico** (OpenTopoMap) — todos sem chave e **sem
+   satélite**; a camada de tiles troca sem recriar o mapa (os marcadores
+   permanecem) e a preferência fica **salva no aparelho**. A atribuição correta
+   de cada provedor aparece no canto do mapa.
 
 7. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
    regra (escolha região, tipo, parâmetro, condição `>`/`<` e limiar) e toque em

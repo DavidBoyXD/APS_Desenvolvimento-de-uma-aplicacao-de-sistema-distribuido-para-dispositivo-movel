@@ -62,15 +62,11 @@ desenvolvimento (ano de 2026).
 - **FlatList (React Native)** - lista performática usada na tela inicial.
   [https://reactnative.dev/docs/flatlist](https://reactnative.dev/docs/flatlist).
   Aplicado em `mobile/src/screens/MapaScreen.tsx`.
-- **react-native-chart-kit** - biblioteca de gráficos usada no relatório.
-  npm: [https://www.npmjs.com/package/react-native-chart-kit](https://www.npmjs.com/package/react-native-chart-kit).
-  GitHub: [https://github.com/indiespirit/react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit).
-  Aplicado em `mobile/src/screens/RelatoriosScreen.tsx` (gráfico de barras
-  "Médias por parâmetro").
-- **react-native-svg** - renderização vetorial (SVG) exigida pelo
-  react-native-chart-kit.
-  [https://github.com/software-mansion/react-native-svg](https://github.com/software-mansion/react-native-svg).
-  Aplicado (indiretamente) em `mobile/src/screens/RelatoriosScreen.tsx`.
+- **Gráfico de barras com `View`** - o relatório ("Médias por parâmetro") é
+  desenhado com barras horizontais proporcionais feitas de `View` (layout flex),
+  sem biblioteca de gráficos, para manter os rótulos legíveis. Documentação de
+  layout do `View`: [https://reactnative.dev/docs/view](https://reactnative.dev/docs/view).
+  Aplicado em `mobile/src/screens/RelatoriosScreen.tsx`.
 - **react-native-screens** - telas nativas exigidas pela navegação.
   [https://github.com/software-mansion/react-native-screens](https://github.com/software-mansion/react-native-screens).
 - **react-native-safe-area-context** - áreas seguras da tela.

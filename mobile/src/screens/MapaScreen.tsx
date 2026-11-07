@@ -91,7 +91,7 @@ export default function MapaScreen({ navigation }: Props) {
         <Text style={styles.listaTitulo}>Regioes monitoradas em Sao Paulo</Text>
         <Text style={styles.listaDica}>
           No mapa voce tambem pode buscar linhas e paradas e trocar o estilo do
-          mapa (Padrao, Humanitario ou Topografico).
+          mapa (Padrao, OSM.de ou Topografico).
         </Text>
         <View style={styles.cabecalhoAcoes}>
           {/*

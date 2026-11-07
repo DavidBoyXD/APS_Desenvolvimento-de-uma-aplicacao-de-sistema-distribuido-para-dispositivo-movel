@@ -57,7 +57,7 @@ import {
   rotuloSentido,
   rotuloVeiculosEmOperacao,
 } from '../ui/rotulos';
-import { PARADAS_REFERENCIA } from '../ui/catalogo';
+import { DICA_BUSCA_PARADA } from '../ui/catalogo';
 import {
   LinhaFavorita,
   alternarFavoritoLinha,
@@ -623,9 +623,10 @@ function BotaoFavorito({
 /**
  * Seção de NAVEGAÇÃO ASSISTIDA exibida quando o campo de busca está vazio. Para
  * LINHAS, mostra apenas os FAVORITOS salvos pelo usuário (não há mais sugestões
- * de "linhas populares" nem atalhos por número). Para PARADAS, mostra pontos de
- * referência conhecidos. Tudo aqui é SUGESTÃO: a busca livre no campo acima
- * continua sendo a forma principal de encontrar qualquer linha ou parada.
+ * de "linhas populares" nem atalhos por número). Para PARADAS, NÃO há mais
+ * sugestões fixas (podiam não existir na busca real): apenas uma orientação
+ * curta, pois a busca livre no campo acima é a forma de encontrar qualquer
+ * parada.
  */
 function NavegacaoAssistida({
   aba,
@@ -639,21 +640,7 @@ function NavegacaoAssistida({
   if (aba === 'paradas') {
     return (
       <View style={styles.assistida}>
-        <Text style={styles.assistidaTitulo}>Pontos de referencia</Text>
-        <Text style={styles.assistidaDica}>
-          Sugestoes para comecar. Voce pode pesquisar qualquer parada pelo campo
-          acima.
-        </Text>
-        {PARADAS_REFERENCIA.map((ponto) => (
-          <Pressable
-            key={ponto.termo}
-            style={styles.sugestao}
-            onPress={() => onSugestao(ponto.termo)}
-            accessibilityRole="button"
-          >
-            <Text style={styles.sugestaoTitulo}>{ponto.descricao}</Text>
-          </Pressable>
-        ))}
+        <Text style={styles.assistidaDica}>{DICA_BUSCA_PARADA}</Text>
       </View>
     );
   }

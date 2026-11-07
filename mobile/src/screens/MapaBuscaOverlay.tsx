@@ -18,8 +18,8 @@
  *     src/ui/catalogo.ts) e os FAVORITOS (src/ui/favoritos.ts). Tocar numa linha
  *     seleciona-a: o mapa passa a plotar seus veículos.
  *
- * O seletor de ESTILO cartográfico do mapa (Padrão/Humanitário/Topográfico) é um controle
- * flutuante próprio (SeletorEstiloMapa), renderizado pela tela.
+ * O seletor de ESTILO cartográfico do mapa (Padrão/OSM.de/Topográfico) é um
+ * controle flutuante próprio (SeletorEstiloMapa), renderizado pela tela.
  *
  * Onde é aplicado: src/screens/MapaVisualScreen.tsx.
  */
@@ -38,7 +38,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError, buscarLinhas, buscarParadas } from '../api/client';
 import { LinhaRead, ParadaRead } from '../types';
-import { PARADAS_REFERENCIA } from '../ui/catalogo';
+import { DICA_BUSCA_PARADA } from '../ui/catalogo';
 import { LinhaFavorita } from '../ui/favoritos';
 import { EstiloMapa, EstiloMapaId } from '../ui/estiloMapa';
 import { AVISO_DADO_EXEMPLO, rotuloSentido } from '../ui/rotulos';
@@ -78,6 +78,8 @@ interface MapaBuscaOverlayProps {
   favoritos: LinhaFavorita[];
   /** Seleciona uma linha: o mapa passa a plotar seus veículos e o painel recolhe. */
   aoSelecionarLinha: (linha: LinhaRead) => void;
+  /** Seleciona uma parada: o mapa plota o marcador da parada e o painel recolhe. */
+  aoSelecionarParada: (parada: ParadaRead) => void;
   /** Alterna o favorito de uma linha (estrela). */
   aoAlternarFavorito: (linha: LinhaRead) => void;
   /** Estilos cartográficos disponíveis e o selecionado (seletor flutuante). */
@@ -92,6 +94,7 @@ export default function MapaBuscaOverlay({
   quantidadeVeiculos,
   favoritos,
   aoSelecionarLinha,
+  aoSelecionarParada,
   aoAlternarFavorito,
   estilos,
   estiloAtual,
@@ -224,6 +227,15 @@ export default function MapaBuscaOverlay({
     [aoSelecionarLinha],
   );
 
+  /** Seleciona uma parada dos resultados: plota no mapa e recolhe o painel. */
+  const selecionarParada = useCallback(
+    (parada: ParadaRead) => {
+      aoSelecionarParada(parada);
+      setExpandido(false);
+    },
+    [aoSelecionarParada],
+  );
+
   /** Verificação SÍNCRONA de favorito (para a estrela), pelo letreiro. */
   const favoritada = useCallback(
     (letreiro: string): boolean => {
@@ -253,12 +265,15 @@ export default function MapaBuscaOverlay({
 
   return (
     <>
-      {/* SELETOR DE ESTILO cartográfico: controle flutuante no canto superior
-          direito, sobre o mapa. */}
+      {/* SELETOR DE ESTILO cartográfico: controle flutuante no canto INFERIOR
+          direito, sobre o mapa. Fica acima do painel inferior e fora da barra
+          de busca (topo) e dos controles de zoom +/- do Leaflet (canto superior
+          esquerdo), para não colidir com nenhum deles. */}
       <SeletorEstiloMapa
         estilos={estilos}
         estiloAtual={estiloAtual}
         aoTrocarEstilo={aoTrocarEstilo}
+        insetBottom={insets.bottom}
       />
 
       {/* BARRA DE BUSCA FLUTUANTE no topo, sobre o mapa. Soma o inset superior
@@ -403,6 +418,15 @@ export default function MapaBuscaOverlay({
                           {AVISO_DADO_EXEMPLO}
                         </Text>
                       ) : null}
+                      <Pressable
+                        style={styles.botaoVerMapa}
+                        onPress={() => selecionarParada(parada)}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.botaoVerMapaTexto}>
+                          Ver no mapa
+                        </Text>
+                      </Pressable>
                     </View>
                   ))
                 )
@@ -416,30 +440,36 @@ export default function MapaBuscaOverlay({
 }
 
 /**
- * Seletor flutuante do ESTILO cartográfico (Padrão/Humanitário/Topográfico). Um botão de
- * "camadas" que expande chips com os estilos; tocar troca a camada de tiles do
- * mapa (sem recriar o mapa). Fica no canto superior direito, abaixo da barra.
+ * Seletor flutuante do ESTILO cartográfico (Padrão/OSM.de/Topográfico). Um botão
+ * de "camadas" que expande chips com os estilos; tocar troca a camada de tiles
+ * do mapa (sem recriar o mapa).
+ *
+ * POSIÇÃO: canto INFERIOR direito, acima do painel inferior. Essa escolha evita
+ * colidir com a barra de busca (topo) e com os controles de zoom +/- do Leaflet
+ * (canto superior esquerdo). Os chips abrem PARA CIMA (acima do botão) para não
+ * ficarem embaixo do painel inferior. O `insetBottom` (safe area) afasta o
+ * controle da barra de navegação do sistema. O container ancora o botão embaixo
+ * e empilha os chips acima dele via `flex-end` + ordem reversa na árvore.
  */
 function SeletorEstiloMapa({
   estilos,
   estiloAtual,
   aoTrocarEstilo,
+  insetBottom,
 }: {
   estilos: EstiloMapa[];
   estiloAtual: EstiloMapaId;
   aoTrocarEstilo: (id: EstiloMapaId) => void;
+  insetBottom: number;
 }) {
   const [aberto, setAberto] = useState<boolean>(false);
   return (
-    <View style={styles.seletorEstilo} pointerEvents="box-none">
-      <Pressable
-        style={styles.botaoCamadas}
-        onPress={() => setAberto((atual) => !atual)}
-        accessibilityRole="button"
-        accessibilityLabel="Trocar estilo do mapa"
-      >
-        <Text style={styles.botaoCamadasTexto}>⧉ Estilo</Text>
-      </Pressable>
+    <View
+      style={[styles.seletorEstilo, { bottom: 96 + insetBottom }]}
+      pointerEvents="box-none"
+    >
+      {/* Chips ACIMA do botão quando aberto (o botão fica por último, logo mais
+          embaixo na tela). */}
       {aberto ? (
         <View style={styles.seletorChips}>
           {estilos.map((estilo) => {
@@ -467,6 +497,14 @@ function SeletorEstiloMapa({
           })}
         </View>
       ) : null}
+      <Pressable
+        style={styles.botaoCamadas}
+        onPress={() => setAberto((atual) => !atual)}
+        accessibilityRole="button"
+        accessibilityLabel="Trocar estilo do mapa"
+      >
+        <Text style={styles.botaoCamadasTexto}>⧉ Estilo</Text>
+      </Pressable>
     </View>
   );
 }
@@ -555,21 +593,7 @@ function Catalogo({
   if (aba === 'paradas') {
     return (
       <View style={styles.catalogo}>
-        <Text style={styles.catalogoTitulo}>Pontos de referencia</Text>
-        <Text style={styles.catalogoDica}>
-          Sugestoes para comecar. Voce pode pesquisar qualquer parada pelo campo
-          acima.
-        </Text>
-        {PARADAS_REFERENCIA.map((ponto) => (
-          <Pressable
-            key={ponto.termo}
-            style={styles.sugestao}
-            onPress={() => onSugestao(ponto.termo)}
-            accessibilityRole="button"
-          >
-            <Text style={styles.sugestaoTitulo}>{ponto.descricao}</Text>
-          </Pressable>
-        ))}
+        <Text style={styles.catalogoDica}>{DICA_BUSCA_PARADA}</Text>
       </View>
     );
   }
@@ -710,10 +734,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // Seletor de estilo cartográfico (canto superior direito).
+  // Seletor de estilo cartográfico (canto INFERIOR direito, acima do painel).
+  // O `bottom` é definido inline somando a safe area; os chips abrem para cima.
   seletorEstilo: {
     position: 'absolute',
-    top: 120,
     right: 12,
     zIndex: 15,
     alignItems: 'flex-end',

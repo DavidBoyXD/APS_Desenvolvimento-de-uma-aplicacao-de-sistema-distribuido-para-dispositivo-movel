@@ -11,8 +11,8 @@
  *     e, quando o campo está vazio, a NAVEGAÇÃO ASSISTIDA (catálogo) e os
  *     FAVORITOS. Tocar numa linha a seleciona: o mapa passa a plotar seus
  *     veículos (com auto-refresh) e o painel recolhe.
- *   - um SELETOR DE ESTILO cartográfico (Padrão/Humanitário/Topográfico), que
- *     troca a camada de tiles do Leaflet sem recriar o mapa.
+ *   - um SELETOR DE ESTILO cartográfico (Padrão/OSM.de/Topográfico), que troca a
+ *     camada de tiles do Leaflet sem recriar o mapa.
  *
  * Modos do mapa:
  *   - SEM linha selecionada: plota as REGIÕES monitoradas (getRegioes); tocar no
@@ -24,18 +24,24 @@
  *     sem recriar o HTML (não pisca, mantém zoom/centro). O fitBounds só ocorre
  *     ao montar um NOVO conjunto de marcadores (ex.: ao selecionar outra linha).
  *
+ * PARADA selecionada: ao tocar numa parada dos resultados da busca, a tela
+ * plota um MARCADOR da parada (lat/lon) sobre o mapa atual via injectJavaScript
+ * (window.mostrarParada), centralizando nela (flyTo) com um popup (nome +
+ * endereço). O marcador de parada é independente das regiões/veículos, então
+ * continua possível voltar a ver regiões ou selecionar uma linha depois.
+ *
  * COMO O MAPA É DESENHADO (WebView + Leaflet):
  *   Renderizamos um `WebView` (do `react-native-webview`, via wrapper protegido
  *   em src/ui/webview.ts) que carrega um HTML embutido com a Leaflet (via CDN) e
- *   tiles cartográficos SEM chave (OpenStreetMap, HOT e OpenTopoMap). Requer internet para
- *   baixar tiles e a Leaflet; offline, o mapa não carrega, mas a tela de Linhas
- *   (em lista) continua funcionando.
+ *   tiles cartográficos SEM chave (OpenStreetMap, OSM.de e OpenTopoMap). Requer
+ *   internet para baixar tiles e a Leaflet; offline, o mapa não carrega, mas a
+ *   tela de Linhas (em lista) continua funcionando.
  *
  * Referências:
  *   - react-native-webview (SDK 58): https://docs.expo.dev/versions/v58.0.0/sdk/webview/
  *   - Leaflet: https://leafletjs.com/reference.html
  *   - OpenStreetMap (tiles): https://www.openstreetmap.org/
- *   - OpenStreetMap Humanitarian (HOT): https://www.openstreetmap.fr/hot/
+ *   - OpenStreetMap (servidor alemão / OSM.de): https://www.openstreetmap.de/
  *   - OpenTopoMap: https://opentopomap.org/about
  *
  * Onde é aplicado: rota "MapaVisual" em App.tsx.
@@ -53,7 +59,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { getRegioes, getPosicoesLinha, ApiError } from '../api/client';
-import { LinhaRead, Regiao, VeiculoPosicaoRead } from '../types';
+import { LinhaRead, ParadaRead, Regiao, VeiculoPosicaoRead } from '../types';
 import { RootStackParamList } from '../navigation';
 import { EstadoCarregando, EstadoErro } from '../ui/estados';
 import {
@@ -128,13 +134,16 @@ interface LinhaAtiva {
  * Os pontos são injetados via JSON.stringify (serialização segura) e o caractere
  * "<" é escapado como "\\u003c" para impedir que um nome contendo "</script>"
  * feche o bloco <script> prematuramente. A Leaflet vem por CDN (unpkg); os tiles
- * vêm de provedores cartográficos sem chave (OpenStreetMap, HOT e OpenTopoMap).
+ * vêm de provedores cartográficos sem chave (OpenStreetMap, OSM.de e
+ * OpenTopoMap).
  *
- * Expõe duas funções globais usadas pelo React via injectJavaScript:
+ * Expõe três funções globais usadas pelo React via injectJavaScript:
  *   - window.atualizarVeiculos(json): troca apenas os marcadores de veículo
  *     (auto-refresh), preservando zoom/centro;
  *   - window.trocarEstiloMapa(estiloJson): troca a camada de tiles atual pela
- *     nova, preservando os marcadores (seletor de estilo).
+ *     nova, preservando os marcadores (seletor de estilo);
+ *   - window.mostrarParada(json): plota (ou limpa) o marcador da PARADA
+ *     selecionada na busca, centralizando o mapa nela com um popup.
  */
 function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
   const pontosJson = JSON.stringify(pontos).replace(/</g, '\\u003c');
@@ -155,6 +164,10 @@ function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
     <style>
       html, body, #mapa { height: 100%; margin: 0; padding: 0; }
       #mapa { width: 100%; }
+      /* Afasta os controles de zoom (canto inferior esquerdo) da borda para
+         que não fiquem embaixo do painel inferior (camada React Native) nem da
+         atribuição do mapa. */
+      .leaflet-bottom.leaflet-left { margin-bottom: 92px; }
       .link-detalhe {
         display: inline-block;
         margin-top: 6px;
@@ -173,7 +186,14 @@ function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
         var pontos = ${pontosJson};
         var estilos = ${estilosJson};
         var estiloInicial = ${estiloInicialJson};
-        var mapa = L.map('mapa').setView([${SP_LAT}, ${SP_LON}], ${SP_ZOOM});
+        // Controles de zoom +/- no canto INFERIOR esquerdo: a barra de busca
+        // flutuante (camada React Native) cobre o topo, então movemos o zoom
+        // para baixo para que +/- fiquem sempre visíveis e tocáveis.
+        var mapa = L.map('mapa', { zoomControl: false }).setView(
+          [${SP_LAT}, ${SP_LON}],
+          ${SP_ZOOM}
+        );
+        L.control.zoom({ position: 'bottomleft' }).addTo(mapa);
 
         // Camada de tiles atual (cartográfica, sem chave). Guardada numa variável
         // para que o seletor de estilo possa remover e recriar sem recriar o mapa
@@ -207,6 +227,24 @@ function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
         // possa remover e recriar os veiculos sem recriar o mapa inteiro, sem
         // piscar e sem resetar o zoom/centro escolhido pelo usuario.
         var camadaVeiculos = L.layerGroup().addTo(mapa);
+
+        // Camada SOMENTE das PARADAS selecionadas na busca. Isolada para que
+        // window.mostrarParada possa limpar e recriar o(s) marcador(es) de
+        // parada sem afetar regioes nem veiculos.
+        var camadaParadas = L.layerGroup().addTo(mapa);
+
+        function criarPopupParada(p) {
+          var cont = document.createElement('div');
+          var titulo = document.createElement('strong');
+          titulo.textContent = p.titulo;
+          cont.appendChild(titulo);
+          if (p.subtitulo) {
+            var sub = document.createElement('div');
+            sub.textContent = p.subtitulo;
+            cont.appendChild(sub);
+          }
+          return cont;
+        }
 
         function criarPopup(p) {
           var cont = document.createElement('div');
@@ -301,6 +339,37 @@ function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
             aplicarEstilo(id);
           } catch (e) {
             // Id invalido: ignora para nao derrubar o mapa.
+          }
+          return true;
+        };
+
+        // Ponte React -> WebView: PARADA selecionada na busca. Recebe uma lista
+        // de pontos de parada (geralmente 1). Limpa os marcadores de parada
+        // anteriores, adiciona os novos e centraliza o mapa: flyTo num unico
+        // ponto, fitBounds em varios. Chamar com lista vazia apenas limpa.
+        window.mostrarParada = function (json) {
+          try {
+            var lista = JSON.parse(json);
+            camadaParadas.clearLayers();
+            if (!lista || lista.length === 0) {
+              return true;
+            }
+            var marcadores = [];
+            lista.forEach(function (p) {
+              var marcador = L.marker([p.lat, p.lon]);
+              marcador.bindPopup(criarPopupParada(p));
+              marcador.addTo(camadaParadas);
+              marcadores.push(marcador);
+            });
+            if (marcadores.length === 1) {
+              mapa.flyTo([lista[0].lat, lista[0].lon], 16);
+              marcadores[0].openPopup();
+            } else {
+              var limites = L.featureGroup(marcadores).getBounds();
+              mapa.fitBounds(limites.pad(0.2));
+            }
+          } catch (e) {
+            // JSON invalido: ignora para nao derrubar o mapa.
           }
           return true;
         };
@@ -538,6 +607,28 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     }
   }, []);
 
+  // Plota a PARADA selecionada na busca sobre o mapa atual (sem recriar o
+  // WebView): injeta a chamada window.mostrarParada com o ponto da parada.
+  // Mantem regioes/veiculos; apenas adiciona/centraliza o marcador de parada.
+  const mostrarParadaNoMapa = useCallback((parada: ParadaRead) => {
+    if (webviewRef.current && webviewPronto.current) {
+      const pontos = [
+        {
+          lat: parada.latitude,
+          lon: parada.longitude,
+          titulo: parada.nome,
+          subtitulo: parada.endereco || undefined,
+        },
+      ];
+      const json = JSON.stringify(pontos).replace(/</g, '\\u003c');
+      webviewRef.current.injectJavaScript(
+        `window.mostrarParada && window.mostrarParada(${JSON.stringify(
+          json,
+        )}); true;`,
+      );
+    }
+  }, []);
+
   // Troca o estilo cartografico (acao do usuario): atualiza o estado, persiste a
   // preferencia e aplica no mapa imediatamente.
   const trocarEstilo = useCallback(
@@ -765,6 +856,7 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
         quantidadeVeiculos={quantidadeVeiculos}
         favoritos={favoritos}
         aoSelecionarLinha={selecionarLinha}
+        aoSelecionarParada={mostrarParadaNoMapa}
         aoAlternarFavorito={alternarFavorito}
         estilos={ESTILOS_MAPA}
         estiloAtual={estiloMapa}

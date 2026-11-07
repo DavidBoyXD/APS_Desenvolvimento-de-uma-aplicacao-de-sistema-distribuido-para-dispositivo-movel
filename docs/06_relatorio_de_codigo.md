@@ -15,7 +15,7 @@ código; destaca os núcleos. Os caminhos apontam para o código real do reposit
 | **IBGE Localidades** (OFICIAL, UF 35) | Base geográfica de SP | `server/app/services/ibge.py` | `mapear_payload`, `buscar_municipios_sp` | `GET /api/v1/localidades/sp` |
 | **PMSP / GeoSampa** | Coordenadas dos distritos | `server/app/seed.py` | `REGIOES_SEED` (citação na docstring) | seed de startup |
 | **httpx** | Cliente HTTP do servidor | `server/app/services/*` | chamadas `client.get/post` | serviços sptrans e ibge |
-| **react-native-chart-kit** | Gráfico de barras | `mobile/src/screens/RelatoriosScreen.tsx` | `GraficoMedias` (`BarChart`) | tela Relatórios |
+| **Gráfico de barras (View)** | Barras horizontais proporcionais | `mobile/src/screens/RelatoriosScreen.tsx` | `GraficoMedias` (barras com `View`) | tela Relatórios |
 | **Fetch API** | Cliente HTTP do app | `mobile/src/api/client.ts` | `requisitar`, `atualizarTransporte` etc. | todas as telas |
 
 ## 6.1 Back-end
@@ -175,7 +175,12 @@ Pontos-chave:
   fallback de exemplo), mantendo a rastreabilidade da origem na própria medição.
 - Traduz a falha da fonte externa em **502 Bad Gateway** padronizado (nunca 500
   cru), atendendo ao requisito de tratamento de erros.
-- Persiste as medições com `tipo=transporte_publico`.
+- Persiste as medições com `tipo=transporte_publico` **acumulando o histórico**
+  (sem apagar as anteriores). Após inserir, a função auxiliar `podar_historico`
+  mantém apenas as **últimas `LIMITE_HISTORICO_POR_PARAMETRO` (50)** medições por
+  `(regiao_id, tipo, parametro)`, ordenadas por `timestamp`/`id` decrescentes.
+  Assim o relatório passa a ter **amostras > 1** (média/mínimo/máximo que variam)
+  sem a tabela crescer indefinidamente.
 
 ### 6.1.5 Acompanhamento de ônibus e busca - `server/app/services/sptrans.py` e `server/app/routers/linhas.py`
 
@@ -435,25 +440,39 @@ de relatório da região.
 ### 6.2.5 Relatório com gráfico de barras - `mobile/src/screens/RelatoriosScreen.tsx`
 
 Além da lista tabular, a tela resume as médias por par tipo/parâmetro num gráfico
-de barras com `BarChart` do **react-native-chart-kit** (desenha via
-**react-native-svg**), medindo a largura com `useWindowDimensions`:
+de **barras horizontais renderizadas com `View`** (layout flex), sem biblioteca
+de gráficos. A largura de cada barra é proporcional ao **maior valor** do
+conjunto e o rótulo textual completo fica ao lado:
 
 ```tsx
-import { BarChart } from 'react-native-chart-kit';
-
-function GraficoMedias({ resumos, larguraJanela }) {
+function GraficoMedias({ resumos }) {
   if (resumos.length === 0) return null;            // trata dataset vazio
-  const labels = resumos.map(
-    (item) => `${rotuloTipo(item.tipo)} - ${rotuloParametro(item.parametro)}`,
-  );
-  const valores = resumos.map((item) =>
-    Number.isFinite(item.media) ? item.media : 0,
-  );
-  const larguraGrafico = Math.max(larguraJanela - 32, 0);
+  const itens = resumos.map((item) => ({
+    chave: `${item.tipo}-${item.parametro}`,
+    rotulo: `${rotuloParametro(item.parametro)} (${rotuloTipo(item.tipo)})`,
+    valor: Number.isFinite(item.media) ? item.media : 0,
+    unidade: item.unidade,
+  }));
+  const maximo = Math.max(...itens.map((i) => i.valor), 0);
   return (
     <View style={styles.graficoCartao}>
       <Text style={styles.graficoTitulo}>Medias por parametro</Text>
-      <BarChart data={{ labels, datasets: [{ data: valores }] }} ... />
+      {itens.map((item) => {
+        const proporcao = maximo > 0 ? item.valor / maximo : 0;
+        const larguraRelativa = Math.max(proporcao, 0.04); // mínimo visível
+        return (
+          <View key={item.chave} style={styles.barraLinha}>
+            <Text style={styles.barraRotulo}>{item.rotulo}</Text>
+            <View style={styles.barraTrilho}>
+              <View style={[styles.barraPreenchida, { flex: larguraRelativa }]} />
+              <View style={{ flex: 1 - larguraRelativa }} />
+            </View>
+            <Text style={styles.barraValor}>
+              {formatarNumero(item.valor)} {item.unidade}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -461,18 +480,18 @@ function GraficoMedias({ resumos, larguraJanela }) {
 
 Pontos-chave:
 
-- **Biblioteca e justificativa:** react-native-chart-kit (7.0.4) foi escolhida por
-  ser compatível com o stack atual (Expo SDK 57, React 19.2.3, React Native
-  0.86.3) e por ter como única dependência nativa o react-native-svg (15.15.4),
-  módulo suportado pelo Expo. Instalada com
-  `npx expo install react-native-chart-kit react-native-svg`. Referências:
-  [react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit)
-  e [npm](https://www.npmjs.com/package/react-native-chart-kit).
-- O rótulo das barras combina **tipo + parâmetro**, usando `rotuloTipo`/
-  `rotuloParametro` de `src/ui/rotulos.ts`; assim o tipo `transporte_publico`
-  ("Transporte publico (SPTrans)") aparece com rótulo PT-BR.
+- **Por que `View` e não uma biblioteca de gráficos:** barras verticais com
+  rótulos abaixo ficavam **cortadas/ilegíveis** em telas estreitas e com nomes
+  longos. Com barras horizontais, cada barra traz o **rótulo completo** do
+  parâmetro ao lado (combinando `rotuloParametro` + `rotuloTipo` de
+  `src/ui/rotulos.ts`, para o tipo `transporte_publico` aparecer em PT-BR) e o
+  **valor** ao final, sempre legíveis e sem dependência nativa de desenho.
+- A barra tem uma **largura mínima** (4%) para permanecer visível mesmo com valor
+  pequeno ou zero; trata também o caso de todos os valores serem zero.
 - Trata dataset vazio (não renderiza o gráfico) e é injetado como
-  `ListHeaderComponent` da `FlatList`, preservando a lista tabular.
+  `ListHeaderComponent` da `FlatList`, preservando a lista tabular. Com o
+  histórico acumulado (limitado a 50 por parâmetro no back-end), os cards passam
+  a exibir **amostras > 1**.
 
 ### 6.2.6 Rótulos PT-BR - `mobile/src/ui/rotulos.ts`
 

@@ -6,36 +6,26 @@
  * automaticamente nos cards e no gráfico de barras quando há medições.
  *
  * Além da exibição tabular (FlatList de cards), a tela apresenta um GRÁFICO de
- * barras com as médias por parâmetro, resumindo visualmente os dados agregados.
+ * barras HORIZONTAIS com as médias por parâmetro, resumindo visualmente os
+ * dados agregados.
  *
- * Biblioteca de gráfico: react-native-chart-kit (BarChart).
- *   - npm:    https://www.npmjs.com/package/react-native-chart-kit
- *   - GitHub: https://github.com/indiespirit/react-native-chart-kit
- * Por que foi escolhida: é compatível com o stack atual (Expo SDK 57, React 19.2.3,
- * React Native 0.86.3) e sua única dependência nativa é o react-native-svg, que é
- * um módulo suportado pelo Expo (instalado via `npx expo install`). Alternativas
- * como react-native-gifted-charts (exige react-native-linear-gradient nativo) e
- * victory-native (peer dependencies mais pesadas) foram descartadas por adicionarem
- * dependências nativas extras.
- * Onde é aplicado: renderizada no cabeçalho desta tela (rota "Relatorios" em App.tsx),
- * acima da lista tabular. As demais telas (Mapa, Detalhe, Alertas) não são afetadas.
+ * Por que barras renderizadas com Views (e não uma biblioteca de gráfico):
+ * cada barra tem o seu RÓTULO textual completo ao lado (sem corte nem rotação
+ * ilegível), a proporção é calculada em relação ao maior valor do conjunto e o
+ * layout se adapta à largura da tela. Isso deixa sempre claro QUAL parâmetro
+ * cada barra representa, inclusive em telas estreitas e com nomes longos,
+ * evitando os rótulos cortados/ilegíveis do gráfico de barras verticais.
+ * Onde é aplicado: renderizada no cabeçalho desta tela (rota "Relatorios" em
+ * App.tsx), acima da lista tabular. As demais telas não são afetadas.
  *
  * Referências:
  *   - FlatList: https://reactnative.dev/docs/flatlist
- *   - useWindowDimensions: https://reactnative.dev/docs/usewindowdimensions
- *   - BarChart (react-native-chart-kit): https://github.com/indiespirit/react-native-chart-kit#bar-chart
+ *   - View (layout flex): https://reactnative.dev/docs/view
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { BarChart } from 'react-native-chart-kit';
 
 import { getRelatorio, ApiError } from '../api/client';
 import { RelatorioRegiao, ResumoRelatorio } from '../types';
@@ -52,7 +42,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Relatorios'>;
 
 export default function RelatoriosScreen({ route }: Props) {
   const { regiaoId } = route.params;
-  const { width: larguraJanela } = useWindowDimensions();
   const [relatorio, setRelatorio] = useState<RelatorioRegiao | null>(null);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -133,7 +122,7 @@ export default function RelatoriosScreen({ route }: Props) {
           Total de medicoes: {formatarNumero(relatorio.total_medicoes)}
         </Text>
       </View>
-      <GraficoMedias resumos={relatorio.resumos} larguraJanela={larguraJanela} />
+      <GraficoMedias resumos={relatorio.resumos} />
     </View>
   );
 
@@ -151,65 +140,61 @@ export default function RelatoriosScreen({ route }: Props) {
 }
 
 /**
- * Gráfico de barras com a média de cada par (tipo/parâmetro) do relatório.
- * Usa BarChart do react-native-chart-kit. Trata dataset vazio: se não houver
- * resumos, nada é renderizado, evitando quebra em runtime.
+ * Gráfico de barras HORIZONTAIS com a média de cada par (tipo/parâmetro).
+ *
+ * Cada linha mostra: o RÓTULO textual completo do parâmetro (com o tipo), a
+ * barra proporcional (largura relativa ao MAIOR valor do conjunto, via
+ * flex-grow) e o VALOR numérico formatado. Barras com valor zero recebem uma
+ * largura mínima visível. Trata dataset vazio (nada é renderizado) e o caso de
+ * todos os valores iguais a zero (todas as barras no mínimo).
  */
-function GraficoMedias({
-  resumos,
-  larguraJanela,
-}: {
-  resumos: ResumoRelatorio[];
-  larguraJanela: number;
-}) {
+function GraficoMedias({ resumos }: { resumos: ResumoRelatorio[] }) {
   if (resumos.length === 0) {
     return null;
   }
 
-  // Compõe o rótulo com o tipo além do parâmetro. O relatório agrega por
-  // (tipo, parametro), então parâmetros de mesmo nome em tipos diferentes
-  // gerariam rótulos duplicados no eixo X se usássemos apenas o parâmetro.
-  const labels = resumos.map(
-    (item) => `${rotuloTipo(item.tipo)} - ${rotuloParametro(item.parametro)}`,
-  );
-  const valores = resumos.map((item) =>
-    Number.isFinite(item.media) ? item.media : 0,
-  );
+  const itens = resumos.map((item) => ({
+    chave: `${item.tipo}-${item.parametro}`,
+    rotulo: `${rotuloParametro(item.parametro)} (${rotuloTipo(item.tipo)})`,
+    valor: Number.isFinite(item.media) ? item.media : 0,
+    unidade: item.unidade,
+  }));
 
-  // Margem horizontal total do container (16 de cada lado).
-  const larguraGrafico = Math.max(larguraJanela - 32, 0);
+  // Maior valor do conjunto, base para a proporção das barras. Evita divisão
+  // por zero quando todas as médias forem 0.
+  const maximo = Math.max(...itens.map((i) => i.valor), 0);
 
   return (
     <View style={styles.graficoCartao}>
       <Text style={styles.graficoTitulo}>Medias por parametro</Text>
-      <BarChart
-        data={{ labels, datasets: [{ data: valores }] }}
-        width={larguraGrafico}
-        height={220}
-        yAxisLabel=""
-        yAxisSuffix=""
-        fromZero
-        showValuesOnTopOfBars
-        verticalLabelRotation={30}
-        chartConfig={chartConfig}
-        style={styles.grafico}
-      />
+      {itens.map((item) => {
+        // Proporção 0..1 em relação ao maior valor; mínimo de 4% para manter a
+        // barra visível mesmo com valores pequenos ou zero.
+        const proporcao = maximo > 0 ? item.valor / maximo : 0;
+        const larguraRelativa = Math.max(proporcao, 0.04);
+        return (
+          <View key={item.chave} style={styles.barraLinha}>
+            <Text style={styles.barraRotulo} numberOfLines={2}>
+              {item.rotulo}
+            </Text>
+            <View style={styles.barraTrilho}>
+              <View
+                style={[
+                  styles.barraPreenchida,
+                  { flex: larguraRelativa },
+                ]}
+              />
+              <View style={{ flex: 1 - larguraRelativa }} />
+            </View>
+            <Text style={styles.barraValor}>
+              {formatarNumero(item.valor)} {item.unidade}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
-
-/**
- * Configuração visual do gráfico. A função `color` define a cor base de barras e
- * rótulos; é a única propriedade obrigatória do chartConfig além da formatação.
- */
-const chartConfig = {
-  backgroundGradientFrom: '#FFFFFF',
-  backgroundGradientTo: '#FFFFFF',
-  decimalPlaces: 1,
-  color: (opacity = 1) => `rgba(11, 110, 79, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(71, 85, 105, ${opacity})`,
-  barPercentage: 0.6,
-};
 
 function Metrica({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
@@ -253,18 +238,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     paddingVertical: 12,
-    alignItems: 'center',
+    paddingHorizontal: 14,
+    gap: 12,
   },
   graficoTitulo: {
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    marginBottom: 8,
+    marginBottom: 2,
   },
-  grafico: {
+  // Uma linha do gráfico de barras horizontais: rótulo + barra + valor.
+  barraLinha: {
+    gap: 4,
+  },
+  barraRotulo: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  barraTrilho: {
+    flexDirection: 'row',
+    height: 16,
     borderRadius: 8,
+    backgroundColor: '#EEF2F7',
+    overflow: 'hidden',
+  },
+  barraPreenchida: {
+    backgroundColor: '#0B6E4F',
+    borderRadius: 8,
+  },
+  barraValor: {
+    fontSize: 12,
+    color: '#475569',
   },
   card: {
     backgroundColor: '#FFFFFF',

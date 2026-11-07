@@ -105,8 +105,7 @@ Fontes de dados externas (recorte São Paulo):
 | React | 19.2.3 | [react.dev](https://react.dev) | Componentes do app |
 | @react-navigation/native | 7.5.0 | [reactnavigation.org](https://reactnavigation.org) | `mobile/App.tsx` |
 | @react-navigation/native-stack | 7.20.0 | [reactnavigation.org](https://reactnavigation.org) | `mobile/App.tsx` |
-| react-native-chart-kit | 7.0.4 | [github.com/indiespirit/react-native-chart-kit](https://github.com/indiespirit/react-native-chart-kit) | `mobile/src/screens/RelatoriosScreen.tsx` (gráfico de barras) |
-| react-native-svg | 15.15.4 | [github.com/software-mansion/react-native-svg](https://github.com/software-mansion/react-native-svg) | Dependência do chart-kit |
+| react-native-webview | - | [docs.expo.dev](https://docs.expo.dev/versions/v58.0.0/sdk/webview/) | `mobile/src/screens/MapaVisualScreen.tsx` (mapa Leaflet) |
 | react-native-screens | 4.26.2 | [github.com/software-mansion/react-native-screens](https://github.com/software-mansion/react-native-screens) | Dependência da navegação |
 | react-native-safe-area-context | 5.7.0 | [github.com/th3rdwave/react-native-safe-area-context](https://github.com/th3rdwave/react-native-safe-area-context) | `mobile/App.tsx` (SafeAreaProvider) |
 | TypeScript | 5.9 | [typescriptlang.org](https://www.typescriptlang.org) | Todo o código `mobile/` |
@@ -131,8 +130,8 @@ mobile):
 
 3. **Cliente móvel.** Lista de regiões da cidade de São Paulo; rótulos PT-BR do
    tipo em `src/ui/rotulos.ts`; `atualizarTransporte()` em `src/api/client.ts`;
-   detalhe e relatórios para `transporte_publico`; gráfico de barras com
-   react-native-chart-kit em `RelatoriosScreen.tsx`.
+   detalhe e relatórios para `transporte_publico`; gráfico de barras horizontais
+   renderizado com `View` em `RelatoriosScreen.tsx`.
 
 4. **Testes.** Suíte pytest com `test_ibge.py` e `test_transporte.py`, mais
    fixtures `ibge_municipios_sample.json` e `sptrans_posicao_sample.json`. A rede

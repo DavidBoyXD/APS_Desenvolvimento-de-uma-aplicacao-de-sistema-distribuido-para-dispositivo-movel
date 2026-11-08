@@ -23,6 +23,6 @@
  * vazio, no lugar das antigas sugestões fixas.
  */
 export const DICA_BUSCA_PARADA =
-  'Digite o nome da parada, avenida ou referencia para buscar.';
+  'Digite o nome da parada, avenida ou referência para buscar.';
 
 export {};

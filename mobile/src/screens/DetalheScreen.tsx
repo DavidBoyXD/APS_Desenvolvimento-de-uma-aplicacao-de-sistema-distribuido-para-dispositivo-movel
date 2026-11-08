@@ -71,7 +71,7 @@ export default function DetalheScreen({ route, navigation }: Props) {
       const msg =
         e instanceof ApiError
           ? e.mensagem
-          : 'Ocorreu um erro inesperado ao carregar as medicoes.';
+          : 'Ocorreu um erro inesperado ao carregar as medições.';
       setErro(msg);
       setDetalheErro(e instanceof ApiError ? e.detalhe ?? null : null);
     } finally {
@@ -111,8 +111,8 @@ export default function DetalheScreen({ route, navigation }: Props) {
       atualizar(
         'transporte_publico',
         atualizarTransporte,
-        'Transporte publico atualizado com dados da SPTrans (Olho Vivo).',
-        'Nao foi possivel atualizar o transporte publico agora.',
+        'Transporte público atualizado com dados da SPTrans (Olho Vivo).',
+        'Não foi possível atualizar o transporte público agora.',
       ),
     [atualizar],
   );
@@ -128,7 +128,7 @@ export default function DetalheScreen({ route, navigation }: Props) {
   }, [medicoes]);
 
   if (carregando) {
-    return <EstadoCarregando texto="Carregando medicoes..." />;
+    return <EstadoCarregando texto="Carregando medições..." />;
   }
 
   if (erro) {
@@ -168,7 +168,7 @@ export default function DetalheScreen({ route, navigation }: Props) {
           }
           accessibilityRole="button"
         >
-          <Text style={styles.botaoSecundarioTexto}>Ver relatorio</Text>
+          <Text style={styles.botaoSecundarioTexto}>Ver relatório</Text>
         </Pressable>
       </View>
 
@@ -177,7 +177,7 @@ export default function DetalheScreen({ route, navigation }: Props) {
       {secoes.length === 0 ? (
         <View style={styles.vazio}>
           <Text style={styles.vazioTexto}>
-            Ainda nao ha medicoes para esta regiao. Use o botao
+            Ainda não há medições para esta região. Use o botão
             "Atualizar transporte" acima para buscar dados reais.
           </Text>
         </View>

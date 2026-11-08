@@ -59,7 +59,7 @@ export default function RelatoriosScreen({ route }: Props) {
       const msg =
         e instanceof ApiError
           ? e.mensagem
-          : 'Ocorreu um erro inesperado ao carregar o relatorio.';
+          : 'Ocorreu um erro inesperado ao carregar o relatório.';
       setErro(msg);
       setDetalheErro(e instanceof ApiError ? e.detalhe ?? null : null);
     } finally {
@@ -72,7 +72,7 @@ export default function RelatoriosScreen({ route }: Props) {
   }, [carregar]);
 
   if (carregando) {
-    return <EstadoCarregando texto="Gerando relatorio..." />;
+    return <EstadoCarregando texto="Gerando relatório..." />;
   }
 
   if (erro) {
@@ -87,7 +87,7 @@ export default function RelatoriosScreen({ route }: Props) {
 
   if (!relatorio || relatorio.resumos.length === 0) {
     return (
-      <EstadoVazio mensagem="Sem dados suficientes para gerar o relatorio desta regiao." />
+      <EstadoVazio mensagem="Sem dados suficientes para gerar o relatório desta região." />
     );
   }
 
@@ -100,13 +100,13 @@ export default function RelatoriosScreen({ route }: Props) {
         <Text style={styles.cardTipo}>{rotuloTipo(item.tipo)}</Text>
       </View>
       <View style={styles.grade}>
-        <Metrica rotulo="Media" valor={`${formatarNumero(item.media)} ${item.unidade}`} />
-        <Metrica rotulo="Minimo" valor={`${formatarNumero(item.minimo)} ${item.unidade}`} />
-        <Metrica rotulo="Maximo" valor={`${formatarNumero(item.maximo)} ${item.unidade}`} />
+        <Metrica rotulo="Média" valor={`${formatarNumero(item.media)} ${item.unidade}`} />
+        <Metrica rotulo="Mínimo" valor={`${formatarNumero(item.minimo)} ${item.unidade}`} />
+        <Metrica rotulo="Máximo" valor={`${formatarNumero(item.maximo)} ${item.unidade}`} />
         <Metrica rotulo="Amostras" valor={formatarNumero(item.contagem)} />
       </View>
       <Text style={styles.cardUltimo}>
-        Ultimo: {formatarNumero(item.ultimo_valor)} {item.unidade} em{' '}
+        Último: {formatarNumero(item.ultimo_valor)} {item.unidade} em{' '}
         {formatarTimestamp(item.ultimo_timestamp)}
       </Text>
     </View>
@@ -119,7 +119,7 @@ export default function RelatoriosScreen({ route }: Props) {
           {relatorio.regiao.nome} - {relatorio.regiao.cidade}/{relatorio.regiao.uf}
         </Text>
         <Text style={styles.cabecalhoSubtitulo}>
-          Total de medicoes: {formatarNumero(relatorio.total_medicoes)}
+          Total de medições: {formatarNumero(relatorio.total_medicoes)}
         </Text>
       </View>
       <GraficoMedias resumos={relatorio.resumos} />
@@ -166,7 +166,7 @@ function GraficoMedias({ resumos }: { resumos: ResumoRelatorio[] }) {
 
   return (
     <View style={styles.graficoCartao}>
-      <Text style={styles.graficoTitulo}>Medias por parametro</Text>
+      <Text style={styles.graficoTitulo}>Médias por parâmetro</Text>
       {itens.map((item) => {
         // Proporção 0..1 em relação ao maior valor; mínimo de 4% para manter a
         // barra visível mesmo com valores pequenos ou zero.

@@ -110,24 +110,24 @@ export default function AlertasScreen(_props: Props) {
   // Retorna o nome da regiao correspondente ao id; se nao encontrar (ex.: regra
   // de uma regiao que nao esta na lista carregada), cai num rotulo legivel.
   const nomeRegiao = useCallback(
-    (id: number) => nomePorRegiao.get(id) ?? `Regiao ${id}`,
+    (id: number) => nomePorRegiao.get(id) ?? `Região ${id}`,
     [nomePorRegiao],
   );
 
   const onCriar = useCallback(async () => {
     setFeedbackForm(null);
     if (regiaoId === null) {
-      setFeedbackForm('Selecione uma regiao para o alerta.');
+      setFeedbackForm('Selecione uma região para o alerta.');
       return;
     }
     const limiarNumero = Number(limiar.replace(',', '.'));
     if (!Number.isFinite(limiarNumero)) {
-      setFeedbackForm('Informe um limiar numerico valido.');
+      setFeedbackForm('Informe um limiar numérico válido.');
       return;
     }
     if (parametro.trim().length === 0) {
       setFeedbackForm(
-        'Informe o parametro (ex.: veiculos_em_operacao, linhas_monitoradas).',
+        'Informe o parâmetro (ex.: veiculos_em_operacao, linhas_monitoradas).',
       );
       return;
     }
@@ -153,7 +153,7 @@ export default function AlertasScreen(_props: Props) {
       const msg =
         e instanceof ApiError
           ? e.mensagem
-          : 'Nao foi possivel criar a regra de alerta.';
+          : 'Não foi possível criar a regra de alerta.';
       setFeedbackForm(msg);
     } finally {
       setSalvando(false);
@@ -162,7 +162,7 @@ export default function AlertasScreen(_props: Props) {
 
   const onAvaliar = useCallback(async () => {
     if (regiaoId === null) {
-      setFeedbackAvaliacao('Selecione uma regiao para avaliar.');
+      setFeedbackAvaliacao('Selecione uma região para avaliar.');
       return;
     }
     setAvaliando(true);
@@ -173,14 +173,14 @@ export default function AlertasScreen(_props: Props) {
       setDisparados(resultado);
       if (resultado.length === 0) {
         setFeedbackAvaliacao(
-          'Nenhum alerta disparado: as medicoes estao dentro dos limiares.',
+          'Nenhum alerta disparado: as medições estão dentro dos limiares.',
         );
       }
     } catch (e) {
       const msg =
         e instanceof ApiError
           ? e.mensagem
-          : 'Nao foi possivel avaliar os alertas desta regiao.';
+          : 'Não foi possível avaliar os alertas desta região.';
       setFeedbackAvaliacao(msg);
     } finally {
       setAvaliando(false);
@@ -229,7 +229,7 @@ export default function AlertasScreen(_props: Props) {
       {/* Formulário de criação */}
       <Text style={styles.secaoTitulo}>Nova regra de alerta</Text>
 
-      <Text style={styles.rotuloCampo}>Regiao</Text>
+      <Text style={styles.rotuloCampo}>Região</Text>
       <View style={styles.chips}>
         {regioes.map((r) => (
           <Chip
@@ -253,7 +253,7 @@ export default function AlertasScreen(_props: Props) {
         ))}
       </View>
 
-      <Text style={styles.rotuloCampo}>Parametro</Text>
+      <Text style={styles.rotuloCampo}>Parâmetro</Text>
       <TextInput
         style={styles.input}
         value={parametro}
@@ -262,7 +262,7 @@ export default function AlertasScreen(_props: Props) {
         autoCapitalize="none"
       />
 
-      <Text style={styles.rotuloCampo}>Condicao e limiar</Text>
+      <Text style={styles.rotuloCampo}>Condição e limiar</Text>
       <View style={styles.linhaLimiar}>
         <View style={styles.chips}>
           {CONDICOES.map((c) => (
@@ -306,7 +306,7 @@ export default function AlertasScreen(_props: Props) {
       {feedbackForm ? <Text style={styles.feedback}>{feedbackForm}</Text> : null}
 
       {/* Avaliação */}
-      <Text style={styles.secaoTitulo}>Avaliar alertas da regiao</Text>
+      <Text style={styles.secaoTitulo}>Avaliar alertas da região</Text>
       <Pressable
         style={[styles.botaoSecundario, avaliando && styles.botaoDesabilitado]}
         onPress={onAvaliar}
@@ -317,7 +317,7 @@ export default function AlertasScreen(_props: Props) {
           <ActivityIndicator color="#0B6E4F" />
         ) : (
           <Text style={styles.botaoSecundarioTexto}>
-            Avaliar regiao selecionada
+            Avaliar região selecionada
           </Text>
         )}
       </Pressable>

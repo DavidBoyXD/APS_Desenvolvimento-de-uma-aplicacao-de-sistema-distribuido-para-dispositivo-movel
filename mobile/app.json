@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Transporte Publico SP",
+    "name": "Monitoramento de transporte público em SP",
     "slug": "transporte-publico-sp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,7 @@
       "package": "br.unip.aps.transportepublicosp",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0B6E4F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"

@@ -29,4 +29,14 @@ export type RootStackParamList = {
    * se o mapa nativo falhar, só esta tela é afetada e o app continua abrindo.
    */
   MapaVisual: { codigoLinha?: number; linhaRotulo?: string } | undefined;
+  /**
+   * Fluxo de CONSENTIMENTO (LGPD) exibido na primeira abertura (ou quando a
+   * versão dos Termos muda). `aoConcluir` é o callback que o gate em App.tsx
+   * injeta para liberar a navegação principal após ACEITAR/RECUSAR.
+   */
+  Consentimento: { aoConcluir?: () => void } | undefined;
+  /** Política de Privacidade (texto legível, sem WebView). */
+  PoliticaPrivacidade: undefined;
+  /** Termos de Uso (texto legível, sem WebView). */
+  TermosDeUso: undefined;
 };

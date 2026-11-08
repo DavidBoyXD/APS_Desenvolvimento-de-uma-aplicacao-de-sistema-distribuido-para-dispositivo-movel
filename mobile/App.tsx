@@ -36,6 +36,7 @@ import MapaVisualScreen from './src/screens/MapaVisualScreen';
 import ConsentimentoScreen from './src/screens/ConsentimentoScreen';
 import PoliticaPrivacidadeScreen from './src/screens/PoliticaPrivacidadeScreen';
 import TermosDeUsoScreen from './src/screens/TermosDeUsoScreen';
+import PrivacidadeScreen from './src/screens/PrivacidadeScreen';
 import { EstadoCarregando } from './src/ui/estados';
 import {
   carregarConsentimento,
@@ -135,6 +136,11 @@ export default function App() {
               name="TermosDeUso"
               component={TermosDeUsoScreen}
               options={{ title: 'Termos de Uso' }}
+            />
+            <Stack.Screen
+              name="Privacidade"
+              component={PrivacidadeScreen}
+              options={{ title: 'Privacidade' }}
             />
           </Stack.Navigator>
         ) : (

@@ -218,3 +218,23 @@ export async function alternarFavoritoLinha(
   }
   return adicionarFavoritoLinha(linha);
 }
+
+/**
+ * Apaga TODAS as linhas favoritas do aparelho (exclusão de dados / LGPD).
+ * Remove a chave do AsyncStorage e zera o cache em memória de qualquer forma.
+ * NUNCA lança — segue o mesmo estilo tolerante a falha do restante do módulo.
+ *
+ * Onde é aplicado: tela de Privacidade (src/screens/PrivacidadeScreen.tsx),
+ * no fluxo "Excluir meus dados".
+ */
+export async function limparFavoritosLinhas(): Promise<void> {
+  cacheLinhas = [];
+  if (!armazenamento) {
+    return;
+  }
+  try {
+    await armazenamento.removeItem(CHAVE_LINHAS);
+  } catch {
+    // Falha de remoção: o cache em memória já reflete "sem favoritos".
+  }
+}

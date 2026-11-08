@@ -39,4 +39,9 @@ export type RootStackParamList = {
   PoliticaPrivacidade: undefined;
   /** Termos de Uso (texto legível, sem WebView). */
   TermosDeUso: undefined;
+  /**
+   * Privacidade / Direitos do titular (LGPD): ver os dados guardados LOCALMENTE
+   * no aparelho, excluí-los e revogar o consentimento de localização.
+   */
+  Privacidade: undefined;
 };

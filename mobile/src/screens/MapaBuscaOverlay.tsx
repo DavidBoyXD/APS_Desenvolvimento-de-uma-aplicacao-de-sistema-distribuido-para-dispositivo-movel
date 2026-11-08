@@ -250,7 +250,7 @@ export default function MapaBuscaOverlay({
       }
       return nome;
     }
-    return 'Toque para ver ônibus de uma linha ou localizar uma parada';
+    return 'Toque para buscar linhas e ver sugestões';
   })();
 
   return (

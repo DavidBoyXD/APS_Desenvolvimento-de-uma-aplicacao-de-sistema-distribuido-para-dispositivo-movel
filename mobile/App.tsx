@@ -60,7 +60,7 @@ export default function App() {
           <Stack.Screen
             name="Alertas"
             component={AlertasScreen}
-            options={{ title: 'Alertas do transporte' }}
+            options={{ title: 'Alertas' }}
           />
           <Stack.Screen
             name="Linhas"

@@ -68,8 +68,18 @@ público de São Paulo, atende a esses pontos:
 
 - **Núcleo da aplicação:** transporte público com a fonte OFICIAL da Prefeitura de
   SP (SPTrans Olho Vivo), por região, a partir de uma lista das regiões da capital.
-- **Funções extras:** relatórios agregados (com gráfico de barras) e sistema de
-  alertas por limiar.
+- **Funções extras (diferenciais):** além dos relatórios agregados com histórico
+  acumulado e gráfico de barras e do sistema de alertas por limiar, a aplicação
+  traz um mapa visual (WebView + Leaflet + OpenStreetMap), busca livre de linhas
+  e paradas com correspondência aproximada (fuzzy), favoritos de linhas salvos
+  localmente no aparelho, atualização automática da posição dos veículos
+  (10/15/30s, com pausar/retomar) e o recurso "Você está aqui" (GPS) condicionado
+  ao consentimento do usuário.
+- **Conformidade com a LGPD:** consentimento explícito na primeira execução,
+  Política de Privacidade, Termos de Uso, tela de Privacidade com acesso e
+  exclusão de dados locais e revogação do consentimento (ver
+  `12_politica_de_privacidade.md` e `13_termos_de_uso.md`). A localização é
+  tratada apenas no dispositivo e nunca enviada ao servidor.
 - **Tratamento de erros:** handlers globais no servidor (respostas 502 e 404
   padronizadas em PT-BR) e tratamento de falhas de rede no cliente (ver
   `06_relatorio_de_codigo.md`).

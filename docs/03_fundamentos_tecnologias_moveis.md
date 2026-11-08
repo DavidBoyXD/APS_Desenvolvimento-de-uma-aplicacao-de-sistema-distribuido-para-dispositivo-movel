@@ -44,12 +44,13 @@ seu papel e se comunica por rede.
   [https://reactnative.dev](https://reactnative.dev).
   Aplicado em: todas as telas do app (`mobile/src/screens/*`), componentes de UI
   (`mobile/src/ui/*`) e no componente raiz `mobile/App.tsx`.
-- **Expo (SDK 57)** - plataforma e conjunto de ferramentas sobre o React Native
+- **Expo (SDK 58)** - plataforma e conjunto de ferramentas sobre o React Native
   que simplifica configuração, build e execução (inclusive em emulador e via app
   Expo Go em dispositivo físico). Referência oficial:
   [https://docs.expo.dev](https://docs.expo.dev).
   Aplicado em: projeto inicializado com Expo, configuração em `mobile/app.json`
-  (nome "Monitor Ambiental Urbano"), scripts em `mobile/package.json`.
+  (nome "Monitoramento de transporte público em SP", ícone próprio e plugin
+  `expo-location`), scripts em `mobile/package.json`.
 
 Justificativa: React Native/Expo entrega uma única base TypeScript para Android e
 iOS, ecossistema maduro (navegação, listas, gráficos), execução em
@@ -72,9 +73,10 @@ esforço controlado.
   Paulo em uma lista clicável (cada item mostra nome, cidade/UF e as coordenadas e
   abre o Detalhe ao ser tocado). A tela inicial não depende de nenhum módulo nativo
   de mapa nem de uma Google Maps API key, garantindo que o app sempre abra.
-- **react-native-screens** (4.26.2) e **react-native-safe-area-context** (5.7.0) -
-  dependências nativas exigidas pelo React Navigation (telas nativas e áreas
-  seguras). Aplicado em: `mobile/App.tsx` (envolvido por `SafeAreaProvider`).
+- **react-native-screens** (~4.30.1) e **react-native-safe-area-context**
+  (~5.11.1) - dependências nativas exigidas pelo React Navigation (telas nativas
+  e áreas seguras). Aplicado em: `mobile/App.tsx` (envolvido por
+  `SafeAreaProvider`).
 - **Gráfico de barras do relatório** - em `mobile/src/screens/RelatoriosScreen.tsx`,
   as **médias por parâmetro** do relatório são resumidas num gráfico de **barras
   horizontais renderizadas com `View`** (layout flex), e não com uma biblioteca
@@ -83,23 +85,38 @@ esforço controlado.
   conjunto e o **valor numérico** aparece ao final. A opção por `View` em vez de um
   gráfico de barras verticais evita rótulos cortados/ilegíveis em telas estreitas e
   com nomes longos, além de remover uma dependência de desenho nativo.
-- **react-native-webview** - componente de WebView usado para desenhar o **mapa
-  visual** (tela opcional). Referência:
+- **react-native-webview** (14.0.1) - componente de WebView usado para desenhar o
+  **mapa visual** (tela opcional). Referência:
   [https://docs.expo.dev/versions/v58.0.0/sdk/webview/](https://docs.expo.dev/versions/v58.0.0/sdk/webview/).
   Aplicado em: `mobile/src/screens/MapaVisualScreen.tsx`, que carrega um HTML
-  embutido com a biblioteca **Leaflet** e **tiles cartográficos sem chave**. O
-  usuário pode alternar o estilo do mapa entre **Padrão** (OpenStreetMap),
-  **OSM.de** (servidor alemão oficial do OpenStreetMap, `tile.openstreetmap.de`)
-  e **Topográfico** (OpenTopoMap) — todos cartográficos, **sem satélite** e **sem
-  API key** —, com a atribuição correta de cada provedor
-  exibida no canto do mapa. Sobre o WebView fica uma camada React Native com a
-  **busca de linhas/paradas** e o catálogo/favoritos (ver `MapaBuscaOverlay.tsx`
-  e `ui/estiloMapa.ts`). Ao selecionar uma **parada** na busca, o mapa plota um
-  **marcador** nela (nome + endereço) e centraliza a visão no ponto. Essa escolha desenha o mapa **sem precisar de chave de
-  API** (não usa Google Maps) e **sem a dependência nativa** que quebrava a
-  inicialização do app; é um módulo padrão e suportado pelo Expo (incluído no
-  Expo Go). Requer internet para baixar os tiles e a Leaflet por CDN. Instalado
-  com `npx expo install react-native-webview`.
+  embutido com a biblioteca **Leaflet** e **um único tile fixo do OpenStreetMap**
+  (`tile.openstreetmap.org`), **sem alternância de camadas, sem satélite e sem
+  chave de API**, com a atribuição "© colaboradores do OpenStreetMap" exibida no
+  canto do mapa. Sobre o WebView fica uma camada React Native com a **busca de
+  linhas/paradas** e o catálogo/favoritos (ver `MapaBuscaOverlay.tsx`). Ao
+  selecionar uma **parada** na busca, o mapa plota um **marcador** nela (nome +
+  endereço) e centraliza a visão no ponto. Essa escolha desenha o mapa **sem
+  precisar de chave de API** (não usa Google Maps) e **sem a dependência nativa
+  de `react-native-maps`** que quebrava a inicialização do app; é um módulo padrão
+  e suportado pelo Expo (incluído no Expo Go). Requer internet para baixar os
+  tiles e a Leaflet por CDN. Instalado com `npx expo install react-native-webview`.
+- **@react-native-async-storage/async-storage** (2.2.0) - armazenamento local
+  chave-valor no aparelho. Referência:
+  [https://react-native-async-storage.github.io/async-storage/](https://react-native-async-storage.github.io/async-storage/).
+  Aplicado em: `mobile/src/ui/favoritos.ts` (favoritos de linhas salvos
+  localmente) e `mobile/src/ui/consentimento.ts` (registro do consentimento
+  LGPD). O acesso ao pacote nativo fica isolado atrás de um wrapper defensivo
+  (carregamento por `require` com fallback em memória). Instalado com
+  `npx expo install @react-native-async-storage/async-storage`.
+- **expo-location** (~58.0.20) - acesso à localização (GPS) do aparelho.
+  Referência:
+  [https://docs.expo.dev/versions/v58.0.0/sdk/location/](https://docs.expo.dev/versions/v58.0.0/sdk/location/).
+  Aplicado em: `mobile/src/ui/localizacao.ts` e
+  `mobile/src/screens/MapaVisualScreen.tsx`, no recurso **"Você está aqui"**. O
+  uso é **condicionado ao consentimento explícito** do usuário (LGPD) e a
+  coordenada é usada **apenas no dispositivo**, nunca enviada ao back-end. O
+  plugin `expo-location` é declarado em `mobile/app.json` (com o texto da
+  permissão de uso). Instalado com `npx expo install expo-location`.
 
 ### Alternativas de plataforma móvel (registro)
 

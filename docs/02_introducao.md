@@ -10,12 +10,21 @@ rápido pelo cidadão comum, especialmente em mobilidade.
 
 ## 2.2 A proposta
 
-Este trabalho propõe o **Monitor de Transporte Público** com recorte em São Paulo,
-um aplicativo móvel que reúne informações da frota de ônibus por região, apoiado
-por um servidor central que integra os dados da fonte oficial e organiza consultas,
+Este trabalho propõe o **Monitoramento de transporte público em SP**, um
+aplicativo móvel que reúne informações da frota de ônibus por região, apoiado por
+um servidor central que integra os dados da fonte oficial e organiza consultas,
 relatórios e alertas. A ideia é oferecer, em uma única tela inicial (uma lista das
 regiões monitoradas em São Paulo), o ponto de partida para explorar cada região em
 detalhe.
+
+Além do núcleo, o aplicativo incorpora funções extras que valorizam o refinamento
+pedido pela APS: um mapa visual (WebView + Leaflet + OpenStreetMap) com busca
+integrada, busca livre de linhas e paradas com correspondência aproximada (fuzzy),
+favoritos de linhas salvos localmente, atualização automática da posição dos
+veículos (10/15/30s) e o recurso "Você está aqui" (GPS) condicionado ao
+consentimento. O tratamento de dados pessoais segue a LGPD (Lei nº 13.709/2018),
+com consentimento explícito, Política de Privacidade, Termos de Uso e uma tela de
+Privacidade para acesso e exclusão dos dados guardados no aparelho.
 
 O fluxo básico de uso é:
 
@@ -80,4 +89,6 @@ diretórios e os módulos reais (capítulo 5), o relatório comentando as linhas
 código mais relevantes e o mapeamento fonte -> arquivo/função (capítulo 6), o
 roteiro de apresentação do programa em funcionamento, incluindo o passo a passo do
 token da SPTrans (capítulo 7), a bibliografia (capítulo 8) e a declaração de uso de
-IA (capítulo 9).
+IA (capítulo 9). Completam o conjunto a capa e a ficha de APS (documento 10) e os
+documentos complementares de licenças e atribuições (11), Política de Privacidade
+(12) e Termos de Uso (13), que sustentam a conformidade com a LGPD.

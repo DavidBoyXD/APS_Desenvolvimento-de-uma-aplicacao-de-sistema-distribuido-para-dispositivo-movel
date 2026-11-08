@@ -10,9 +10,8 @@
  *   - um PAINEL INFERIOR expansível por toque, que revela os RESULTADOS da busca
  *     e, quando o campo está vazio, a NAVEGAÇÃO ASSISTIDA (catálogo) e os
  *     FAVORITOS. Tocar numa linha a seleciona: o mapa passa a plotar seus
- *     veículos (com auto-refresh) e o painel recolhe.
- *   - um SELETOR DE ESTILO cartográfico (Padrão/OSM.de/Topográfico), que troca a
- *     camada de tiles do Leaflet sem recriar o mapa.
+ *     veículos (com auto-refresh) e o painel recolhe. Pelo mesmo menu também é
+ *     possível localizar uma parada (aba Paradas).
  *
  * Modos do mapa:
  *   - SEM linha selecionada: plota as REGIÕES monitoradas (getRegioes); tocar no
@@ -33,16 +32,14 @@
  * COMO O MAPA É DESENHADO (WebView + Leaflet):
  *   Renderizamos um `WebView` (do `react-native-webview`, via wrapper protegido
  *   em src/ui/webview.ts) que carrega um HTML embutido com a Leaflet (via CDN) e
- *   tiles cartográficos SEM chave (OpenStreetMap, OSM.de e OpenTopoMap). Requer
- *   internet para baixar tiles e a Leaflet; offline, o mapa não carrega, mas a
- *   tela de Linhas (em lista) continua funcionando.
+ *   um ÚNICO tile cartográfico SEM chave (OpenStreetMap padrão). Requer internet
+ *   para baixar os tiles e a Leaflet; offline, o mapa não carrega, mas a tela de
+ *   Linhas (em lista) continua funcionando.
  *
  * Referências:
  *   - react-native-webview (SDK 58): https://docs.expo.dev/versions/v58.0.0/sdk/webview/
  *   - Leaflet: https://leafletjs.com/reference.html
  *   - OpenStreetMap (tiles): https://www.openstreetmap.org/
- *   - OpenStreetMap (servidor alemão / OSM.de): https://www.openstreetmap.de/
- *   - OpenTopoMap: https://opentopomap.org/about
  *
  * Onde é aplicado: rota "MapaVisual" em App.tsx.
  */
@@ -74,13 +71,6 @@ import {
   alternarFavoritoLinha,
   carregarFavoritosLinhas,
 } from '../ui/favoritos';
-import {
-  ESTILOS_MAPA,
-  ESTILO_PADRAO,
-  EstiloMapaId,
-  carregarEstiloMapa,
-  salvarEstiloMapa,
-} from '../ui/estiloMapa';
 import MapaBuscaOverlay from './MapaBuscaOverlay';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MapaVisual'>;
@@ -129,26 +119,21 @@ interface LinhaAtiva {
 }
 
 /**
- * Monta o HTML completo do mapa com os pontos e o ESTILO inicial já embutidos.
+ * Monta o HTML completo do mapa com os pontos já embutidos.
  *
  * Os pontos são injetados via JSON.stringify (serialização segura) e o caractere
  * "<" é escapado como "\\u003c" para impedir que um nome contendo "</script>"
  * feche o bloco <script> prematuramente. A Leaflet vem por CDN (unpkg); os tiles
- * vêm de provedores cartográficos sem chave (OpenStreetMap, OSM.de e
- * OpenTopoMap).
+ * vêm de um ÚNICO provedor cartográfico sem chave (OpenStreetMap padrão).
  *
- * Expõe três funções globais usadas pelo React via injectJavaScript:
+ * Expõe duas funções globais usadas pelo React via injectJavaScript:
  *   - window.atualizarVeiculos(json): troca apenas os marcadores de veículo
  *     (auto-refresh), preservando zoom/centro;
- *   - window.trocarEstiloMapa(estiloJson): troca a camada de tiles atual pela
- *     nova, preservando os marcadores (seletor de estilo);
  *   - window.mostrarParada(json): plota (ou limpa) o marcador da PARADA
  *     selecionada na busca, centralizando o mapa nela com um popup.
  */
-function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
+function montarHtmlMapa(pontos: PontoMapa[]): string {
   const pontosJson = JSON.stringify(pontos).replace(/</g, '\\u003c');
-  const estilosJson = JSON.stringify(ESTILOS_MAPA).replace(/</g, '\\u003c');
-  const estiloInicialJson = JSON.stringify(estiloId).replace(/</g, '\\u003c');
   return `<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
@@ -184,8 +169,6 @@ function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
     <script>
       (function () {
         var pontos = ${pontosJson};
-        var estilos = ${estilosJson};
-        var estiloInicial = ${estiloInicialJson};
         // Controles de zoom +/- no canto INFERIOR esquerdo: a barra de busca
         // flutuante (camada React Native) cobre o topo, então movemos o zoom
         // para baixo para que +/- fiquem sempre visíveis e tocáveis.
@@ -195,32 +178,12 @@ function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
         );
         L.control.zoom({ position: 'bottomleft' }).addTo(mapa);
 
-        // Camada de tiles atual (cartográfica, sem chave). Guardada numa variável
-        // para que o seletor de estilo possa remover e recriar sem recriar o mapa
-        // nem perder os marcadores.
-        var camadaTiles = null;
-
-        function definicaoEstilo(id) {
-          for (var i = 0; i < estilos.length; i += 1) {
-            if (estilos[i].id === id) {
-              return estilos[i];
-            }
-          }
-          return estilos[0];
-        }
-
-        function aplicarEstilo(id) {
-          var def = definicaoEstilo(id);
-          if (camadaTiles) {
-            mapa.removeLayer(camadaTiles);
-          }
-          camadaTiles = L.tileLayer(def.url, {
-            maxZoom: def.maxZoom,
-            attribution: def.atribuicao
-          }).addTo(mapa);
-        }
-
-        aplicarEstilo(estiloInicial);
+        // Camada de tiles ÚNICA e fixa: OpenStreetMap padrão, sem chave. Um só
+        // provedor confiável, sem seletor de estilo.
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; colaboradores do OpenStreetMap'
+        }).addTo(mapa);
 
         // Camada SOMENTE dos marcadores de veiculo: isolamos os veiculos numa
         // LayerGroup propria para que o auto-refresh (window.atualizarVeiculos)
@@ -330,19 +293,6 @@ function montarHtmlMapa(pontos: PontoMapa[], estiloId: EstiloMapaId): string {
           return true;
         };
 
-        // Ponte React -> WebView: troca de estilo cartografico. Recebe o id do
-        // estilo como string JSON e troca a camada de tiles preservando os
-        // marcadores (regioes e veiculos continuam no mapa).
-        window.trocarEstiloMapa = function (idJson) {
-          try {
-            var id = JSON.parse(idJson);
-            aplicarEstilo(id);
-          } catch (e) {
-            // Id invalido: ignora para nao derrubar o mapa.
-          }
-          return true;
-        };
-
         // Ponte React -> WebView: PARADA selecionada na busca. Recebe uma lista
         // de pontos de parada (geralmente 1). Limpa os marcadores de parada
         // anteriores, adiciona os novos e centraliza o mapa: flyTo num unico
@@ -424,15 +374,6 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
   // Favoritos locais (reutiliza src/ui/favoritos.ts). Carregados uma vez.
   const [favoritos, setFavoritos] = useState<LinhaFavorita[]>([]);
 
-  // Estilo cartografico atual do mapa (reutiliza src/ui/estiloMapa.ts).
-  const [estiloMapa, setEstiloMapa] = useState<EstiloMapaId>(ESTILO_PADRAO);
-  // Ref que acompanha o estilo atual para ser aplicado assim que o WebView
-  // terminar de carregar (ex.: preferencia persistida resolvida depois do
-  // 1o render, ou um remount por nova geração de HTML).
-  const estiloMapaRef = useRef<EstiloMapaId>(ESTILO_PADRAO);
-  useEffect(() => {
-    estiloMapaRef.current = estiloMapa;
-  }, [estiloMapa]);
   // Id de "geração" do HTML: muda quando trocamos o conjunto de marcadores
   // (nova linha, ou alternancia regioes<->veiculos), forçando um remount do
   // WebView com fitBounds no novo conjunto. NÃO muda a cada auto-refresh.
@@ -446,17 +387,12 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     };
   }, []);
 
-  // Carrega favoritos e a preferencia de estilo uma vez ao abrir a tela.
+  // Carrega favoritos uma vez ao abrir a tela.
   useEffect(() => {
     let ativo = true;
     void carregarFavoritosLinhas().then((lista) => {
       if (ativo) {
         setFavoritos(lista);
-      }
-    });
-    void carregarEstiloMapa().then((id) => {
-      if (ativo) {
-        setEstiloMapa(id);
       }
     });
     return () => {
@@ -594,19 +530,6 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     }
   }, []);
 
-  // Aplica um estilo cartografico no mapa ja carregado via injectJavaScript
-  // (sem recriar o WebView). Idempotente e seguro de chamar repetidamente.
-  const aplicarEstiloNoMapa = useCallback((id: EstiloMapaId) => {
-    if (webviewRef.current && webviewPronto.current) {
-      const json = JSON.stringify(id).replace(/</g, '\\u003c');
-      webviewRef.current.injectJavaScript(
-        `window.trocarEstiloMapa && window.trocarEstiloMapa(${JSON.stringify(
-          json,
-        )}); true;`,
-      );
-    }
-  }, []);
-
   // Plota a PARADA selecionada na busca sobre o mapa atual (sem recriar o
   // WebView): injeta a chamada window.mostrarParada com o ponto da parada.
   // Mantem regioes/veiculos; apenas adiciona/centraliza o marcador de parada.
@@ -629,24 +552,11 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     }
   }, []);
 
-  // Troca o estilo cartografico (acao do usuario): atualiza o estado, persiste a
-  // preferencia e aplica no mapa imediatamente.
-  const trocarEstilo = useCallback(
-    (id: EstiloMapaId) => {
-      setEstiloMapa(id);
-      void salvarEstiloMapa(id);
-      aplicarEstiloNoMapa(id);
-    },
-    [aplicarEstiloNoMapa],
-  );
-
-  // Marca o WebView como pronto e aplica o estilo atual. Cobre o caso de a
-  // preferencia persistida ter sido resolvida depois do HTML inicial (que foi
-  // montado com o estilo padrao) e o caso de remount por nova geração.
+  // Marca o WebView como pronto. O tile é fixo (OSM padrão), embutido no HTML,
+  // então não há nada a aplicar aqui após a carga.
   const aoCarregarWebView = useCallback(() => {
     webviewPronto.current = true;
-    aplicarEstiloNoMapa(estiloMapaRef.current);
-  }, [aplicarEstiloNoMapa]);
+  }, []);
 
   // Monta os pontos a plotar a partir dos dados ja carregados.
   const pontos = useMemo<PontoMapa[]>(() => {
@@ -664,13 +574,12 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
 
   // HTML "semente" do mapa, memorizado por GERAÇÃO: só muda quando o conjunto de
   // marcadores muda (nova linha, troca de modo). Assim o auto-refresh (que vai
-  // por injectJavaScript) NÃO recria o WebView. O estilo inicial embutido é o
-  // atual; trocas posteriores de estilo também vão por injectJavaScript.
+  // por injectJavaScript) NÃO recria o WebView. O tile é fixo (OSM padrão).
   const html = useMemo(() => {
     if (carregando) {
       return '';
     }
-    return montarHtmlMapa(pontos, estiloMapa);
+    return montarHtmlMapa(pontos);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geracao, carregando]);
 
@@ -849,7 +758,7 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
         </View>
       ) : null}
 
-      {/* Camada de BUSCA/CATÁLOGO + seletor de estilo, sobreposta ao mapa. */}
+      {/* Camada de BUSCA/CATÁLOGO (menu do mapa), sobreposta ao mapa. */}
       <MapaBuscaOverlay
         linhaSelecionada={linhaSelecionada}
         linhaRotulo={linhaRotulo}
@@ -858,9 +767,6 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
         aoSelecionarLinha={selecionarLinha}
         aoSelecionarParada={mostrarParadaNoMapa}
         aoAlternarFavorito={alternarFavorito}
-        estilos={ESTILOS_MAPA}
-        estiloAtual={estiloMapa}
-        aoTrocarEstilo={trocarEstilo}
       />
     </KeyboardAvoidingView>
   );

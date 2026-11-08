@@ -15,11 +15,9 @@
  *     recolhido/expandido, sem gesto de arrastar/biblioteca de bottom-sheet).
  *     Recolhido mostra um resumo; expandido revela os RESULTADOS da busca e,
  *     quando o campo está vazio, a NAVEGAÇÃO ASSISTIDA (catálogo de
- *     src/ui/catalogo.ts) e os FAVORITOS (src/ui/favoritos.ts). Tocar numa linha
- *     seleciona-a: o mapa passa a plotar seus veículos.
- *
- * O seletor de ESTILO cartográfico do mapa (Padrão/OSM.de/Topográfico) é um
- * controle flutuante próprio (SeletorEstiloMapa), renderizado pela tela.
+ *     src/ui/catalogo.ts) e os FAVORITOS (src/ui/favoritos.ts). Este menu faz as
+ *     DUAS coisas: na aba Linhas, tocar em "Ver no mapa" plota a posição dos
+ *     ônibus da linha; na aba Paradas, tocar em "Ver no mapa" localiza a parada.
  *
  * Onde é aplicado: src/screens/MapaVisualScreen.tsx.
  */
@@ -40,7 +38,6 @@ import { ApiError, buscarLinhas, buscarParadas } from '../api/client';
 import { LinhaRead, ParadaRead } from '../types';
 import { DICA_BUSCA_PARADA } from '../ui/catalogo';
 import { LinhaFavorita } from '../ui/favoritos';
-import { EstiloMapa, EstiloMapaId } from '../ui/estiloMapa';
 import { AVISO_DADO_EXEMPLO, rotuloSentido } from '../ui/rotulos';
 import { ordenarPorSimilaridade, variacoesDeTermo } from '../ui/busca';
 
@@ -64,8 +61,8 @@ function identidade(letreiro: string): string {
 
 /**
  * Props da camada de busca. A tela do mapa é dona do ciclo de vida: fornece os
- * favoritos (em estado), a linha selecionada e os callbacks de seleção/favorito
- * e de troca de estilo. Toda a lógica de busca vive aqui dentro.
+ * favoritos (em estado), a linha selecionada e os callbacks de seleção/favorito.
+ * Toda a lógica de busca vive aqui dentro.
  */
 interface MapaBuscaOverlayProps {
   /** Linha atualmente selecionada (plotada no mapa), ou null para regiões. */
@@ -82,10 +79,6 @@ interface MapaBuscaOverlayProps {
   aoSelecionarParada: (parada: ParadaRead) => void;
   /** Alterna o favorito de uma linha (estrela). */
   aoAlternarFavorito: (linha: LinhaRead) => void;
-  /** Estilos cartográficos disponíveis e o selecionado (seletor flutuante). */
-  estilos: EstiloMapa[];
-  estiloAtual: EstiloMapaId;
-  aoTrocarEstilo: (id: EstiloMapaId) => void;
 }
 
 export default function MapaBuscaOverlay({
@@ -96,9 +89,6 @@ export default function MapaBuscaOverlay({
   aoSelecionarLinha,
   aoSelecionarParada,
   aoAlternarFavorito,
-  estilos,
-  estiloAtual,
-  aoTrocarEstilo,
 }: MapaBuscaOverlayProps) {
   const [aba, setAba] = useState<AbaBusca>('linhas');
   const [termo, setTermo] = useState<string>('');
@@ -260,29 +250,16 @@ export default function MapaBuscaOverlay({
       }
       return nome;
     }
-    return 'Toque para buscar linhas e ver sugestoes';
+    return 'Toque para ver onibus de uma linha ou localizar uma parada';
   })();
 
   return (
     <>
-      {/* SELETOR DE ESTILO cartográfico: controle flutuante no canto INFERIOR
-          direito, sobre o mapa. Fica acima do painel inferior e fora da barra
-          de busca (topo) e dos controles de zoom +/- do Leaflet (canto superior
-          esquerdo), para não colidir com nenhum deles. */}
-      <SeletorEstiloMapa
-        estilos={estilos}
-        estiloAtual={estiloAtual}
-        aoTrocarEstilo={aoTrocarEstilo}
-        insetBottom={insets.bottom}
-      />
-
-      {/* BARRA DE BUSCA FLUTUANTE no topo, sobre o mapa. Soma o inset superior
-          (status bar/notch) ao padding para não ficar embaixo da barra de
-          status em aparelhos com notch. */}
-      <View
-        style={[styles.barraBusca, { paddingTop: 12 + insets.top }]}
-        pointerEvents="box-none"
-      >
+      {/* BARRA DE BUSCA FLUTUANTE no topo, sobre o mapa. Usa um padding fixo
+          pequeno: o inset superior (status bar/notch) NÃO é somado aqui porque
+          deixava espaço sobrando no topo. O valor fixo já afasta a barra o
+          suficiente da status bar sem colar nela. */}
+      <View style={styles.barraBusca} pointerEvents="box-none">
         <View style={styles.barraBuscaCartao}>
           <View style={styles.abas}>
             <BotaoAba
@@ -439,76 +416,6 @@ export default function MapaBuscaOverlay({
   );
 }
 
-/**
- * Seletor flutuante do ESTILO cartográfico (Padrão/OSM.de/Topográfico). Um botão
- * de "camadas" que expande chips com os estilos; tocar troca a camada de tiles
- * do mapa (sem recriar o mapa).
- *
- * POSIÇÃO: canto INFERIOR direito, acima do painel inferior. Essa escolha evita
- * colidir com a barra de busca (topo) e com os controles de zoom +/- do Leaflet
- * (canto superior esquerdo). Os chips abrem PARA CIMA (acima do botão) para não
- * ficarem embaixo do painel inferior. O `insetBottom` (safe area) afasta o
- * controle da barra de navegação do sistema. O container ancora o botão embaixo
- * e empilha os chips acima dele via `flex-end` + ordem reversa na árvore.
- */
-function SeletorEstiloMapa({
-  estilos,
-  estiloAtual,
-  aoTrocarEstilo,
-  insetBottom,
-}: {
-  estilos: EstiloMapa[];
-  estiloAtual: EstiloMapaId;
-  aoTrocarEstilo: (id: EstiloMapaId) => void;
-  insetBottom: number;
-}) {
-  const [aberto, setAberto] = useState<boolean>(false);
-  return (
-    <View
-      style={[styles.seletorEstilo, { bottom: 96 + insetBottom }]}
-      pointerEvents="box-none"
-    >
-      {/* Chips ACIMA do botão quando aberto (o botão fica por último, logo mais
-          embaixo na tela). */}
-      {aberto ? (
-        <View style={styles.seletorChips}>
-          {estilos.map((estilo) => {
-            const ativo = estilo.id === estiloAtual;
-            return (
-              <Pressable
-                key={estilo.id}
-                style={[styles.chipEstilo, ativo && styles.chipEstiloAtivo]}
-                onPress={() => {
-                  aoTrocarEstilo(estilo.id);
-                  setAberto(false);
-                }}
-                accessibilityRole="button"
-              >
-                <Text
-                  style={[
-                    styles.chipEstiloTexto,
-                    ativo && styles.chipEstiloTextoAtivo,
-                  ]}
-                >
-                  {estilo.rotulo}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-      <Pressable
-        style={styles.botaoCamadas}
-        onPress={() => setAberto((atual) => !atual)}
-        accessibilityRole="button"
-        accessibilityLabel="Trocar estilo do mapa"
-      >
-        <Text style={styles.botaoCamadasTexto}>⧉ Estilo</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 /** Cartão de um resultado de LINHA, com estrela e botão de selecionar no mapa. */
 function ResultadoLinha({
   linha,
@@ -621,8 +528,10 @@ function Catalogo({
         </View>
       ) : (
         <Text style={styles.catalogoDica}>
-          Digite o letreiro ou o trajeto no campo acima para buscar uma linha.
-          As linhas que voce favoritar aparecem aqui.
+          Na aba Linhas, busque o letreiro ou o trajeto e toque em "Ver no mapa"
+          para ver a posicao dos onibus. Na aba Paradas, busque pelo nome e toque
+          em "Ver no mapa" para localizar a parada. As linhas que voce favoritar
+          aparecem aqui.
         </Text>
       )}
     </View>
@@ -732,69 +641,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 14,
-  },
-
-  // Seletor de estilo cartográfico (canto INFERIOR direito, acima do painel).
-  // O `bottom` é definido inline somando a safe area; os chips abrem para cima.
-  seletorEstilo: {
-    position: 'absolute',
-    right: 12,
-    zIndex: 15,
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  botaoCamadas: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    elevation: 3,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-  },
-  botaoCamadasTexto: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0B6E4F',
-  },
-  seletorChips: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 6,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    elevation: 3,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-  },
-  chipEstilo: {
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
-    minWidth: 92,
-    alignItems: 'center',
-  },
-  chipEstiloAtivo: {
-    backgroundColor: '#0B6E4F',
-    borderColor: '#0B6E4F',
-  },
-  chipEstiloTexto: {
-    fontSize: 13,
-    color: '#334155',
-    fontWeight: '600',
-  },
-  chipEstiloTextoAtivo: {
-    color: '#FFFFFF',
   },
 
   // Painel inferior expansível.

@@ -193,22 +193,6 @@ export async function limparConsentimento(): Promise<void> {
 }
 
 /**
- * Indica se há consentimento VÁLIDO para liberar o uso COMPLETO do app: a
- * pessoa precisa ter aceitado os Termos e o registro precisa ser da versão
- * vigente dos Termos/Política. Use isto para decidir o que depende do aceite
- * (por exemplo, oferecer o GPS só faz sentido com aceite).
- */
-export function temConsentimentoValido(
-  registro: RegistroConsentimento | null,
-): boolean {
-  return (
-    !!registro &&
-    registro.aceitouTermos === true &&
-    registro.versaoTermos === VERSAO_TERMOS
-  );
-}
-
-/**
  * Indica se o usuário JÁ RESPONDEU ao gate da versão vigente — tendo ACEITADO
  * ou RECUSADO. Serve ao gate de navegação em App.tsx: uma vez respondido (e
  * registrado) para a versão atual dos Termos, não reexibimos o aviso a cada

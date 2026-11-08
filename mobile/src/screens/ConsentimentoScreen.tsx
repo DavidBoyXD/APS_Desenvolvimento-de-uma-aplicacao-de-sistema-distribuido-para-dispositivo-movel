@@ -76,11 +76,17 @@ export default function ConsentimentoScreen({ navigation }: Props) {
     useState<boolean>(false);
 
   const concluir = async (aceitou: boolean) => {
+    // INVARIANTE (LGPD): recusar os Termos implica consentiuLocalizacao=false.
+    // A localização (GPS) é um consentimento OPCIONAL que só tem base legal
+    // quando os Termos foram ACEITOS. Por isso, ao RECUSAR (aceitou === false),
+    // nunca pode restar consentimento de localização ativo: forçamos false de
+    // forma explícita abaixo, ignorando qualquer valor do checkbox na tela.
+    const consentiuLocalizacaoEfetivo = aceitou ? consentiuLocalizacao : false;
     const registro: RegistroConsentimento = {
       versaoTermos: VERSAO_TERMOS,
       aceitouTermos: aceitou,
-      // Só faz sentido registrar consentimento de localização junto do aceite.
-      consentiuLocalizacao: aceitou ? consentiuLocalizacao : false,
+      // Reforço da invariante: sem aceite dos Termos, não há GPS (sempre false).
+      consentiuLocalizacao: consentiuLocalizacaoEfetivo,
       timestamp: new Date().toISOString(),
     };
     // Grava a resposta (aceite OU recusa) para a versão vigente dos Termos e

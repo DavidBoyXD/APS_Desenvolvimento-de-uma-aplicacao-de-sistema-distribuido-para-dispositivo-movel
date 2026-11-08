@@ -11,8 +11,11 @@
  * NENHUMA permissão/coleta de localização é acionada aqui — o consentimento é
  * apenas registrado localmente. ACEITAR grava o RegistroConsentimento; RECUSAR
  * registra o não-aceite e NÃO trava o app (o usuário segue sem o "Você está
- * aqui"). Ao concluir, chama `route.params.aoConcluir` para o gate em App.tsx
- * liberar a navegação principal.
+ * aqui"). Em AMBOS os casos a resposta fica REGISTRADA para a versão vigente
+ * dos Termos, então o aviso NÃO reaparece a cada abertura (só volta quando a
+ * versão dos Termos muda). Ao concluir, a tela pede ao gate em App.tsx para
+ * REAVALIAR o consentimento via Context (useReavaliarConsentimento), sem
+ * receber um callback por params de rota (que não seria serializável).
  *
  * Referências:
  *   - Pressable: https://reactnative.dev/docs/pressable
@@ -31,6 +34,7 @@ import {
   VERSAO_TERMOS,
   salvarConsentimento,
 } from '../ui/consentimento';
+import { useReavaliarConsentimento } from '../ui/consentimentoContexto';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Consentimento'>;
 
@@ -65,8 +69,8 @@ function Caixa({
   );
 }
 
-export default function ConsentimentoScreen({ navigation, route }: Props) {
-  const aoConcluir = route.params?.aoConcluir;
+export default function ConsentimentoScreen({ navigation }: Props) {
+  const reavaliarConsentimento = useReavaliarConsentimento();
   const [aceitouTermos, setAceitouTermos] = useState<boolean>(false);
   const [consentiuLocalizacao, setConsentiuLocalizacao] =
     useState<boolean>(false);
@@ -79,10 +83,11 @@ export default function ConsentimentoScreen({ navigation, route }: Props) {
       consentiuLocalizacao: aceitou ? consentiuLocalizacao : false,
       timestamp: new Date().toISOString(),
     };
+    // Grava a resposta (aceite OU recusa) para a versão vigente dos Termos e
+    // pede ao gate em App.tsx para reavaliar relendo o registro — liberando a
+    // navegação principal sem depender de callback em params de rota.
     await salvarConsentimento(registro);
-    if (aoConcluir) {
-      aoConcluir();
-    }
+    await reavaliarConsentimento();
   };
 
   return (
@@ -152,7 +157,9 @@ export default function ConsentimentoScreen({ navigation, route }: Props) {
 
       <Text style={styles.rodape}>
         Ao recusar, você continua usando a lista de linhas, a busca e o mapa, sem
-        o "Você está aqui". Dúvidas: {EMAIL_ENCARREGADO}.
+        o "Você está aqui", e este aviso não reaparece a cada abertura — ele só
+        volta se os Termos forem atualizados. Você pode rever sua escolha a
+        qualquer momento em Privacidade. Dúvidas: {EMAIL_ENCARREGADO}.
       </Text>
     </ScrollView>
   );

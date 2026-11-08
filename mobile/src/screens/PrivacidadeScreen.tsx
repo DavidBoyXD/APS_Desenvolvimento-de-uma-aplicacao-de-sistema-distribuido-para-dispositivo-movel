@@ -15,9 +15,12 @@
  *   2. EXCLUSÃO — botão "Excluir meus dados" com confirmação via Alert.alert;
  *      ao confirmar, chama a limpeza REAL do AsyncStorage (limparFavoritosLinhas
  *      + limparConsentimento) e atualiza a UI (contagens zeradas).
- *   3. REVOGAÇÃO — revoga o consentimento de localização (salvarConsentimento
- *      com consentiuLocalizacao=false, mantendo o aceite dos Termos); o
- *      "Você está aqui" deixa de ser oferecido.
+ *   3. REVOGAÇÃO / REATIVAÇÃO — controle simétrico do consentimento de
+ *      localização, sem apagar os demais dados (salvarConsentimento mantendo o
+ *      aceite dos Termos). REVOGAR grava consentiuLocalizacao=false e o "Você
+ *      está aqui" deixa de ser oferecido; REATIVAR grava consentiuLocalizacao
+ *      =true e o "Você está aqui" volta a ser oferecido no mapa. Só é possível
+ *      enquanto houver aceite válido dos Termos (base legal para o GPS).
  *
  * Referências:
  *   - Alert: https://reactnative.dev/docs/alert
@@ -146,9 +149,47 @@ export default function PrivacidadeScreen({ navigation }: Props) {
     );
   }, [consentimento, recarregar]);
 
+  // REATIVAÇÃO: volta a consentir com a localização sem apagar nada, desde que
+  // o aceite dos Termos continue válido (base legal para oferecer o GPS).
+  // Simétrico à revogação: regrava o registro com consentiuLocalizacao=true.
+  const reativarLocalizacao = useCallback(() => {
+    if (!consentimento || consentimento.aceitouTermos !== true) {
+      return;
+    }
+    Alert.alert(
+      'Reativar localização',
+      'O "Você está aqui" volta a ser oferecido no mapa. A localização é usada ' +
+        'apenas no seu aparelho e nunca é enviada a servidores.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Reativar',
+          onPress: async () => {
+            const atualizado: RegistroConsentimento = {
+              ...consentimento,
+              consentiuLocalizacao: true,
+              timestamp: new Date().toISOString(),
+            };
+            await salvarConsentimento(atualizado);
+            await recarregar();
+            Alert.alert(
+              'Localização reativada',
+              'O "Você está aqui" voltará a ser oferecido no mapa.',
+            );
+          },
+        },
+      ],
+    );
+  }, [consentimento, recarregar]);
+
   const temFavoritos = favoritos.length > 0;
   const podeRevogar =
     !!consentimento && consentimento.consentiuLocalizacao === true;
+  // Só oferece reativar quando há aceite válido e a localização está desligada.
+  const podeReativar =
+    !!consentimento &&
+    consentimento.aceitouTermos === true &&
+    consentimento.consentiuLocalizacao === false;
 
   return (
     <ScrollView
@@ -221,27 +262,43 @@ export default function PrivacidadeScreen({ navigation }: Props) {
         )}
       </View>
 
-      {/* REVOGAÇÃO do consentimento de localização. */}
+      {/* REVOGAÇÃO / REATIVAÇÃO do consentimento de localização (simétrico). */}
       <View style={styles.cartao}>
-        <Text style={styles.cartaoTitulo}>Revogar localização</Text>
+        <Text style={styles.cartaoTitulo}>Localização (GPS)</Text>
         <Text style={styles.paragrafo}>
-          Você pode revogar o consentimento de localização sem apagar os demais
+          Você controla o consentimento de localização sem apagar os demais
           dados. Ao revogar, o "Você está aqui" deixa de ser oferecido no mapa;
-          seu aceite dos Termos continua válido.
+          ao reativar, ele volta a ser oferecido. Seu aceite dos Termos continua
+          válido nos dois casos.
         </Text>
-        <Pressable
-          style={[styles.botaoSecundario, !podeRevogar && styles.botaoDesabilitado]}
-          onPress={revogarLocalizacao}
-          disabled={!podeRevogar}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !podeRevogar }}
-        >
-          <Text style={styles.botaoSecundarioTexto}>
-            {podeRevogar
-              ? 'Revogar consentimento de localização'
-              : 'Localização não está permitida'}
-          </Text>
-        </Pressable>
+        {podeReativar ? (
+          <Pressable
+            style={styles.botaoSecundario}
+            onPress={reativarLocalizacao}
+            accessibilityRole="button"
+          >
+            <Text style={styles.botaoSecundarioTexto}>
+              Reativar consentimento de localização
+            </Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={[
+              styles.botaoSecundario,
+              !podeRevogar && styles.botaoDesabilitado,
+            ]}
+            onPress={revogarLocalizacao}
+            disabled={!podeRevogar}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !podeRevogar }}
+          >
+            <Text style={styles.botaoSecundarioTexto}>
+              {podeRevogar
+                ? 'Revogar consentimento de localização'
+                : 'Localização não está permitida'}
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       {/* EXCLUSÃO de todos os dados locais. */}

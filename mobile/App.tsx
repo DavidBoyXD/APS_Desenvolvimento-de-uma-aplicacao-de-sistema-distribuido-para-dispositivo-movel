@@ -6,12 +6,18 @@
  * Linhas e MapaVisual (mapa opcional e separado, nunca a tela inicial).
  *
  * GATE DE CONSENTIMENTO (LGPD): na primeira abertura (ou quando a versao dos
- * Termos muda), o app NAO libera a navegacao principal antes do consentimento.
- * Enquanto le o registro de consentimento do armazenamento local, mostra um
- * estado de carregamento; sem consentimento valido, exibe o fluxo de
- * Consentimento (com acesso a Politica e Termos). Nada de localizacao/permissao
- * e acionado antes do aceite. Apos ACEITAR/RECUSAR, segue para a navegacao
- * normal (RECUSAR nao trava o app).
+ * Termos muda), o app NAO libera a navegacao principal antes de o usuario
+ * RESPONDER ao aviso. Enquanto le o registro de consentimento do armazenamento
+ * local, mostra um estado de carregamento; se ainda NAO ha resposta para a
+ * versao vigente dos Termos, exibe o fluxo de Consentimento (com acesso a
+ * Politica e Termos). Nada de localizacao/permissao e acionado antes do aceite.
+ *
+ * Apos ACEITAR ou RECUSAR, a tela de Consentimento apenas GRAVA o registro no
+ * armazenamento e pede que o App REAVALIE o consentimento (relendo o registro):
+ * nao ha callback passado por params de rota (que seria nao-serializavel). Uma
+ * vez respondido para a versao atual, o aviso NAO reaparece a cada abertura;
+ * o reconsentimento so volta quando a VERSAO_TERMOS muda. RECUSAR nao trava o
+ * app (segue sem o "Voce esta aqui").
  *
  * Referencias:
  *   - React Navigation (getting started): https://reactnavigation.org/docs/getting-started
@@ -40,8 +46,9 @@ import PrivacidadeScreen from './src/screens/PrivacidadeScreen';
 import { EstadoCarregando } from './src/ui/estados';
 import {
   carregarConsentimento,
-  temConsentimentoValido,
+  temRespostaConsentimento,
 } from './src/ui/consentimento';
+import { ReavaliarConsentimentoProvider } from './src/ui/consentimentoContexto';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -54,15 +61,25 @@ const screenOptions = {
 
 export default function App() {
   // `null` = ainda lendo o armazenamento (estado de carregamento);
-  // `true`/`false` = ja sabemos se ha consentimento valido.
-  const [consentido, setConsentido] = useState<boolean | null>(null);
+  // `true`/`false` = ja sabemos se o usuario JA RESPONDEU ao gate da versao
+  // vigente (aceitou OU recusou). `true` libera a navegacao principal.
+  const [respondido, setRespondido] = useState<boolean | null>(null);
+
+  // Reavalia o consentimento RELENDO o registro do armazenamento. E chamado no
+  // boot (useEffect) e pela tela de Consentimento (via Context) apos gravar o
+  // registro em ACEITAR/RECUSAR — dispensando qualquer callback por params de
+  // rota (que seria nao-serializavel).
+  const reavaliarConsentimento = useCallback(async () => {
+    const registro = await carregarConsentimento();
+    setRespondido(temRespostaConsentimento(registro));
+  }, []);
 
   useEffect(() => {
     let ativo = true;
     (async () => {
       const registro = await carregarConsentimento();
       if (ativo) {
-        setConsentido(temConsentimentoValido(registro));
+        setRespondido(temRespostaConsentimento(registro));
       }
     })();
     return () => {
@@ -70,13 +87,7 @@ export default function App() {
     };
   }, []);
 
-  // Callback injetado na tela de Consentimento: apos ACEITAR/RECUSAR, libera a
-  // navegacao principal. (RECUSAR tambem libera o app, apenas sem o GPS.)
-  const liberarNavegacao = useCallback(() => {
-    setConsentido(true);
-  }, []);
-
-  if (consentido === null) {
+  if (respondido === null) {
     return (
       <SafeAreaProvider>
         <StatusBar style="dark" />
@@ -87,92 +98,98 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <StatusBar style="light" />
-        {consentido ? (
-          <Stack.Navigator initialRouteName="Mapa" screenOptions={screenOptions}>
-            <Stack.Screen
-              name="Mapa"
-              component={MapaScreen}
-              options={{ title: 'Monitoramento de transporte público em SP' }}
-            />
-            <Stack.Screen
-              name="Detalhe"
-              component={DetalheScreen}
-              options={({ route }) => ({ title: route.params.regiaoNome })}
-            />
-            <Stack.Screen
-              name="Relatorios"
-              component={RelatoriosScreen}
-              options={({ route }) => ({
-                title: `Relatório: ${route.params.regiaoNome}`,
-              })}
-            />
-            <Stack.Screen
-              name="Alertas"
-              component={AlertasScreen}
-              options={{ title: 'Alertas' }}
-            />
-            <Stack.Screen
-              name="Linhas"
-              component={LinhasScreen}
-              options={{ title: 'Linhas de ônibus' }}
-            />
-            <Stack.Screen
-              name="MapaVisual"
-              component={MapaVisualScreen}
-              options={({ route }) => ({
-                title: route.params?.linhaRotulo
-                  ? `Mapa: ${route.params.linhaRotulo}`
-                  : 'Mapa',
-              })}
-            />
-            <Stack.Screen
-              name="PoliticaPrivacidade"
-              component={PoliticaPrivacidadeScreen}
-              options={{ title: 'Política de Privacidade' }}
-            />
-            <Stack.Screen
-              name="TermosDeUso"
-              component={TermosDeUsoScreen}
-              options={{ title: 'Termos de Uso' }}
-            />
-            <Stack.Screen
-              name="Privacidade"
-              component={PrivacidadeScreen}
-              options={{ title: 'Privacidade' }}
-            />
-          </Stack.Navigator>
-        ) : (
-          /*
-            Fluxo de consentimento: enquanto NAO ha consentimento valido, esta e
-            a UNICA navegacao disponivel. A tela de Consentimento recebe o
-            callback para liberar a navegacao principal e da acesso a Politica e
-            aos Termos (sem acionar qualquer permissao de localizacao).
-          */
-          <Stack.Navigator
-            initialRouteName="Consentimento"
-            screenOptions={screenOptions}
-          >
-            <Stack.Screen
-              name="Consentimento"
-              component={ConsentimentoScreen}
-              initialParams={{ aoConcluir: liberarNavegacao }}
-              options={{ title: 'Consentimento' }}
-            />
-            <Stack.Screen
-              name="PoliticaPrivacidade"
-              component={PoliticaPrivacidadeScreen}
-              options={{ title: 'Política de Privacidade' }}
-            />
-            <Stack.Screen
-              name="TermosDeUso"
-              component={TermosDeUsoScreen}
-              options={{ title: 'Termos de Uso' }}
-            />
-          </Stack.Navigator>
-        )}
-      </NavigationContainer>
+      <ReavaliarConsentimentoProvider value={reavaliarConsentimento}>
+        <NavigationContainer>
+          <StatusBar style="light" />
+          {respondido ? (
+            <Stack.Navigator
+              initialRouteName="Mapa"
+              screenOptions={screenOptions}
+            >
+              <Stack.Screen
+                name="Mapa"
+                component={MapaScreen}
+                options={{ title: 'Monitoramento de transporte público em SP' }}
+              />
+              <Stack.Screen
+                name="Detalhe"
+                component={DetalheScreen}
+                options={({ route }) => ({ title: route.params.regiaoNome })}
+              />
+              <Stack.Screen
+                name="Relatorios"
+                component={RelatoriosScreen}
+                options={({ route }) => ({
+                  title: `Relatório: ${route.params.regiaoNome}`,
+                })}
+              />
+              <Stack.Screen
+                name="Alertas"
+                component={AlertasScreen}
+                options={{ title: 'Alertas' }}
+              />
+              <Stack.Screen
+                name="Linhas"
+                component={LinhasScreen}
+                options={{ title: 'Linhas de ônibus' }}
+              />
+              <Stack.Screen
+                name="MapaVisual"
+                component={MapaVisualScreen}
+                options={({ route }) => ({
+                  title: route.params?.linhaRotulo
+                    ? `Mapa: ${route.params.linhaRotulo}`
+                    : 'Mapa',
+                })}
+              />
+              <Stack.Screen
+                name="PoliticaPrivacidade"
+                component={PoliticaPrivacidadeScreen}
+                options={{ title: 'Política de Privacidade' }}
+              />
+              <Stack.Screen
+                name="TermosDeUso"
+                component={TermosDeUsoScreen}
+                options={{ title: 'Termos de Uso' }}
+              />
+              <Stack.Screen
+                name="Privacidade"
+                component={PrivacidadeScreen}
+                options={{ title: 'Privacidade' }}
+              />
+            </Stack.Navigator>
+          ) : (
+            /*
+              Fluxo de consentimento: enquanto o usuario NAO respondeu ao aviso
+              (para a versao vigente), esta e a UNICA navegacao disponivel. A
+              tela de Consentimento GRAVA a resposta no armazenamento e pede a
+              reavaliacao do gate via Context (sem callback em params de rota) e
+              da acesso a Politica e aos Termos (sem acionar qualquer permissao
+              de localizacao).
+            */
+            <Stack.Navigator
+              initialRouteName="Consentimento"
+              screenOptions={screenOptions}
+            >
+              <Stack.Screen
+                name="Consentimento"
+                component={ConsentimentoScreen}
+                options={{ title: 'Consentimento' }}
+              />
+              <Stack.Screen
+                name="PoliticaPrivacidade"
+                component={PoliticaPrivacidadeScreen}
+                options={{ title: 'Política de Privacidade' }}
+              />
+              <Stack.Screen
+                name="TermosDeUso"
+                component={TermosDeUsoScreen}
+                options={{ title: 'Termos de Uso' }}
+              />
+            </Stack.Navigator>
+          )}
+        </NavigationContainer>
+      </ReavaliarConsentimentoProvider>
     </SafeAreaProvider>
   );
 }

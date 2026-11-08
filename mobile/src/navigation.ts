@@ -31,10 +31,12 @@ export type RootStackParamList = {
   MapaVisual: { codigoLinha?: number; linhaRotulo?: string } | undefined;
   /**
    * Fluxo de CONSENTIMENTO (LGPD) exibido na primeira abertura (ou quando a
-   * versão dos Termos muda). `aoConcluir` é o callback que o gate em App.tsx
-   * injeta para liberar a navegação principal após ACEITAR/RECUSAR.
+   * versão dos Termos muda). Sem parâmetros: a tela GRAVA a resposta no
+   * armazenamento e pede ao gate em App.tsx para REAVALIAR o consentimento via
+   * Context (useReavaliarConsentimento), em vez de receber um callback por
+   * params de rota (que não seria serializável).
    */
-  Consentimento: { aoConcluir?: () => void } | undefined;
+  Consentimento: undefined;
   /** Política de Privacidade (texto legível, sem WebView). */
   PoliticaPrivacidade: undefined;
   /** Termos de Uso (texto legível, sem WebView). */

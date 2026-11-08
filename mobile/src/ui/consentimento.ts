@@ -193,9 +193,10 @@ export async function limparConsentimento(): Promise<void> {
 }
 
 /**
- * Indica se há consentimento VÁLIDO para liberar a navegação principal: a
+ * Indica se há consentimento VÁLIDO para liberar o uso COMPLETO do app: a
  * pessoa precisa ter aceitado os Termos e o registro precisa ser da versão
- * vigente dos Termos/Política.
+ * vigente dos Termos/Política. Use isto para decidir o que depende do aceite
+ * (por exemplo, oferecer o GPS só faz sentido com aceite).
  */
 export function temConsentimentoValido(
   registro: RegistroConsentimento | null,
@@ -205,4 +206,22 @@ export function temConsentimentoValido(
     registro.aceitouTermos === true &&
     registro.versaoTermos === VERSAO_TERMOS
   );
+}
+
+/**
+ * Indica se o usuário JÁ RESPONDEU ao gate da versão vigente — tendo ACEITADO
+ * ou RECUSADO. Serve ao gate de navegação em App.tsx: uma vez respondido (e
+ * registrado) para a versão atual dos Termos, não reexibimos o aviso a cada
+ * abertura ("lembrar que o usuário já respondeu"). Quem RECUSA continua usando
+ * o app sem o "Você está aqui"; quem ACEITA libera também o GPS.
+ *
+ * O reconsentimento volta a ser exigido quando a VERSAO_TERMOS muda: um
+ * registro de versão antiga não conta como resposta válida, forçando o aviso de
+ * novo. Assim respeitamos a base legal (sem aceite não há GPS) sem a
+ * inconsistência de reavisar sempre quem já respondeu RECUSAR.
+ */
+export function temRespostaConsentimento(
+  registro: RegistroConsentimento | null,
+): boolean {
+  return !!registro && registro.versaoTermos === VERSAO_TERMOS;
 }

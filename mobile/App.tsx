@@ -1,5 +1,5 @@
 /**
- * Componente raiz do app "Monitor Ambiental Urbano".
+ * Componente raiz do app "Monitoramento de transporte público em SP".
  *
  * Configura a navegacao em pilha (native stack) do React Navigation e registra
  * as telas do sistema: Mapa (lista inicial), Detalhe, Relatorios, Alertas,
@@ -43,7 +43,7 @@ export default function App() {
           <Stack.Screen
             name="Mapa"
             component={MapaScreen}
-            options={{ title: 'Monitor Ambiental Urbano' }}
+            options={{ title: 'Monitoramento de transporte público em SP' }}
           />
           <Stack.Screen
             name="Detalhe"
@@ -60,12 +60,12 @@ export default function App() {
           <Stack.Screen
             name="Alertas"
             component={AlertasScreen}
-            options={{ title: 'Alertas ambientais' }}
+            options={{ title: 'Alertas do transporte' }}
           />
           <Stack.Screen
             name="Linhas"
             component={LinhasScreen}
-            options={{ title: 'Linhas de onibus' }}
+            options={{ title: 'Linhas de ônibus' }}
           />
           <Stack.Screen
             name="MapaVisual"

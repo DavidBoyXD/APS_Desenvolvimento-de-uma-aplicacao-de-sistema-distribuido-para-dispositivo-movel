@@ -54,7 +54,7 @@ export default function App() {
             name="Relatorios"
             component={RelatoriosScreen}
             options={({ route }) => ({
-              title: `Relatorio: ${route.params.regiaoNome}`,
+              title: `Relatório: ${route.params.regiaoNome}`,
             })}
           />
           <Stack.Screen

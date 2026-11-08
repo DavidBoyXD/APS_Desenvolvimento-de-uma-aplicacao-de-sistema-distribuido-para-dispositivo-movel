@@ -611,7 +611,7 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
       <View style={styles.centro}>
         <Text style={styles.icone}>🗺️</Text>
         <Text style={styles.textoErro}>
-          O mapa nao esta disponivel neste dispositivo.
+          O mapa não está disponível neste dispositivo.
         </Text>
         <Text style={styles.textoDetalhe}>
           Use a tela de Linhas para buscar e acompanhar as linhas em lista.
@@ -630,7 +630,7 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
   if (carregando) {
     return (
       <EstadoCarregando
-        texto={modoVeiculos ? 'Carregando veiculos...' : 'Carregando regioes...'}
+        texto={modoVeiculos ? 'Carregando veículos...' : 'Carregando regiões...'}
       />
     );
   }
@@ -650,9 +650,9 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     return (
       <View style={styles.centro}>
         <Text style={styles.icone}>🗺️</Text>
-        <Text style={styles.textoErro}>Nao foi possivel carregar o mapa.</Text>
+        <Text style={styles.textoErro}>Não foi possível carregar o mapa.</Text>
         <Text style={styles.textoDetalhe}>
-          Verifique sua conexao com a internet (o mapa usa tiles cartograficos
+          Verifique sua conexão com a internet (o mapa usa tiles cartográficos
           online). A tela de Linhas continua funcionando em lista.
         </Text>
         <Pressable
@@ -695,7 +695,7 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
         domStorageEnabled
         onMessage={aoReceberMensagem}
         onLoadEnd={aoCarregarWebView}
-        onError={() => setErroWebView('Falha ao carregar o conteudo do mapa.')}
+        onError={() => setErroWebView('Falha ao carregar o conteúdo do mapa.')}
       />
 
       {/* Faixa de aviso de dado de EXEMPLO (fallback sem token), sobre o mapa. */}
@@ -718,7 +718,7 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
               </Text>
               {ultimaAtualizacao ? (
                 <Text style={styles.barraRefreshSub}>
-                  Ultima atualizacao: {formatarHora(ultimaAtualizacao)}
+                  Última atualização: {formatarHora(ultimaAtualizacao)}
                 </Text>
               ) : null}
             </View>

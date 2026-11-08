@@ -9,7 +9,7 @@
 import { TipoMedicao } from '../types';
 
 const ROTULOS_TIPO: Record<TipoMedicao, string> = {
-  transporte_publico: 'Transporte publico (SPTrans)',
+  transporte_publico: 'Transporte público (SPTrans)',
 };
 
 /**
@@ -21,7 +21,7 @@ const ROTULOS_TIPO: Record<TipoMedicao, string> = {
  */
 const ROTULOS_PARAMETRO: Record<string, string> = {
   linhas_monitoradas: 'Linhas monitoradas',
-  veiculos_em_operacao: 'Veiculos em operacao',
+  veiculos_em_operacao: 'Veículos em operação',
   linhas_exemplo: 'Linhas (exemplo, sem token)',
 };
 
@@ -55,7 +55,7 @@ export function formatarNumero(valor: number): string {
  * EXEMPLO (servidor sem token SPTRANS_TOKEN), ou seja, não é tempo real.
  */
 export const AVISO_DADO_EXEMPLO =
-  'Dado de EXEMPLO (nao e tempo real): o servidor esta sem token da SPTrans.';
+  'Dado de EXEMPLO (não é tempo real): o servidor está sem token da SPTrans.';
 
 /** Rótulo PT-BR do sentido de uma linha (1 = ida, 2 = volta). */
 export function rotuloSentido(sentido: number): string {
@@ -70,7 +70,7 @@ export function rotuloSentido(sentido: number): string {
 
 /** Rótulo PT-BR de acessibilidade de um veículo (ex.: piso baixo/elevador). */
 export function rotuloAcessivel(acessivel: boolean): string {
-  return acessivel ? 'Acessivel' : 'Nao acessivel';
+  return acessivel ? 'Acessível' : 'Não acessível';
 }
 
 /** Formata um timestamp ISO 8601 para data/hora local legível (pt-BR). */
@@ -101,10 +101,10 @@ export function rotuloVeiculosEmOperacao(
 ): string {
   const sufixo = tempoReal ? '' : ' (exemplo)';
   if (quantidade <= 0) {
-    return `Sem veiculos no momento${sufixo}`;
+    return `Sem veículos no momento${sufixo}`;
   }
   if (quantidade === 1) {
-    return `1 em operacao${sufixo}`;
+    return `1 em operação${sufixo}`;
   }
-  return `${quantidade} em operacao${sufixo}`;
+  return `${quantidade} em operação${sufixo}`;
 }

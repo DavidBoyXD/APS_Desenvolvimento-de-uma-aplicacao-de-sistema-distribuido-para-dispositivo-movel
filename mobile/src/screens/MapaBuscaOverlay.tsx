@@ -186,7 +186,7 @@ export default function MapaBuscaOverlay({
         if (!montado.ativo) {
           return;
         }
-        setErroBusca(mensagemDeErro(e, 'Nao foi possivel realizar a busca.'));
+        setErroBusca(mensagemDeErro(e, 'Não foi possível realizar a busca.'));
         setDetalheBusca(detalheDeErro(e));
       } finally {
         if (montado.ativo) {
@@ -245,12 +245,12 @@ export default function MapaBuscaOverlay({
       const nome = linhaSelecionada?.letreiro ?? linhaRotulo ?? 'Linha';
       if (typeof quantidadeVeiculos === 'number') {
         const sufixo =
-          quantidadeVeiculos === 1 ? '1 veiculo' : `${quantidadeVeiculos} veiculos`;
-        return `${nome} · ${sufixo} em operacao`;
+          quantidadeVeiculos === 1 ? '1 veículo' : `${quantidadeVeiculos} veículos`;
+        return `${nome} · ${sufixo} em operação`;
       }
       return nome;
     }
-    return 'Toque para ver onibus de uma linha ou localizar uma parada';
+    return 'Toque para ver ônibus de uma linha ou localizar uma parada';
   })();
 
   return (
@@ -529,8 +529,8 @@ function Catalogo({
       ) : (
         <Text style={styles.catalogoDica}>
           Na aba Linhas, busque o letreiro ou o trajeto e toque em "Ver no mapa"
-          para ver a posicao dos onibus. Na aba Paradas, busque pelo nome e toque
-          em "Ver no mapa" para localizar a parada. As linhas que voce favoritar
+          para ver a posição dos ônibus. Na aba Paradas, busque pelo nome e toque
+          em "Ver no mapa" para localizar a parada. As linhas que você favoritar
           aparecem aqui.
         </Text>
       )}

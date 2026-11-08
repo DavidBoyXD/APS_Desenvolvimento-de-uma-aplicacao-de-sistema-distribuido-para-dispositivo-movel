@@ -43,7 +43,7 @@ export default function MapaScreen({ navigation }: Props) {
       const msg =
         e instanceof ApiError
           ? e.mensagem
-          : 'Ocorreu um erro inesperado ao carregar as regioes.';
+          : 'Ocorreu um erro inesperado ao carregar as regiões.';
       setErro(msg);
       setDetalheErro(e instanceof ApiError ? e.detalhe ?? null : null);
     } finally {
@@ -66,7 +66,7 @@ export default function MapaScreen({ navigation }: Props) {
   );
 
   if (carregando) {
-    return <EstadoCarregando texto="Carregando regioes..." />;
+    return <EstadoCarregando texto="Carregando regiões..." />;
   }
 
   if (erro) {
@@ -81,17 +81,17 @@ export default function MapaScreen({ navigation }: Props) {
 
   if (regioes.length === 0) {
     return (
-      <EstadoVazio mensagem="Nenhuma regiao de Sao Paulo cadastrada no servidor." />
+      <EstadoVazio mensagem="Nenhuma região de São Paulo cadastrada no servidor." />
     );
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.listaCabecalho}>
-        <Text style={styles.listaTitulo}>Regioes monitoradas em Sao Paulo</Text>
+        <Text style={styles.listaTitulo}>Regiões monitoradas em São Paulo</Text>
         <Text style={styles.listaDica}>
-          No mapa voce tambem pode buscar linhas e paradas e trocar o estilo do
-          mapa (Padrao, OSM.de ou Topografico).
+          No mapa você também pode buscar linhas e paradas e ver a posição dos
+          ônibus e das paradas.
         </Text>
         <View style={styles.cabecalhoAcoes}>
           {/*
@@ -111,7 +111,7 @@ export default function MapaScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('Linhas')}
             accessibilityRole="button"
           >
-            <Text style={styles.botaoAlertasTexto}>Linhas de onibus</Text>
+            <Text style={styles.botaoAlertasTexto}>Linhas de ônibus</Text>
           </Pressable>
           <Pressable
             style={styles.botaoAlertas}

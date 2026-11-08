@@ -206,7 +206,7 @@ export default function LinhasScreen({ navigation }: Props) {
           setLinhas(null);
         }
       } catch (e) {
-        setErroBusca(mensagemDeErro(e, 'Nao foi possivel realizar a busca.'));
+        setErroBusca(mensagemDeErro(e, 'Não foi possível realizar a busca.'));
         setDetalheBusca(detalheDeErro(e));
       } finally {
         setBuscando(false);
@@ -276,8 +276,8 @@ export default function LinhasScreen({ navigation }: Props) {
           mensagemDeErro(
             e,
             alvo === 'posicoes'
-              ? 'Nao foi possivel carregar a posicao dos veiculos.'
-              : 'Nao foi possivel carregar a previsao de chegada.',
+              ? 'Não foi possível carregar a posição dos veículos.'
+              : 'Não foi possível carregar a previsão de chegada.',
           ),
         );
         setDetalheErroDetalhe(detalheDeErro(e));
@@ -317,7 +317,7 @@ export default function LinhasScreen({ navigation }: Props) {
       <Text style={styles.rotuloCampo}>
         {aba === 'linhas'
           ? 'Buscar linha (ex.: 8000, Lapa, Terminal)'
-          : 'Buscar parada (ex.: Av. Paulista, Se)'}
+          : 'Buscar parada (ex.: Av. Paulista, Sé)'}
       </Text>
       <TextInput
         style={styles.input}
@@ -394,7 +394,7 @@ export default function LinhasScreen({ navigation }: Props) {
                   onPress={() => carregarDetalhe(linha, 'posicoes')}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.botaoAcaoTexto}>Ver posicao</Text>
+                  <Text style={styles.botaoAcaoTexto}>Ver posição</Text>
                 </Pressable>
                 <Pressable
                   style={[
@@ -406,7 +406,7 @@ export default function LinhasScreen({ navigation }: Props) {
                   onPress={() => carregarDetalhe(linha, 'previsao')}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.botaoAcaoTexto}>Ver previsao</Text>
+                  <Text style={styles.botaoAcaoTexto}>Ver previsão</Text>
                 </Pressable>
               </View>
 
@@ -492,7 +492,7 @@ function Posicoes({
   const temVeiculos = quantidade > 0;
   return (
     <View style={styles.detalheBloco}>
-      <Text style={styles.detalheTitulo}>Posicao dos veiculos</Text>
+      <Text style={styles.detalheTitulo}>Posição dos veículos</Text>
       {/* Selo com a contagem de veiculos em operacao: verde quando ha veiculos,
           neutro (cinza) quando a linha nao tem veiculos no momento. O numero vem
           do tamanho da lista retornada por getPosicoesLinha; quando o dado e de
@@ -513,7 +513,7 @@ function Posicoes({
         </Text>
       </View>
       <Text style={styles.detalheMeta}>
-        Horario de referencia: {formatarTimestamp(posicoes.horario_referencia)}
+        Horário de referência: {formatarTimestamp(posicoes.horario_referencia)}
       </Text>
       {!posicoes.tempo_real ? (
         <Text style={styles.avisoExemplo}>{AVISO_DADO_EXEMPLO}</Text>
@@ -528,7 +528,7 @@ function Posicoes({
         </Pressable>
       ) : null}
       {posicoes.veiculos.length === 0 ? (
-        <Text style={styles.vazio}>Nenhum veiculo em operacao no momento.</Text>
+        <Text style={styles.vazio}>Nenhum veículo em operação no momento.</Text>
       ) : (
         posicoes.veiculos.map((veiculo, indice) => (
           // Compoe a key com o indice: dois veiculos podem compartilhar o mesmo
@@ -554,15 +554,15 @@ function Posicoes({
 function Previsao({ previsao }: { previsao: PrevisaoLinhaRead }) {
   return (
     <View style={styles.detalheBloco}>
-      <Text style={styles.detalheTitulo}>Previsao de chegada</Text>
+      <Text style={styles.detalheTitulo}>Previsão de chegada</Text>
       <Text style={styles.detalheMeta}>
-        Horario de referencia: {formatarTimestamp(previsao.horario_referencia)}
+        Horário de referência: {formatarTimestamp(previsao.horario_referencia)}
       </Text>
       {!previsao.tempo_real ? (
         <Text style={styles.avisoExemplo}>{AVISO_DADO_EXEMPLO}</Text>
       ) : null}
       {previsao.paradas.length === 0 ? (
-        <Text style={styles.vazio}>Nenhuma parada com previsao no momento.</Text>
+        <Text style={styles.vazio}>Nenhuma parada com previsão no momento.</Text>
       ) : (
         previsao.paradas.map((parada) => (
           <View key={parada.codigo_parada} style={styles.itemParada}>
@@ -572,7 +572,7 @@ function Previsao({ previsao }: { previsao: PrevisaoLinhaRead }) {
               {parada.longitude.toFixed(5)}
             </Text>
             {parada.veiculos.length === 0 ? (
-              <Text style={styles.vazio}>Sem previsao para esta parada.</Text>
+              <Text style={styles.vazio}>Sem previsão para esta parada.</Text>
             ) : (
               parada.veiculos.map((veiculo, indice) => (
                 // Compoe a key com o indice: o mesmo prefixo pode aparecer mais
@@ -669,7 +669,7 @@ function NavegacaoAssistida({
       ) : (
         <Text style={styles.assistidaDica}>
           Digite o letreiro ou o trajeto no campo acima para buscar uma linha.
-          As linhas que voce favoritar aparecem aqui.
+          As linhas que você favoritar aparecem aqui.
         </Text>
       )}
     </View>

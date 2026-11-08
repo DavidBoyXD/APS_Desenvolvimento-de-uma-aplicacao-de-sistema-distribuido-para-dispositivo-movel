@@ -215,7 +215,7 @@ async function tentarRequisicao<T>(
     const mensagem =
       erro && typeof erro.mensagem === 'string' && erro.mensagem.length > 0
         ? erro.mensagem
-        : `O servidor respondeu com erro (codigo ${resposta.status}).`;
+        : `O servidor respondeu com erro (código ${resposta.status}).`;
     const detalhe =
       erro && typeof erro.detalhe === 'string' && erro.detalhe.length > 0
         ? erro.detalhe
@@ -276,8 +276,8 @@ async function requisitar<T>(
   // Esgotou as tentativas de rede/timeout: monta a ApiError final com detalhe.
   const falha = ultimaFalha as FalhaDeRede;
   const mensagem = falha.timeout
-    ? 'A conexao demorou demais para responder. Verifique se o servidor esta ativo e tente novamente.'
-    : 'Nao foi possivel conectar ao servidor. Verifique sua conexao e o endereco da API.';
+    ? 'A conexão demorou demais para responder. Verifique se o servidor está ativo e tente novamente.'
+    : 'Não foi possível conectar ao servidor. Verifique sua conexão e o endereço da API.';
   const detalhe = `${falha.detalhe} (apos ${MAX_TENTATIVAS} tentativas)`;
   throw new ApiError(mensagem, 0, detalhe);
 }

@@ -29,4 +29,21 @@ export type RootStackParamList = {
    * se o mapa nativo falhar, só esta tela é afetada e o app continua abrindo.
    */
   MapaVisual: { codigoLinha?: number; linhaRotulo?: string } | undefined;
+  /**
+   * Fluxo de CONSENTIMENTO (LGPD) exibido na primeira abertura (ou quando a
+   * versão dos Termos muda). Sem parâmetros: a tela GRAVA a resposta no
+   * armazenamento e pede ao gate em App.tsx para REAVALIAR o consentimento via
+   * Context (useReavaliarConsentimento), em vez de receber um callback por
+   * params de rota (que não seria serializável).
+   */
+  Consentimento: undefined;
+  /** Política de Privacidade (texto legível, sem WebView). */
+  PoliticaPrivacidade: undefined;
+  /** Termos de Uso (texto legível, sem WebView). */
+  TermosDeUso: undefined;
+  /**
+   * Privacidade / Direitos do titular (LGPD): ver os dados guardados LOCALMENTE
+   * no aparelho, excluí-los e revogar o consentimento de localização.
+   */
+  Privacidade: undefined;
 };

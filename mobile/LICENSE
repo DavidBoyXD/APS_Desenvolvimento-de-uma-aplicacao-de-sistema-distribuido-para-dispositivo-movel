@@ -1,3 +1,13 @@
+NOTA (projeto APS): este arquivo é herdado do template oficial da Expo usado
+para criar o app e refere-se ao software da Expo/650 Industries, não ao código
+deste trabalho acadêmico. A licença do PROJETO é a da raiz do repositório
+(../LICENSE), sob a qual o código próprio é distribuído. Esta cópia é mantida
+apenas para preservar o aviso de licença do template. Veja também
+docs/11_licencas_e_atribuicoes.md para a auditoria completa de licenças
+(código, OpenStreetMap/ODbL, Leaflet BSD-2 e fonte do sistema).
+
+--------------------------------------------------------------------------------
+
 The MIT License (MIT)
 
 Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)

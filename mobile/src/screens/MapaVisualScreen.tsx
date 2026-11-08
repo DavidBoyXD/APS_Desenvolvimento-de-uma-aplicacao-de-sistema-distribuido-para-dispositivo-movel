@@ -46,6 +46,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -71,6 +72,8 @@ import {
   alternarFavoritoLinha,
   carregarFavoritosLinhas,
 } from '../ui/favoritos';
+import { carregarConsentimento } from '../ui/consentimento';
+import { obterPosicaoAtual } from '../ui/localizacao';
 import MapaBuscaOverlay from './MapaBuscaOverlay';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MapaVisual'>;
@@ -195,6 +198,12 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
         // window.mostrarParada possa limpar e recriar o(s) marcador(es) de
         // parada sem afetar regioes nem veiculos.
         var camadaParadas = L.layerGroup().addTo(mapa);
+
+        // Camada SOMENTE do marcador "Voce esta aqui" (GPS). Isolada para que
+        // window.mostrarMinhaLocalizacao possa limpar e recriar o marcador da
+        // posicao do usuario sem afetar regioes, veiculos nem paradas. So e
+        // populada APOS consentimento explicito de localizacao (ver React).
+        var camadaMinhaLocalizacao = L.layerGroup().addTo(mapa);
 
         function criarPopupParada(p) {
           var cont = document.createElement('div');
@@ -323,6 +332,32 @@ function montarHtmlMapa(pontos: PontoMapa[]): string {
           }
           return true;
         };
+
+        // Ponte React -> WebView: marcador "Voce esta aqui" (GPS). Recebe um
+        // JSON com { lat, lon }. Limpa o marcador anterior, plota o novo numa
+        // camada propria, abre um popup "Voce esta aqui" e centraliza (flyTo).
+        // So e chamada pelo React APOS o consentimento explicito de localizacao.
+        window.mostrarMinhaLocalizacao = function (json) {
+          try {
+            var p = JSON.parse(json);
+            camadaMinhaLocalizacao.clearLayers();
+            if (
+              !p ||
+              typeof p.lat !== 'number' ||
+              typeof p.lon !== 'number'
+            ) {
+              return true;
+            }
+            var marcador = L.marker([p.lat, p.lon]);
+            marcador.bindPopup('<strong>Você está aqui</strong>');
+            marcador.addTo(camadaMinhaLocalizacao);
+            mapa.flyTo([p.lat, p.lon], 16);
+            marcador.openPopup();
+          } catch (e) {
+            // JSON invalido: ignora para nao derrubar o mapa.
+          }
+          return true;
+        };
       })();
     </script>
   </body>
@@ -374,6 +409,16 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
   // Favoritos locais (reutiliza src/ui/favoritos.ts). Carregados uma vez.
   const [favoritos, setFavoritos] = useState<LinhaFavorita[]>([]);
 
+  // Consentimento de LOCALIZAÇÃO (LGPD). Começa false e só vira true depois de
+  // lermos o registro de consentimento do aparelho (src/ui/consentimento.ts)
+  // com consentiuLocalizacao === true. O controle "Você está aqui" (GPS) só
+  // aparece/age quando este estado é true: nada de permissão de SO antes do sim.
+  const [consentiuLocalizacao, setConsentiuLocalizacao] =
+    useState<boolean>(false);
+  // Indica se estamos obtendo a posição (evita toques repetidos no botão).
+  const [buscandoLocalizacao, setBuscandoLocalizacao] =
+    useState<boolean>(false);
+
   // Id de "geração" do HTML: muda quando trocamos o conjunto de marcadores
   // (nova linha, ou alternancia regioes<->veiculos), forçando um remount do
   // WebView com fitBounds no novo conjunto. NÃO muda a cada auto-refresh.
@@ -393,6 +438,21 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
     void carregarFavoritosLinhas().then((lista) => {
       if (ativo) {
         setFavoritos(lista);
+      }
+    });
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  // Lê o consentimento de localização uma vez ao abrir a tela. Só habilitamos o
+  // controle "Você está aqui" (GPS) quando consentiuLocalizacao for true. NUNCA
+  // pedimos permissão de SO nesta leitura; apenas decidimos exibir o botão.
+  useEffect(() => {
+    let ativo = true;
+    void carregarConsentimento().then((registro) => {
+      if (ativo) {
+        setConsentiuLocalizacao(registro?.consentiuLocalizacao === true);
       }
     });
     return () => {
@@ -551,6 +611,83 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
       );
     }
   }, []);
+
+  // "Você está aqui" (GPS) sob demanda, CONDICIONADO AO CONSENTIMENTO.
+  //
+  // Privacidade/LGPD: só seguimos se o usuário consentiu explicitamente com a
+  // localização (consentiuLocalizacao === true). É obterPosicaoAtual (wrapper
+  // de expo-location em src/ui/localizacao.ts) que, internamente, pede a
+  // permissão de SO — portanto NUNCA chamamos nada de GPS sem consentimento.
+  //
+  // A coordenada obtida é usada APENAS para plotar o marcador local no WebView
+  // (window.mostrarMinhaLocalizacao). Ela NÃO é enviada ao back-end: não há
+  // nenhuma chamada a src/api/client aqui. Fica só no aparelho.
+  //
+  // Todos os estados de retorno são tratados sem derrubar o mapa: avisos
+  // amigáveis via Alert para 'sem_permissao', 'servico_desligado',
+  // 'indisponivel' e 'erro'; o restante da tela continua funcionando.
+  const mostrarMinhaLocalizacao = useCallback(async () => {
+    if (!consentiuLocalizacao) {
+      // Salvaguarda extra: sem consentimento, não acionamos o GPS de forma
+      // alguma (o botão já fica oculto, mas reforçamos aqui).
+      return;
+    }
+    if (buscandoLocalizacao) {
+      return;
+    }
+    setBuscandoLocalizacao(true);
+    try {
+      const resultado = await obterPosicaoAtual();
+      if (!montado.current) {
+        return;
+      }
+      switch (resultado.status) {
+        case 'ok': {
+          if (webviewRef.current && webviewPronto.current) {
+            // Apenas o marcador local: lat/lon NÃO vão para o back-end.
+            const ponto = {
+              lat: resultado.latitude,
+              lon: resultado.longitude,
+            };
+            const json = JSON.stringify(ponto).replace(/</g, '\\u003c');
+            webviewRef.current.injectJavaScript(
+              `window.mostrarMinhaLocalizacao && window.mostrarMinhaLocalizacao(${JSON.stringify(
+                json,
+              )}); true;`,
+            );
+          }
+          break;
+        }
+        case 'sem_permissao':
+          Alert.alert(
+            'Permissão de localização necessária',
+            'Para mostrar "Você está aqui", permita o acesso à localização nas configurações do aparelho.',
+          );
+          break;
+        case 'servico_desligado':
+          Alert.alert(
+            'Localização desligada',
+            'Ative a localização (GPS) do aparelho e tente novamente.',
+          );
+          break;
+        case 'indisponivel':
+          Alert.alert(
+            'Recurso indisponível',
+            'A localização não está disponível neste aplicativo. O restante do mapa continua funcionando.',
+          );
+          break;
+        default:
+          Alert.alert(
+            'Não foi possível obter sua localização',
+            'Tente novamente em instantes. O restante do mapa continua funcionando.',
+          );
+      }
+    } finally {
+      if (montado.current) {
+        setBuscandoLocalizacao(false);
+      }
+    }
+  }, [consentiuLocalizacao, buscandoLocalizacao]);
 
   // Marca o WebView como pronto. O tile é fixo (OSM padrão), embutido no HTML,
   // então não há nada a aplicar aqui após a carga.
@@ -758,6 +895,25 @@ export default function MapaVisualScreen({ navigation, route }: Props) {
         </View>
       ) : null}
 
+      {/* Controle flutuante "Você está aqui" (GPS). Só aparece quando o usuário
+          consentiu com a localização (consentiuLocalizacao). Sem consentimento,
+          o botão não é renderizado e nenhuma permissão de SO é pedida. */}
+      {consentiuLocalizacao ? (
+        <View style={styles.areaLocalizacao} pointerEvents="box-none">
+          <Pressable
+            style={styles.botaoLocalizacao}
+            onPress={mostrarMinhaLocalizacao}
+            disabled={buscandoLocalizacao}
+            accessibilityRole="button"
+            accessibilityLabel="Mostrar você está aqui no mapa"
+          >
+            <Text style={styles.botaoLocalizacaoTexto}>
+              {buscandoLocalizacao ? '📍 Localizando...' : '📍 Você está aqui'}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       {/* Camada de BUSCA/CATÁLOGO (menu do mapa), sobreposta ao mapa. */}
       <MapaBuscaOverlay
         linhaSelecionada={linhaSelecionada}
@@ -868,6 +1024,30 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#0B6E4F',
+  },
+  // Área do controle "Você está aqui": canto inferior direito, acima do painel
+  // inferior (camada de busca/catálogo) e dos controles de zoom (à esquerda).
+  areaLocalizacao: {
+    position: 'absolute',
+    right: 12,
+    bottom: 96,
+    zIndex: 10,
+  },
+  botaoLocalizacao: {
+    backgroundColor: '#0B6E4F',
+    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  botaoLocalizacaoTexto: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
   },
   centro: {
     flex: 1,

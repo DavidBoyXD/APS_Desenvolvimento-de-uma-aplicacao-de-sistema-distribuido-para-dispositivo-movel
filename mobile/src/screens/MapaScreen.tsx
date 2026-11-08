@@ -120,6 +120,13 @@ export default function MapaScreen({ navigation }: Props) {
           >
             <Text style={styles.botaoAlertasTexto}>Ver alertas</Text>
           </Pressable>
+          <Pressable
+            style={styles.botaoAlertas}
+            onPress={() => navigation.navigate('Privacidade')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.botaoAlertasTexto}>Privacidade</Text>
+          </Pressable>
         </View>
       </View>
 

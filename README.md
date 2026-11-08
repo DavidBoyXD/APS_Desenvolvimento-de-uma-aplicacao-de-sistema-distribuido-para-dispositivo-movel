@@ -38,8 +38,8 @@ de dados, caracterizando o sistema distribuído:
   estão também **integrados ao mapa** (tela "Ver no mapa"), numa camada flutuante
   sobre o mapa com um **painel expansível por toque** que respeita a **área
   segura** do aparelho, permitindo buscar/selecionar uma linha e vê-la plotada; o
-  mapa ainda oferece um **seletor de estilo cartográfico** (Padrão, Humanitário ou
-  Topográfico, sem satélite e sem chave de API).
+  mapa usa um **único tile cartográfico fixo** (OpenStreetMap padrão, sem
+  satélite e sem chave de API).
 - Servidor de API REST (Python / FastAPI) que expõe os dados e a lógica e consome
   as fontes externas de SP.
 - Banco de dados (SQLite) que persiste regiões, medições e alertas.
@@ -245,12 +245,10 @@ Leaflet), portanto **não precisa de chave do Google Maps** nem de billing;
 requer apenas internet para carregar os tiles. Sobre o mapa há uma camada de
 **busca integrada** (barra flutuante + painel expansível por toque com catálogo
 e favoritos): dá para buscar e selecionar uma linha e vê-la plotada sem sair do
-mapa. Um **seletor de estilo** (no canto inferior direito, fora da barra de
-busca e dos controles de zoom) alterna entre **Padrão** (OpenStreetMap),
-**OSM.de** (servidor alemão oficial do OpenStreetMap, `tile.openstreetmap.de`)
-e **Topográfico** (OpenTopoMap) — todos cartográficos, **sem satélite** e **sem
-chave de API** —, trocando a camada de tiles sem recriar o mapa e guardando a
-preferência no aparelho. Ao selecionar uma **parada** na busca, o mapa plota um
+mapa. O mapa usa um **único tile cartográfico fixo** — **OpenStreetMap padrão**
+(`tile.openstreetmap.org`), cartográfico, **sem satélite** e **sem chave de
+API** — com a atribuição obrigatória "© colaboradores do OpenStreetMap" exibida
+no próprio mapa. Ao selecionar uma **parada** na busca, o mapa plota um
 **marcador** nela (nome + endereço) e centraliza a visão no ponto. Com uma linha
 selecionada (pela busca no mapa ou vinda
 das Linhas de ônibus), o mapa **atualiza automaticamente** a posição dos veículos

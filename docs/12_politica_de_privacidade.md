@@ -2,7 +2,7 @@
 
 **Aplicativo:** Monitoramento de transporte público em SP
 **Versão desta política:** 1.0
-**Data de vigência:** 10 de novembro de 2026
+**Data de vigência:** 10 de novembro de 2025
 **Encarregado pelo tratamento de dados (DPO) / canal de contato:** David Andrew — daviddeziderio07@gmail.com
 
 > **Aviso acadêmico:** este é um projeto **ACADÊMICO** desenvolvido para a disciplina de

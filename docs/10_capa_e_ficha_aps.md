@@ -1,7 +1,9 @@
 # 10. Capa e Ficha de APS
 
-Os dados desta página dependem de informações pessoais e institucionais do autor.
-Para não inventar dados, os campos estão marcados como `[preencher pelo autor]`.
+Os dados do grupo (nomes e RA) estão preenchidos abaixo. Apenas os campos que
+dependem de informação institucional específica permanecem marcados como
+`[preencher pelo autor]`: professor(a) orientador(a), polo/campus, turma e data
+de entrega.
 
 ## 10.1 Capa
 
@@ -16,39 +18,50 @@ Atividades Praticas Supervisionadas (APS)
 
 Titulo do trabalho:
 Desenvolvimento de uma aplicacao de sistema distribuido para dispositivo movel
-- Monitor de Transporte Publico de Sao Paulo (SPTrans Olho Vivo)
+- Monitoramento de transporte publico em SP
 
-Aluno(s) e RA:
-- [preencher pelo autor: Nome completo] - RA: [preencher pelo autor]
-- [preencher pelo autor: Nome completo] - RA: [preencher pelo autor]
-  (repetir conforme o numero de integrantes)
+Alunos e RA:
+- David Andrew Deziderio Gomes Silva - RA F3530E8
+- Carlos Henrique Santana Rodrigues - RA R013944
+- Henrique Vitale Cassu - RA N916FJ2
+- Marcelo Augusto de Souza Silva - RA F356JE0
 
 Professor(a) orientador(a): [preencher pelo autor]
 Polo / Campus: [preencher pelo autor]
-Cidade / UF: [preencher pelo autor]
-Ano: 2026
+Turma: [preencher pelo autor]
+Cidade / UF: Sao Paulo / SP
+Ano: 2025
 ```
 
 ## 10.2 Ficha de APS
 
 A ficha de APS é o formulário padrão da UNIP entregue junto ao trabalho. Os
-campos abaixo devem ser preenchidos e assinados pelo autor conforme o modelo
+campos abaixo estão preenchidos com os dados do grupo; os itens institucionais
+específicos e as assinaturas devem ser completados pelo autor conforme o modelo
 oficial fornecido pela instituição:
 
 - Nome da instituição: Universidade Paulista (UNIP)
 - Curso: Ciência da Computação
-- Disciplina: Sistemas Distribuídos
-- Semestre/Turma: [preencher pelo autor]
+- Disciplina: Sistemas Distribuídos (SD)
+- Semestre: 7º / 8º
+- Ano: 2025
+- Turma: [preencher pelo autor]
 - Título da APS: Desenvolvimento de uma aplicação de sistema distribuído para
-  dispositivo móvel (Monitor de Transporte Público de São Paulo)
-- Integrantes do grupo (nome e RA): [preencher pelo autor]
-- Professor(a): [preencher pelo autor]
+  dispositivo móvel - Monitoramento de transporte público em SP
+- Integrantes do grupo (nome e RA):
+  - David Andrew Dezidério Gomes Silva - RA F3530E8
+  - Carlos Henrique Santana Rodrigues - RA R013944
+  - Henrique Vitale Cassú - RA N916FJ2
+  - Marcelo Augusto de Souza Silva - RA F356JE0
+- Professor(a) orientador(a): [preencher pelo autor]
+- Polo / Campus: [preencher pelo autor]
 - Data de entrega: [preencher pelo autor]
 - Nota / avaliação: (reservado ao professor)
 - Assinaturas dos integrantes: [preencher pelo autor]
 
 > Observação: substitua este texto pelo formulário oficial da Ficha de APS da
-> UNIP, mantendo o título e a descrição do trabalho aqui indicados.
+> UNIP, mantendo o título, os integrantes e a descrição do trabalho aqui
+> indicados.
 
 ## 10.3 Resumo do trabalho (para a capa/apresentação)
 
@@ -59,6 +72,13 @@ e um banco de dados (SQLite, migrável para PostgreSQL). Apoia-se em fontes
 OFICIAIS: **transporte público** com a SPTrans Olho Vivo (fonte OFICIAL da
 Prefeitura de SP, tempo real com token gratuito e fallback de exemplo sem token) e
 **base geográfica** com a API oficial do IBGE (UF 35 = SP). Oferece consulta por
-região ligada a um mapa enquadrado em São Paulo, relatórios agregados (com gráfico
-de barras), alertas por limiar e tratamento de erros padronizado. A documentação
-completa está nos arquivos numerados desta pasta `docs/` (ver `00_LEIA-ME.md`).
+região, um mapa visual (WebView + Leaflet + OpenStreetMap) com busca integrada,
+busca livre de linhas e paradas com correspondência aproximada (fuzzy), favoritos
+de linhas salvos localmente, atualização automática da posição dos veículos,
+relatórios agregados com histórico e gráfico de barras, alertas por limiar e
+tratamento de erros padronizado. O tratamento de dados pessoais segue a LGPD
+(consentimento explícito, Política de Privacidade, Termos de Uso e tela de
+Privacidade para acesso e exclusão dos dados locais), e o recurso "Você está
+aqui" (GPS) é condicionado ao consentimento, com a coordenada usada apenas no
+aparelho. A documentação completa está nos arquivos numerados desta pasta `docs/`
+(ver `00_LEIA-ME.md`).

@@ -2,7 +2,7 @@
 
 **Aplicativo:** Monitoramento de transporte público em SP
 **Versão deste documento:** 1.0
-**Data:** 10 de novembro de 2026
+**Data:** 10 de novembro de 2025
 **Responsável / contato:** David Andrew — daviddeziderio07@gmail.com
 
 > **Aviso acadêmico:** este é um projeto **ACADÊMICO** desenvolvido para a disciplina de

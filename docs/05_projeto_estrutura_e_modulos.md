@@ -23,7 +23,10 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
 │   ├── 07_apresentacao_do_programa.md
 │   ├── 08_bibliografia.md
 │   ├── 09_declaracao_uso_ia.md
-│   └── 10_capa_e_ficha_aps.md
+│   ├── 10_capa_e_ficha_aps.md
+│   ├── 11_licencas_e_atribuicoes.md
+│   ├── 12_politica_de_privacidade.md
+│   └── 13_termos_de_uso.md
 ├── server/                         # BACK-END (API REST FastAPI + SQLite)
 │   ├── requirements.txt            # dependencias fixadas por versao
 │   ├── conftest.py                 # configuracao dos testes (banco em memoria)
@@ -80,15 +83,21 @@ APS_Desenvolvimento-de-uma-aplicacao-de-sistema-distribuido-para-dispositivo-mov
         │   ├── RelatoriosScreen.tsx # barras horizontais (View) + transporte_publico
         │   ├── AlertasScreen.tsx
         │   ├── LinhasScreen.tsx     # busca de linhas/paradas + posicao/previsao (lista)
-        │   ├── MapaVisualScreen.tsx # mapa com busca integrada, catalogo e estilos
-        │   └── MapaBuscaOverlay.tsx # camada de busca/catalogo sobreposta ao mapa
+        │   ├── MapaVisualScreen.tsx # mapa (Leaflet/OSM) com busca integrada + "Voce esta aqui"
+        │   ├── MapaBuscaOverlay.tsx # camada de busca/catalogo sobreposta ao mapa
+        │   ├── ConsentimentoScreen.tsx     # gate LGPD: aceite + consentimento de GPS
+        │   ├── PoliticaPrivacidadeScreen.tsx # texto da politica de privacidade
+        │   ├── TermosDeUsoScreen.tsx         # texto dos termos de uso
+        │   └── PrivacidadeScreen.tsx         # direitos do titular: acesso/exclusao/revogacao
         └── ui/
             ├── estados.tsx         # EstadoCarregando/EstadoErro/EstadoVazio
             ├── webview.ts          # carregamento defensivo do react-native-webview
             ├── busca.ts            # busca aproximada (fuzzy): normalizacao + similaridade
             ├── catalogo.ts         # navegacao assistida (dica de busca de paradas)
             ├── favoritos.ts        # favoritos locais de linhas (AsyncStorage defensivo)
-            ├── estiloMapa.ts       # estilos cartograficos do mapa + preferencia local
+            ├── consentimento.ts    # registro de consentimento LGPD (AsyncStorage defensivo)
+            ├── consentimentoContexto.tsx # contexto para reavaliar o gate de consentimento
+            ├── localizacao.ts      # wrapper defensivo do expo-location ("Voce esta aqui")
             └── rotulos.ts          # rotulos PT-BR (transporte_publico)
 ```
 
@@ -260,18 +269,21 @@ origem do dado.
 - **`src/screens/MapaVisualScreen.tsx`** - tela de **mapa com busca integrada**,
   uma segunda porta de entrada (mais visual) para acompanhar as linhas,
   complementando a tela de Linhas (que continua em LISTA). O mapa (WebView +
-  Leaflet) ocupa a tela toda; por cima dele, numa **camada React Native
-  sobreposta** (`position: absolute` + `zIndex`, nunca HTML dentro do WebView),
-  ficam uma **barra de busca flutuante** no topo (campo "Buscar linha ou parada"
-  + abas Linhas/Paradas), um **painel inferior expansível por toque** e um
-  **seletor de estilo cartográfico**. Sem linha selecionada, plota as **regiões**
-  (balão com "Ver detalhe"); ao selecionar uma linha (por parâmetro de rota OU
-  pela busca na própria tela), plota os **veículos** com **auto-refresh**
-  (10/15/30s, botão pausar). O auto-refresh atualiza os marcadores via
-  `injectJavaScript` (`window.atualizarVeiculos`) sem recriar o HTML; o
-  `fitBounds` só ocorre ao montar um **novo conjunto** de marcadores (nova linha
-  ou troca de modo), identificado por uma "geração" que também define a `key` do
-  WebView.
+  Leaflet + OpenStreetMap, com **um único tile fixo** do OSM) ocupa a tela toda;
+  por cima dele, numa **camada React Native sobreposta** (`position: absolute` +
+  `zIndex`, nunca HTML dentro do WebView), ficam uma **barra de busca flutuante**
+  no topo (campo "Buscar linha ou parada" + abas Linhas/Paradas), um **painel
+  inferior expansível por toque** e o controle **"Você está aqui"** (GPS). Sem
+  linha selecionada, plota as **regiões** (balão com "Ver detalhe"); ao selecionar
+  uma linha (por parâmetro de rota OU pela busca na própria tela), plota os
+  **veículos** com **auto-refresh** (10/15/30s, botão pausar). O auto-refresh
+  atualiza os marcadores via `injectJavaScript` (`window.atualizarVeiculos`) sem
+  recriar o HTML; o `fitBounds` só ocorre ao montar um **novo conjunto** de
+  marcadores (nova linha ou troca de modo), identificado por uma "geração" que
+  também define a `key` do WebView. O controle "Você está aqui" só aparece quando
+  o usuário consentiu com a localização (ver `ui/consentimento.ts` e
+  `ui/localizacao.ts`); a coordenada obtida é plotada **apenas no mapa, no
+  aparelho**, e nunca enviada ao back-end.
 - **`src/screens/MapaBuscaOverlay.tsx`** - componentes da camada sobreposta ao
   mapa: a **barra de busca flutuante** e o **painel inferior expansível**. O
   painel, ao ser tocado, alterna entre recolhido (faixa com resumo da linha e
@@ -283,24 +295,10 @@ origem do dado.
   `useSafeAreaInsets`: a barra de busca soma o inset superior (status bar/notch) e
   o painel inferior soma o inset inferior, para não ficar embaixo da barra de
   navegação do Android (botões voltar/home/recentes) nem da home indicator do iOS.
-  Inclui ainda o seletor flutuante de estilo cartográfico, posicionado no canto
-  **inferior direito** (acima do painel inferior, respeitando a safe area) para
-  não colidir com a barra de busca (topo) nem com os controles de zoom +/- do
-  Leaflet, que foram movidos para o canto **inferior esquerdo**. Ao selecionar
-  uma **parada** nos resultados, a tela plota um **marcador** da parada no mapa
-  (nome + endereço) via `window.mostrarParada` e centraliza a visão no ponto.
-- **`src/ui/estiloMapa.ts`** - catálogo e persistência do **estilo cartográfico**
-  do mapa, todos SEM chave e SEM satélite: **Padrão** (OpenStreetMap), **OSM.de**
-  (servidor alemão oficial do OpenStreetMap, `tile.openstreetmap.de`) e
-  **Topográfico** (OpenTopoMap), cada um com URL de tiles, zoom máximo e a
-  **atribuição** correta do provedor (exibida pela Leaflet). Os basemaps da CARTO
-  não são usados (exigem API key) e o OpenStreetMap Humanitarian (HOT, `.fr`) foi
-  removido por aparecer em cinza no aparelho (bloqueio por política de uso). A
-  preferência é guardada **localmente no aparelho** via AsyncStorage, no mesmo
-  padrão defensivo de `favoritos.ts` (carregamento por `require` isolado, com
-  fallback EM MEMÓRIA). A troca de estilo não recria o mapa: a tela injeta
-  `window.trocarEstiloMapa(id)`, que remove a camada de tiles atual e adiciona a
-  nova, **preservando os marcadores**.
+  Os controles de zoom +/- do Leaflet ficam no canto **inferior esquerdo** para
+  não colidir com a barra de busca (topo). Ao selecionar uma **parada** nos
+  resultados, a tela plota um **marcador** da parada no mapa (nome + endereço) via
+  `window.mostrarParada` e centraliza a visão no ponto.
 - **`src/screens/DetalheScreen.tsx`** - medições de transporte público da região,
   com o botão **"Atualizar transporte"** (chama
   `POST /api/v1/regioes/{id}/atualizar-transporte`) e acesso ao relatório.
@@ -324,3 +322,45 @@ origem do dado.
   e de data/hora no padrão pt-BR. Inclui também os rótulos da tela de Linhas: o
   aviso de dado de EXEMPLO (`AVISO_DADO_EXEMPLO`), o sentido (`rotuloSentido`) e a
   acessibilidade do veículo (`rotuloAcessivel`).
+
+### Módulos e telas de conformidade LGPD e localização (GPS)
+
+- **`src/ui/consentimento.ts`** - registro de **consentimento** do usuário
+  (LGPD), persistido **somente no aparelho** via AsyncStorage (wrapper defensivo
+  com `require` isolado e fallback EM MEMÓRIA, mesmo padrão de `favoritos.ts`).
+  Guarda a versão dos Termos/Política aceitos (`VERSAO_TERMOS`, atualmente `1.0`),
+  se a pessoa aceitou os Termos, se consentiu OPCIONALMENTE com a localização e a
+  data/hora (ISO 8601) para comprovação. Expõe `carregarConsentimento`,
+  `salvarConsentimento`, `limparConsentimento` (revogação/exclusão) e
+  `temRespostaConsentimento` (usado pelo gate em `App.tsx` para não reexibir o
+  aviso a cada abertura). Invariante: sem aceite dos Termos não há consentimento
+  de localização.
+- **`src/ui/consentimentoContexto.tsx`** - Context do React que permite à tela de
+  Consentimento pedir ao `App.tsx` para **reavaliar o gate** (relendo o registro)
+  após gravar a resposta, sem passar função por parâmetros de rota (que não são
+  serializáveis). Provido em `App.tsx` e consumido via
+  `useReavaliarConsentimento()`.
+- **`src/ui/localizacao.ts`** - wrapper **defensivo** do `expo-location` para o
+  **"Você está aqui"**. Carrega o módulo nativo por `require` isolado (fallback
+  `indisponivel` se não resolver) e expõe `obterPosicaoAtual`, que verifica os
+  serviços de localização, pede a permissão de SO e devolve latitude/longitude ou
+  um status tratável (`sem_permissao`, `servico_desligado`, `indisponivel`,
+  `erro`) sem nunca lançar. Só deve ser chamado **após** o consentimento explícito
+  de localização; a coordenada é usada apenas no dispositivo, nunca enviada ao
+  back-end.
+- **`src/screens/ConsentimentoScreen.tsx`** - gate de **consentimento LGPD**
+  exibido na primeira abertura (ou quando a versão dos Termos muda). Mostra um
+  resumo honesto, dá acesso à Política de Privacidade e aos Termos de Uso, e traz
+  um **checkbox obrigatório** de aceite dos Termos/Política e um **checkbox
+  opcional** de consentimento de localização. Os botões ACEITAR e RECUSAR gravam
+  o registro de consentimento (recusar não trava o app, apenas desliga o "Você
+  está aqui") e pedem ao gate para reavaliar.
+- **`src/screens/PoliticaPrivacidadeScreen.tsx`** e
+  **`src/screens/TermosDeUsoScreen.tsx`** - exibem, em texto legível (sem
+  WebView), a Política de Privacidade e os Termos de Uso, cujo conteúdo é o dos
+  arquivos `docs/12_politica_de_privacidade.md` e `docs/13_termos_de_uso.md`.
+- **`src/screens/PrivacidadeScreen.tsx`** - tela de **direitos do titular**
+  (LGPD): permite ver os dados guardados **localmente** no aparelho (favoritos e
+  registro de consentimento), **excluir** esses dados locais e **revogar** o
+  consentimento de localização. Como não há conta nem coleta no servidor, os
+  direitos são exercidos diretamente no aparelho.

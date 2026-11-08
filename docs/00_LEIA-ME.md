@@ -1,7 +1,8 @@
-# Documentação da APS - Monitor de Transporte Público de São Paulo (SP)
+# Documentação da APS - Monitoramento de transporte público em SP
 
 Atividades Práticas Supervisionadas (APS) da disciplina **Sistemas Distribuídos (SD)**,
-7o/8o semestre do curso de Ciência da Computação (CC) - Universidade Paulista (UNIP).
+7o/8o semestre do curso de Ciência da Computação (CC) - Universidade Paulista (UNIP),
+ano de 2025.
 
 Tema: **Desenvolvimento de uma aplicação de sistema distribuído para dispositivo móvel**,
 com foco no monitoramento do **transporte público** (frota de ônibus) da cidade de
@@ -34,7 +35,16 @@ A tabela abaixo mapeia o item da APS ao arquivo correspondente.
 | Apresentação do programa em funcionamento | `07_apresentacao_do_programa.md` |
 | Bibliografia | `08_bibliografia.md` |
 | Declaração de uso de IA (norma anexada) | `09_declaracao_uso_ia.md` |
-| Ficha de APS | `10_capa_e_ficha_aps.md` (seção "Ficha de APS") - [preencher pelo autor] |
+| Ficha de APS | `10_capa_e_ficha_aps.md` (seção "Ficha de APS") |
+
+Documentos complementares (conformidade e atribuições), referenciados ao longo
+do trabalho:
+
+| Documento complementar | Arquivo nesta pasta |
+| --- | --- |
+| Licenças e atribuições (auditoria) | `11_licencas_e_atribuicoes.md` |
+| Política de Privacidade (LGPD) | `12_politica_de_privacidade.md` |
+| Termos de Uso | `13_termos_de_uso.md` |
 
 ## Requisito transversal de rastreabilidade
 
@@ -53,24 +63,42 @@ mapeamento fonte -> arquivo/função está detalhado em `06_relatorio_de_codigo.
   [https://servicodados.ibge.gov.br/api/v1/localidades](https://servicodados.ibge.gov.br/api/v1/localidades).
   Aplicada em `server/app/services/ibge.py`.
 
-## Dados a serem preenchidos pelo autor
+## Dados do grupo e itens a preencher pelo autor
 
-Os itens abaixo dependem de informações pessoais/institucionais e por isso NÃO
-foram inventados. Estão marcados como `[preencher pelo autor]` no arquivo
+Os integrantes do grupo e seus RA já estão preenchidos no arquivo
 `10_capa_e_ficha_aps.md`:
 
-- Nome(s) do(s) aluno(s) e respectivos RA (Registro Acadêmico).
-- Nome do professor/orientador e do polo/campus.
-- Turma, período e data de entrega.
+- David Andrew Dezidério Gomes Silva - RA F3530E8
+- Carlos Henrique Santana Rodrigues - RA R013944
+- Henrique Vitale Cassú - RA N916FJ2
+- Marcelo Augusto de Souza Silva - RA F356JE0
+
+Os itens abaixo dependem de informações institucionais específicas e permanecem
+marcados como `[preencher pelo autor]` em `10_capa_e_ficha_aps.md`:
+
+- Nome do(a) professor(a) orientador(a).
+- Polo / Campus.
+- Turma e data de entrega.
 - Assinatura na declaração de uso de IA e na ficha de APS.
 
 ## Resumo técnico do que foi construído
 
 - **Back-end (servidor):** API REST em Python com FastAPI, ORM SQLAlchemy 2.x e
   banco SQLite (migrável para PostgreSQL). Código em `server/`.
-- **Cliente móvel:** aplicativo React Native com Expo (TypeScript), com mapa
-  enquadrado em São Paulo, detalhe por região, relatórios (com gráfico de barras)
-  e alertas. Código em `mobile/`.
+- **Cliente móvel:** aplicativo React Native com Expo (TypeScript), com lista de
+  regiões de São Paulo, detalhe por região, relatórios com histórico acumulado e
+  gráfico de barras, alertas, tela de Linhas de ônibus e um mapa visual
+  (WebView + Leaflet + OpenStreetMap). Código em `mobile/`.
+- **Funções extras (diferenciais):** busca livre com correspondência aproximada
+  (fuzzy), favoritos de linhas salvos localmente (AsyncStorage), atualização
+  automática da posição dos veículos (10/15/30s), relatórios com histórico
+  (limite de 50 por parâmetro) e gráfico de barras, e o recurso "Você está aqui"
+  (GPS via `expo-location`) condicionado ao consentimento explícito.
+- **Conformidade com a LGPD (Lei nº 13.709/2018):** tela de consentimento na
+  primeira execução (checkbox e registro local), Política de Privacidade, Termos
+  de Uso, tela de Privacidade (acesso e exclusão de dados locais, revogação do
+  consentimento), tabela de retenção e encarregado (David Andrew,
+  daviddeziderio07@gmail.com). A localização nunca é enviada ao back-end.
 - **Token da SPTrans:** o transporte público em tempo real usa um token gratuito
   lido da variável de ambiente `SPTRANS_TOKEN` (nunca escrito no código). Sem o
   token, o sistema usa um fallback de exemplo claramente rotulado, de modo que o

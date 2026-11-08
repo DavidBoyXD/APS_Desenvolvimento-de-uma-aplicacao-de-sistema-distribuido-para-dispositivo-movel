@@ -2,7 +2,7 @@
 
 Todas as referências abaixo foram efetivamente utilizadas no projeto. Cada item
 indica onde foi aplicado (arquivo/função). Os links foram acessados durante o
-desenvolvimento (ano de 2026).
+desenvolvimento (ano de 2025).
 
 ## 8.1 Back-end (Python / API REST)
 
@@ -72,6 +72,23 @@ desenvolvimento (ano de 2026).
 - **react-native-safe-area-context** - áreas seguras da tela.
   [https://github.com/th3rdwave/react-native-safe-area-context](https://github.com/th3rdwave/react-native-safe-area-context).
   Aplicado em `mobile/App.tsx`.
+- **react-native-webview** - WebView que hospeda o mapa (Leaflet + OpenStreetMap).
+  [https://docs.expo.dev/versions/v58.0.0/sdk/webview/](https://docs.expo.dev/versions/v58.0.0/sdk/webview/).
+  Aplicado em `mobile/src/screens/MapaVisualScreen.tsx`.
+- **@react-native-async-storage/async-storage** - armazenamento local chave-valor
+  no aparelho.
+  [https://react-native-async-storage.github.io/async-storage/](https://react-native-async-storage.github.io/async-storage/).
+  Aplicado em `mobile/src/ui/favoritos.ts` (favoritos de linhas) e
+  `mobile/src/ui/consentimento.ts` (registro de consentimento LGPD).
+- **expo-location** - acesso à localização (GPS) para o "Você está aqui".
+  [https://docs.expo.dev/versions/v58.0.0/sdk/location/](https://docs.expo.dev/versions/v58.0.0/sdk/location/).
+  Aplicado em `mobile/src/ui/localizacao.ts` e
+  `mobile/src/screens/MapaVisualScreen.tsx`, condicionado ao consentimento do
+  usuário (a coordenada nunca é enviada ao back-end).
+- **Leaflet** - biblioteca JavaScript de mapas carregada via CDN (licença
+  BSD-2-Clause). [https://leafletjs.com](https://leafletjs.com).
+  Aplicado no HTML embutido do mapa em
+  `mobile/src/screens/MapaVisualScreen.tsx`.
 - **TypeScript** - linguagem/tipagem do cliente.
   [https://www.typescriptlang.org](https://www.typescriptlang.org).
 - **MDN - Fetch API** - API de requisições HTTP usada no cliente.
@@ -116,6 +133,16 @@ desenvolvimento (ano de 2026).
   GeoSampa: [https://geosampa.prefeitura.sp.gov.br/](https://geosampa.prefeitura.sp.gov.br/).
   Referenciado na docstring de `server/app/seed.py` (`REGIOES_SEED`).
 
+### 8.3.3 Cartografia do mapa (OpenStreetMap)
+
+- **OpenStreetMap** - tiles e dados cartográficos do mapa visual (© colaboradores
+  do OpenStreetMap). Os dados estão sob a licença **ODbL**, que exige atribuição.
+  Copyright e licença: [https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright).
+  ODbL: [https://opendatacommons.org/licenses/odbl/](https://opendatacommons.org/licenses/odbl/).
+  Aplicado em `mobile/src/screens/MapaVisualScreen.tsx` (um único tile fixo,
+  `tile.openstreetmap.org`, com a atribuição exibida no mapa). Detalhes da
+  auditoria de licenças em `11_licencas_e_atribuicoes.md`.
+
 ## 8.4 Conceitos e plataformas de referência
 
 - **MDN - HTTP** - fundamentos do protocolo usado na comunicação REST.
@@ -133,7 +160,19 @@ desenvolvimento (ano de 2026).
   Material do autor disponível em:
   [https://www.distributed-systems.net](https://www.distributed-systems.net).
 
-## 8.5 Documento base da disciplina
+## 8.5 Conformidade e proteção de dados
+
+- **Lei Geral de Proteção de Dados Pessoais (LGPD) - Lei nº 13.709/2018** - base
+  legal da conformidade do aplicativo (consentimento, direitos do titular,
+  retenção e responsabilização). Texto oficial:
+  [http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm](http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm).
+  Aplicada na Política de Privacidade (`12_politica_de_privacidade.md`), nos
+  Termos de Uso (`13_termos_de_uso.md`) e no fluxo de consentimento do app
+  (`mobile/src/ui/consentimento.ts`,
+  `mobile/src/screens/ConsentimentoScreen.tsx` e
+  `mobile/src/screens/PrivacidadeScreen.tsx`).
+
+## 8.6 Documento base da disciplina
 
 - **Documento de requisitos da APS** (`APS_7_8_CC_2025_DSD.docx`), disciplina
   Sistemas Distribuídos, 7o/8o semestre CC, Universidade Paulista (UNIP).

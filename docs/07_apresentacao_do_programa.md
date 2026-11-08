@@ -138,19 +138,17 @@ opcional** (botão "Ver no mapa"), uma segunda porta de entrada mais visual para
 acompanhar as linhas, que complementa a tela de Linhas (que continua em lista).
 O mapa ocupa a tela toda e, por cima dele (numa camada React Native sobreposta,
 nunca dentro do WebView), traz uma **barra de busca flutuante**, um **painel
-inferior expansível por toque** com o catálogo/sugestões e os favoritos, e um
-**seletor de estilo cartográfico** (Padrão, OSM.de ou Topográfico). Sem
-linha selecionada, plota as regiões como marcadores; ao selecionar uma linha
-(pela busca na própria tela ou vindo das Linhas de ônibus), plota a posição em
-tempo real dos veículos (com **atualização automática** periódica e botão de
-pausar); ao selecionar uma **parada**, plota um marcador nela. Essa tela desenha
-o mapa com **tiles cartográficos via WebView** (biblioteca Leaflet dentro de um
-`react-native-webview`, usando OpenStreetMap, OSM.de e OpenTopoMap), portanto
-**não precisa de chave de API** nem de billing (ver
-`mobile/BUILD_APK.md`)
-e **não usa satélite**; requer apenas internet para carregar os tiles. Por ser
-separada e opcional, mesmo que o mapa não carregue (ex.: sem internet), o app
-continua abrindo normalmente na lista.
+inferior expansível por toque** com o catálogo/sugestões e os favoritos, e o
+controle **"Você está aqui"** (GPS). Sem linha selecionada, plota as regiões como
+marcadores; ao selecionar uma linha (pela busca na própria tela ou vindo das
+Linhas de ônibus), plota a posição em tempo real dos veículos (com **atualização
+automática** periódica e botão de pausar); ao selecionar uma **parada**, plota um
+marcador nela. Essa tela desenha o mapa com **um único tile fixo do
+OpenStreetMap** (biblioteca Leaflet dentro de um `react-native-webview`),
+portanto **não precisa de chave de API** nem de billing e **não usa satélite**;
+requer apenas internet para carregar os tiles. Por ser separada e opcional, mesmo
+que o mapa não carregue (ex.: sem internet), o app continua abrindo normalmente
+na lista.
 
 > Nota sobre o ambiente de desenvolvimento deste trabalho: não havia emulador
 > disponível no ambiente onde o código foi construído. Por isso, o cliente foi
@@ -160,6 +158,17 @@ continua abrindo normalmente na lista.
 ## 7.5 Roteiro de demonstração das funcionalidades
 
 Com o servidor no ar e o app aberto, percorra o fluxo:
+
+0. **Consentimento (LGPD) na primeira execução.** Na primeira abertura (ou quando
+   a versão dos Termos muda), o app exibe a tela de **Consentimento** antes de
+   qualquer outra. Ela traz um resumo honesto, botões para ler a **Política de
+   Privacidade** e os **Termos de Uso**, um **checkbox obrigatório** ("Li e aceito
+   os Termos de Uso e a Política de Privacidade") e um **checkbox opcional** de
+   consentimento de localização para o "Você está aqui". Toque em **ACEITAR**
+   (habilitado somente com o aceite marcado) ou em **RECUSAR**: em ambos os casos
+   a resposta é **registrada localmente** (com versão e data/hora) e o aviso não
+   reaparece a cada abertura. Quem recusa continua usando o app sem o "Você está
+   aqui".
 
 1. **Lista e consulta por região.** A tela inicial mostra a lista clicável
    "Regiões monitoradas em São Paulo" com os 12 distritos reais da capital (Sé,
@@ -248,32 +257,46 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    de São Paulo. Com `SPTRANS_TOKEN` definido, são em tempo real; sem token, a
    tela exibe um aviso de que o dado é de EXEMPLO (não tempo real).
 
-6. **Mapa com busca integrada e estilos cartográficos.** Na tela inicial, toque
-   em **"Ver no mapa"**. O mapa abre ocupando a tela toda, mostrando as regiões.
-   No topo há uma **barra de busca flutuante** (abas "Linhas"/"Paradas" + campo
-   "Buscar linha ou parada"): é a **mesma busca livre** da tela de Linhas, então
-   qualquer linha pode ser pesquisada. No rodapé há um **painel que abre e fecha
-   ao toque**: recolhido, mostra um resumo (a linha selecionada e o número de
-   veículos em operação, ou um convite a buscar); expandido, revela os
-   **resultados da busca** e, quando o campo está vazio, a **navegação assistida**
-   (favoritos de linhas na aba Linhas; uma orientação curta na aba Paradas) e os
-   **favoritos** (com a estrela para salvar/remover). A mesma **busca aproximada (fuzzy)** da
-   tela de Linhas vale aqui. O painel respeita a **área segura** do aparelho: o
-   cabeçalho e os itens tocáveis ficam acima da barra de navegação do Android
-   (botões voltar/home/recentes), nunca escondidos atrás dela. Toque numa linha
-   para **plotá-la no mapa**: os veículos aparecem com o mesmo **auto-refresh**
+6. **Mapa com busca integrada.** Na tela inicial, toque em **"Ver no mapa"**. O
+   mapa abre ocupando a tela toda, mostrando as regiões. No topo há uma **barra de
+   busca flutuante** (abas "Linhas"/"Paradas" + campo "Buscar linha ou parada"):
+   é a **mesma busca livre** da tela de Linhas, então qualquer linha pode ser
+   pesquisada. No rodapé há um **painel que abre e fecha ao toque**: recolhido,
+   mostra um resumo (a linha selecionada e o número de veículos em operação, ou um
+   convite a buscar); expandido, revela os **resultados da busca** e, quando o
+   campo está vazio, a **navegação assistida** (favoritos de linhas na aba Linhas;
+   uma orientação curta na aba Paradas) e os **favoritos** (com a estrela para
+   salvar/remover). A mesma **busca aproximada (fuzzy)** da tela de Linhas vale
+   aqui. O painel respeita a **área segura** do aparelho: o cabeçalho e os itens
+   tocáveis ficam acima da barra de navegação do Android (botões
+   voltar/home/recentes), nunca escondidos atrás dela. Toque numa linha para
+   **plotá-la no mapa**: os veículos aparecem com o mesmo **auto-refresh**
    (10/15/30s e botão pausar) e o painel recolhe para dar espaço ao mapa. Ao
    buscar e tocar numa **parada**, o mapa plota um **marcador** nela (nome +
-   endereço) e centraliza a visão no ponto. No canto **inferior direito** (fora
-   da barra de busca e dos controles de zoom +/-, que ficam no canto inferior
-   esquerdo), o botão **"Estilo"** alterna o estilo **cartográfico** do mapa
-   entre **Padrão** (OpenStreetMap), **OSM.de** (servidor alemão oficial do
-   OpenStreetMap) e **Topográfico** (OpenTopoMap) — todos sem chave e **sem
-   satélite**; a camada de tiles troca sem recriar o mapa (os marcadores
-   permanecem) e a preferência fica **salva no aparelho**. A atribuição correta
-   de cada provedor aparece no canto do mapa.
+   endereço) e centraliza a visão no ponto. O mapa usa **um único tile fixo do
+   OpenStreetMap** (sem alternância de camadas, sem satélite e sem chave de API),
+   com a atribuição "© colaboradores do OpenStreetMap" visível no canto; os
+   controles de zoom +/- ficam no canto inferior esquerdo.
 
-7. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
+7. **"Você está aqui" (GPS, condicionado ao consentimento).** Ainda no mapa, se
+   você consentiu com a localização no passo 0, aparece o controle **"📍 Você está
+   aqui"** no canto inferior direito. Ao tocá-lo, o app pede (uma única vez) a
+   permissão de localização do sistema e, concedida, plota um marcador "Você está
+   aqui" na sua posição atual, **apenas no mapa do aparelho**: a coordenada
+   **nunca é enviada ao servidor**. Se você recusou o consentimento, o controle
+   não aparece (é possível reativá-lo na tela de Privacidade). Caso a permissão do
+   SO seja negada ou o GPS esteja desligado, o app exibe uma mensagem amigável e o
+   mapa continua funcionando.
+
+8. **Privacidade e direitos do titular (LGPD).** Abra a tela de **Privacidade**.
+   Nela você pode **ver os dados guardados localmente** no aparelho (linhas
+   favoritas e o registro de consentimento), **excluir** esses dados locais e
+   **revogar** o consentimento de localização. Como o app não tem conta nem coleta
+   dados no servidor, esses direitos (acesso, correção, exclusão e revogação) são
+   exercidos diretamente no dispositivo; para solicitações adicionais, o canal é o
+   e-mail do encarregado (daviddeziderio07@gmail.com).
+
+9. **Alertas.** Pela tela de Alertas, veja as regras cadastradas, crie uma nova
    regra (escolha região, tipo, parâmetro, condição `>`/`<` e limiar) e toque em
    "Avaliar região selecionada". Tanto as regras cadastradas quanto os alertas
    disparados identificam a região pelo **nome** (ex.: "Sé", "Lapa"), e não pelo
@@ -281,7 +304,7 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    observado. Dica: crie uma regra com limiar baixo (ex.: veículos em operação >
    1) para forçar um disparo.
 
-8. **Tratamento de erros (demonstração).** Pare o servidor (encerre o uvicorn) e
+10. **Tratamento de erros (demonstração).** Pare o servidor (encerre o uvicorn) e
    tente recarregar uma tela no app: em vez de travar, o app exibe uma mensagem
    amigável em PT-BR ("Nao foi possivel conectar ao servidor...") com a opção de
    "Tentar novamente". No servidor, uma região inexistente

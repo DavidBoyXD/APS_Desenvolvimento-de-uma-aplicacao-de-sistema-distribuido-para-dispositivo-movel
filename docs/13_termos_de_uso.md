@@ -2,7 +2,7 @@
 
 **Aplicativo:** Monitoramento de transporte público em SP
 **Versão destes termos:** 1.0
-**Data de vigência:** 10 de novembro de 2026
+**Data de vigência:** 10 de novembro de 2025
 **Contato:** David Andrew — daviddeziderio07@gmail.com
 
 > **Aviso acadêmico:** este é um projeto **ACADÊMICO** da disciplina de Sistemas Distribuídos,

@@ -100,15 +100,17 @@ Fontes de dados externas (recorte São Paulo):
 
 | Ferramenta | Versão | Link oficial | Onde foi aplicada |
 | --- | --- | --- | --- |
-| Expo (SDK) | 57 | [docs.expo.dev](https://docs.expo.dev) | Projeto todo; `mobile/app.json` |
-| React Native | 0.86.3 | [reactnative.dev](https://reactnative.dev) | Telas e UI em `mobile/src/*` |
-| React | 19.2.3 | [react.dev](https://react.dev) | Componentes do app |
+| Expo (SDK) | 58 | [docs.expo.dev](https://docs.expo.dev) | Projeto todo; `mobile/app.json` |
+| React Native | 0.88.1 | [reactnative.dev](https://reactnative.dev) | Telas e UI em `mobile/src/*` |
+| React | 19.3.0 | [react.dev](https://react.dev) | Componentes do app |
 | @react-navigation/native | 7.5.0 | [reactnavigation.org](https://reactnavigation.org) | `mobile/App.tsx` |
 | @react-navigation/native-stack | 7.20.0 | [reactnavigation.org](https://reactnavigation.org) | `mobile/App.tsx` |
-| react-native-webview | - | [docs.expo.dev](https://docs.expo.dev/versions/v58.0.0/sdk/webview/) | `mobile/src/screens/MapaVisualScreen.tsx` (mapa Leaflet) |
-| react-native-screens | 4.26.2 | [github.com/software-mansion/react-native-screens](https://github.com/software-mansion/react-native-screens) | Dependência da navegação |
-| react-native-safe-area-context | 5.7.0 | [github.com/th3rdwave/react-native-safe-area-context](https://github.com/th3rdwave/react-native-safe-area-context) | `mobile/App.tsx` (SafeAreaProvider) |
-| TypeScript | 5.9 | [typescriptlang.org](https://www.typescriptlang.org) | Todo o código `mobile/` |
+| react-native-webview | 14.0.1 | [docs.expo.dev](https://docs.expo.dev/versions/v58.0.0/sdk/webview/) | `mobile/src/screens/MapaVisualScreen.tsx` (mapa Leaflet/OSM) |
+| @react-native-async-storage/async-storage | 2.2.0 | [react-native-async-storage.github.io/async-storage](https://react-native-async-storage.github.io/async-storage/) | `mobile/src/ui/favoritos.ts`, `mobile/src/ui/consentimento.ts` |
+| expo-location | ~58.0.20 | [docs.expo.dev](https://docs.expo.dev/versions/v58.0.0/sdk/location/) | `mobile/src/ui/localizacao.ts`, `MapaVisualScreen.tsx` ("Você está aqui") |
+| react-native-screens | ~4.30.1 | [github.com/software-mansion/react-native-screens](https://github.com/software-mansion/react-native-screens) | Dependência da navegação |
+| react-native-safe-area-context | ~5.11.1 | [github.com/th3rdwave/react-native-safe-area-context](https://github.com/th3rdwave/react-native-safe-area-context) | `mobile/App.tsx` (SafeAreaProvider) |
+| TypeScript | ~6.0.3 | [typescriptlang.org](https://www.typescriptlang.org) | Todo o código `mobile/` |
 
 ## 4.4 Passo a passo do desenvolvimento
 

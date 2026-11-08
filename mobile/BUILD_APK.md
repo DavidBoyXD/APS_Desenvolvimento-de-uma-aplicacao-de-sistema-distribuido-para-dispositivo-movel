@@ -253,3 +253,46 @@ Google Maps, conta no Google Cloud nem impressão digital SHA-1 para o mapa.
    Uma forma rápida de validar é instalar o APK, abrir **"Ver no mapa"** com o
    dispositivo conectado à internet e verificar se o mapa do OpenStreetMap
    aparece com os marcadores.
+
+### "Você está aqui" (GPS) — exige dev/EAS build
+
+O mapa tem um botão flutuante **"Você está aqui"** que plota a sua posição atual
+como um marcador no mapa. Esse recurso usa o pacote **`expo-location`**, que tem
+**código nativo**, então:
+
+1. **Instale a dependência** na pasta `mobile/`:
+
+   ```bash
+   npx expo install expo-location
+   ```
+
+   Esse comando resolve a versão compatível com o SDK do Expo (o `package.json`
+   já referencia `expo-location` na versão esperada: `~58.0.20`).
+
+2. **Gere um dev/EAS build.** Embora o `expo-location` esteja incluído no Expo
+   Go, o aplicativo já declara um **config plugin** no `app.json`
+   (`locationWhenInUsePermission`, que define a mensagem de permissão do iOS). A
+   partir daí, o recomendado é um **development build** ou um build pelo EAS,
+   e não o Expo Go:
+
+   ```bash
+   # desenvolvimento local (precisa de Xcode/Android Studio):
+   npx expo run:android   # ou: npx expo run:ios
+
+   # ou na nuvem, pelo EAS:
+   eas build --profile development   # ou: --profile preview
+   ```
+
+   As pastas `ios/` e `android/` **não** são editadas à mão: as permissões de
+   localização vêm do `app.json` (CNG). No iOS isso define
+   `NSLocationWhenInUseUsageDescription`; no Android as permissões
+   `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` são adicionadas
+   automaticamente quando o app solicita a localização em primeiro plano.
+
+**Privacidade (LGPD):** o botão "Você está aqui" só aparece e só pede a permissão
+do sistema **depois** que você consentir com o uso da localização na tela de
+consentimento do app (consentimento de localização é **opcional** e separado do
+aceite dos Termos). A coordenada obtida é usada **apenas no aparelho**, para
+desenhar o marcador no mapa — **ela não é enviada ao servidor**. Sem
+consentimento, nenhuma permissão de localização é solicitada. **Não** usamos
+localização em segundo plano (background).

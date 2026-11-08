@@ -68,18 +68,18 @@ TAMANHO = 12
 
 # Dados do grupo (fonte: docs/10 e context.json). A capa usa acentuacao correta.
 INSTITUICAO = "Universidade Paulista (UNIP)"
-CURSO = "Ciencia da Computacao"
-DISCIPLINA = "Sistemas Distribuidos (SD)"
-SEMESTRE = "7o / 8o"
+CURSO = "Ciência da Computação"
+DISCIPLINA = "Sistemas Distribuídos (SD)"
+SEMESTRE = "7º / 8º"
 ANO = "2025"
 TITULO = (
-    "Desenvolvimento de uma aplicacao de sistema distribuido para dispositivo movel "
-    "- Monitoramento de transporte publico em SP"
+    "Desenvolvimento de uma aplicação de sistema distribuído para dispositivo móvel "
+    "- Monitoramento de transporte público em SP"
 )
 INTEGRANTES = [
-    "David Andrew Deziderio Gomes Silva - RA F3530E8",
+    "David Andrew Dezidério Gomes Silva - RA F3530E8",
     "Carlos Henrique Santana Rodrigues - RA R013944",
-    "Henrique Vitale Cassu - RA N916FJ2",
+    "Henrique Vitale Cassú - RA N916FJ2",
     "Marcelo Augusto de Souza Silva - RA F356JE0",
 ]
 
@@ -444,7 +444,7 @@ def montar_capa(doc):
     titulo_centralizado(f"Disciplina: {DISCIPLINA}", 12, negrito=False, espaco_depois=2)
     titulo_centralizado(f"Semestre: {SEMESTRE}", 12, negrito=False, espaco_depois=24)
 
-    titulo_centralizado("Atividades Praticas Supervisionadas (APS)", 13, espaco_depois=36)
+    titulo_centralizado("Atividades Práticas Supervisionadas (APS)", 13, espaco_depois=36)
 
     titulo_centralizado(TITULO, 14, espaco_antes=24, espaco_depois=36)
 
@@ -459,7 +459,7 @@ def montar_capa(doc):
     titulo_centralizado("Polo / Campus: [preencher pelo autor]", 12, negrito=False, espaco_depois=2)
     titulo_centralizado("Turma: [preencher pelo autor]", 12, negrito=False, espaco_depois=2)
     titulo_centralizado("Data de entrega: [preencher pelo autor]", 12, negrito=False, espaco_depois=2)
-    titulo_centralizado("Cidade / UF: Sao Paulo / SP", 12, negrito=False, espaco_depois=2)
+    titulo_centralizado("Cidade / UF: São Paulo / SP", 12, negrito=False, espaco_depois=2)
     titulo_centralizado(f"Ano: {ANO}", 12, negrito=False, espaco_depois=2)
 
 

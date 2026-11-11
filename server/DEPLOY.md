@@ -82,7 +82,7 @@ Fly.io (todos aceitam Dockerfile).
    do APK.
 
 > **Atalho opcional (blueprint):** em vez de configurar os campos na mão, é
-> possível usar **New > Blueprint** e apontar para o arquivo `server/render.yaml`
+> possível usar **New → Blueprint** e apontar para o arquivo `server/render.yaml`
 > deste repositório. Ele já declara o Web Service Docker, o plano `free` e o
 > health check `/health`.
 

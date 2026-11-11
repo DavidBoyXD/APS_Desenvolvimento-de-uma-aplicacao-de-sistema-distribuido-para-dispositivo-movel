@@ -1,12 +1,7 @@
 # Declaração de uso de Inteligência Artificial
 
-Nós, o grupo autor deste trabalho, declaramos o uso de ferramenta de
-Inteligência Artificial Generativa como apoio no desenvolvimento desta APS. Esta
-é uma declaração própria e oficial do grupo, feita de forma transparente e por
-nossa iniciativa: não é um documento apresentado pela ferramenta, mas o documento
-oficial em que nós, autores, assumimos o trabalho. A ferramenta serviu apenas de
-auxílio nos processos, em pesquisa e tarefas de apoio, sem nunca conduzir o
-trabalho por conta própria.
+O grupo autor deste trabalho, declara por meio deste, o uso de ferramenta de
+Inteligência Artificial Generativa como apoio no desenvolvimento da APS.
 
 Esta declaração atende à Portaria CNPq no 2.664, de 6 de março de 2026, que
 institui a Política de Integridade na Atividade Científica do CNPq (publicada no
@@ -54,10 +49,6 @@ Integrantes do grupo (nome e número de matrícula):
 - Carlos Henrique Santana Rodrigues - R013944
 - Henrique Vitale Cassu - N916FJ2
 - Marcelo Augusto de Souza Silva - F356JE0
-
-Os itens abaixo dependem de ato físico na entrega e permanecem marcados como
-`[preencher pelo autor]`. Após preencher cada um, apague a marcação
-`[preencher pelo autor]` e deixe apenas o valor.
 
 - Data da assinatura: [preencher pelo autor]
 - Assinaturas dos integrantes: [preencher pelo autor]

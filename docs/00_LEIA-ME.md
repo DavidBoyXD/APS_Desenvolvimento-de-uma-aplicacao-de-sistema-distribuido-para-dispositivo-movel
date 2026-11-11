@@ -74,10 +74,10 @@ arquivo `10_capa_e_ficha_aps.md`:
 - Marcelo Augusto de Souza Silva - F356JE0
 
 A orientação é da professora Jacqueline Zonichenn, no campus Paulista (São Paulo
-- SP). Os itens abaixo ainda dependem de informação institucional específica e
+- SP). Os itens abaixo dependem de ato físico no momento da entrega e
 permanecem marcados como `[preencher pelo autor]` em `10_capa_e_ficha_aps.md`:
 
-- Turma e data de entrega.
+- Data de entrega.
 - Assinatura na ficha de APS.
 
 ## Resumo técnico do que foi construído

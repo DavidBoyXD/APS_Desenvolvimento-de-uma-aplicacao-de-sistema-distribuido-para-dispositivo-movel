@@ -1,9 +1,9 @@
 # 10. Capa e Ficha de APS
 
-Os dados do grupo (nomes e número de matrícula) estão preenchidos abaixo. O
-único campo que depende de informação institucional específica e permanece
-marcado como `[preencher pelo autor]` é a turma. Após preencher a turma, apague
-a marcação `[preencher pelo autor]` e deixe apenas o valor.
+Os dados do grupo (nomes e número de matrícula) estão preenchidos abaixo. Os
+campos que dependem de ato físico na entrega (data de entrega e assinaturas na
+ficha) permanecem marcados como `[preencher pelo autor]`. Após preencher cada
+um, apague a marcação `[preencher pelo autor]` e deixe apenas o valor.
 
 ## 10.1 Capa
 
@@ -28,7 +28,6 @@ Alunos:
 
 Professora orientadora: Jacqueline Zonichenn
 Campus: Paulista
-Turma: [preencher pelo autor]
 Cidade / UF: Sao Paulo - SP
 Ano: 2026
 ```
@@ -36,9 +35,9 @@ Ano: 2026
 ## 10.2 Ficha de APS
 
 A ficha de APS é o formulário padrão da UNIP entregue junto ao trabalho. Os
-campos abaixo estão preenchidos com os dados do grupo; a turma, a data de
-entrega e as assinaturas devem ser completadas pelo autor conforme o modelo
-oficial fornecido pela instituição. Cada campo ainda marcado com
+campos abaixo estão preenchidos com os dados do grupo; a data de entrega e as
+assinaturas devem ser completadas pelo autor conforme o modelo oficial fornecido
+pela instituição. Cada campo ainda marcado com
 `[preencher pelo autor]` deve ter a marcação apagada depois que o valor correto
 for inserido no lugar.
 
@@ -47,7 +46,6 @@ for inserido no lugar.
 - Disciplina: Desenvolvimento de Sistemas Distribuídos (DSD)
 - Semestre: 7º / 8º
 - Ano: 2026
-- Turma: [preencher pelo autor]
 - Título da APS: Desenvolvimento de uma aplicação de sistema distribuído para
   dispositivo móvel - Monitoramento de transporte público em SP
 - Integrantes do grupo (nome e número de matrícula):

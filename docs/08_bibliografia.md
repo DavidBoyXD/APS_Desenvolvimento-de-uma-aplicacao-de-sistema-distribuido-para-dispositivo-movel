@@ -2,7 +2,7 @@
 
 Todas as referências abaixo foram efetivamente utilizadas no projeto. Cada item
 indica onde foi aplicado (arquivo/função). Os links foram acessados durante o
-desenvolvimento (ano de 2025).
+desenvolvimento (ano de 2026).
 
 ## 8.1 Back-end (Python / API REST)
 

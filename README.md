@@ -1,9 +1,9 @@
-# Monitor de Transporte Público de São Paulo (SP)
+# Monitoramento de transporte público em SP
 
 APS do 7º/8º semestre de Ciência da Computação (CC) na Universidade Paulista (UNIP).
 
-Disciplina: Sistemas Distribuídos (SD). Tema da APS: "Desenvolvimento de uma
-aplicação de sistema distribuído para dispositivo móvel".
+Disciplina: Desenvolvimento de Sistemas Distribuídos (DSD). Tema da APS:
+"Desenvolvimento de uma aplicação de sistema distribuído para dispositivo móvel".
 
 ## Descrição do projeto e tema
 
@@ -147,7 +147,7 @@ curl -X POST http://localhost:8000/api/v1/regioes/1/atualizar-transporte
 
 - Python 3.11 (back-end). O repositório foi validado com Python 3.11.
 - Node.js 18 ou superior e npm (cliente móvel).
-- Expo (usado via `npx`, não precisa instalar global). O projeto usa Expo SDK 57.
+- Expo (usado via `npx`, não precisa instalar global). O projeto usa Expo SDK 58.
 - Opcional: Android Studio com emulador Android, ou o app Expo Go em um
   dispositivo físico, para executar o cliente móvel.
 - Opcional: token gratuito da SPTrans para o transporte público em tempo real
@@ -335,7 +335,6 @@ bibliografia, capa e ficha), está na pasta [docs/](docs/):
 - [Indice da documentacao (docs/00_LEIA-ME.md)](docs/00_LEIA-ME.md)
 - [Apresentacao do programa em funcionamento (docs/07_apresentacao_do_programa.md)](docs/07_apresentacao_do_programa.md)
 - [Bibliografia e referencias (docs/08_bibliografia.md)](docs/08_bibliografia.md)
-- [Declaracao de uso de IA (DECLARACAO_IA.md)](DECLARACAO_IA.md)
 
 ## Estrutura do repositório
 
@@ -346,7 +345,6 @@ server/        Back-end FastAPI (API REST) + SQLite
   app/services/ibge.py      Base geografica oficial (IBGE, UF 35)
 mobile/        Cliente movel Expo / React Native (TypeScript)
 docs/          Documentacao academica em Portugues-BR
-DECLARACAO_IA.md   Declaracao de uso de Inteligencia Artificial
 README.md      Este arquivo
 ```
 

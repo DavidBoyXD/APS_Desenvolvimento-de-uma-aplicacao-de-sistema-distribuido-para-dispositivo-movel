@@ -1,5 +1,5 @@
 # ===========================================================================
-# .gitignore do monorepo APS - Sistema Distribuido Ambiental
+# .gitignore do monorepo APS - Monitoramento de transporte publico em SP
 # Cobre artefatos do back-end (Python/FastAPI) e do cliente movel (Expo/RN).
 # Referencia dos padroes:
 #  - Python: https://github.com/github/gitignore/blob/main/Python.gitignore

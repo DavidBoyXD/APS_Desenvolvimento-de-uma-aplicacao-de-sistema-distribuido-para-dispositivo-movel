@@ -1,8 +1,8 @@
 # Documentação da APS - Monitoramento de transporte público em SP
 
-Atividades Práticas Supervisionadas (APS) da disciplina **Sistemas Distribuídos (SD)**,
-7o/8o semestre do curso de Ciência da Computação (CC) - Universidade Paulista (UNIP),
-ano de 2025.
+Atividades Práticas Supervisionadas (APS) da disciplina Desenvolvimento de
+Sistemas Distribuídos (DSD), 7o/8o semestre do curso de Ciência da Computação
+(CC) - Universidade Paulista (UNIP), ano de 2026.
 
 Tema: **Desenvolvimento de uma aplicação de sistema distribuído para dispositivo móvel**,
 com foco no monitoramento do **transporte público** (frota de ônibus) da cidade de
@@ -65,21 +65,20 @@ mapeamento fonte -> arquivo/função está detalhado em `06_relatorio_de_codigo.
 
 ## Dados do grupo e itens a preencher pelo autor
 
-Os integrantes do grupo e seus RA já estão preenchidos no arquivo
-`10_capa_e_ficha_aps.md`:
+Os integrantes do grupo e seus números de matrícula já estão preenchidos no
+arquivo `10_capa_e_ficha_aps.md`:
 
-- David Andrew Dezidério Gomes Silva - RA F3530E8
-- Carlos Henrique Santana Rodrigues - RA R013944
-- Henrique Vitale Cassú - RA N916FJ2
-- Marcelo Augusto de Souza Silva - RA F356JE0
+- David Andrew Dezidério Gomes Silva - F3530E8
+- Carlos Henrique Santana Rodrigues - R013944
+- Henrique Vitale Cassú - N916FJ2
+- Marcelo Augusto de Souza Silva - F356JE0
 
-Os itens abaixo dependem de informações institucionais específicas e permanecem
-marcados como `[preencher pelo autor]` em `10_capa_e_ficha_aps.md`:
+A orientação é da professora Jacqueline Zonichenn, no campus Paulista (São Paulo
+- SP). Os itens abaixo ainda dependem de informação institucional específica e
+permanecem marcados como `[preencher pelo autor]` em `10_capa_e_ficha_aps.md`:
 
-- Nome do(a) professor(a) orientador(a).
-- Polo / Campus.
 - Turma e data de entrega.
-- Assinatura na declaração de uso de IA e na ficha de APS.
+- Assinatura na ficha de APS.
 
 ## Resumo técnico do que foi construído
 

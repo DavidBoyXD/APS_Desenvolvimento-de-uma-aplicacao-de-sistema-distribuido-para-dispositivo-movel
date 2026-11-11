@@ -1,9 +1,9 @@
 # 10. Capa e Ficha de APS
 
-Os dados do grupo (nomes e RA) estão preenchidos abaixo. Apenas os campos que
-dependem de informação institucional específica permanecem marcados como
-`[preencher pelo autor]`: professor(a) orientador(a), polo/campus, turma e data
-de entrega.
+Os dados do grupo (nomes e número de matrícula) estão preenchidos abaixo. O
+único campo que depende de informação institucional específica e permanece
+marcado como `[preencher pelo autor]` é a turma. Após preencher a turma, apague
+a marcação `[preencher pelo autor]` e deixe apenas o valor.
 
 ## 10.1 Capa
 
@@ -11,7 +11,7 @@ de entrega.
 UNIVERSIDADE PAULISTA - UNIP
 
 Curso: Ciencia da Computacao
-Disciplina: Sistemas Distribuidos (SD)
+Disciplina: Desenvolvimento de Sistemas Distribuidos (DSD)
 Semestre: 7o / 8o
 
 Atividades Praticas Supervisionadas (APS)
@@ -20,41 +20,43 @@ Titulo do trabalho:
 Desenvolvimento de uma aplicacao de sistema distribuido para dispositivo movel
 - Monitoramento de transporte publico em SP
 
-Alunos e RA:
-- David Andrew Deziderio Gomes Silva - RA F3530E8
-- Carlos Henrique Santana Rodrigues - RA R013944
-- Henrique Vitale Cassu - RA N916FJ2
-- Marcelo Augusto de Souza Silva - RA F356JE0
+Alunos:
+- David Andrew Deziderio Gomes Silva - F3530E8
+- Carlos Henrique Santana Rodrigues - R013944
+- Henrique Vitale Cassu - N916FJ2
+- Marcelo Augusto de Souza Silva - F356JE0
 
-Professor(a) orientador(a): [preencher pelo autor]
-Polo / Campus: [preencher pelo autor]
+Professora orientadora: Jacqueline Zonichenn
+Campus: Paulista
 Turma: [preencher pelo autor]
-Cidade / UF: Sao Paulo / SP
-Ano: 2025
+Cidade / UF: Sao Paulo - SP
+Ano: 2026
 ```
 
 ## 10.2 Ficha de APS
 
 A ficha de APS é o formulário padrão da UNIP entregue junto ao trabalho. Os
-campos abaixo estão preenchidos com os dados do grupo; os itens institucionais
-específicos e as assinaturas devem ser completados pelo autor conforme o modelo
-oficial fornecido pela instituição:
+campos abaixo estão preenchidos com os dados do grupo; a turma, a data de
+entrega e as assinaturas devem ser completadas pelo autor conforme o modelo
+oficial fornecido pela instituição. Cada campo ainda marcado com
+`[preencher pelo autor]` deve ter a marcação apagada depois que o valor correto
+for inserido no lugar.
 
 - Nome da instituição: Universidade Paulista (UNIP)
 - Curso: Ciência da Computação
-- Disciplina: Sistemas Distribuídos (SD)
+- Disciplina: Desenvolvimento de Sistemas Distribuídos (DSD)
 - Semestre: 7º / 8º
-- Ano: 2025
+- Ano: 2026
 - Turma: [preencher pelo autor]
 - Título da APS: Desenvolvimento de uma aplicação de sistema distribuído para
   dispositivo móvel - Monitoramento de transporte público em SP
-- Integrantes do grupo (nome e RA):
-  - David Andrew Dezidério Gomes Silva - RA F3530E8
-  - Carlos Henrique Santana Rodrigues - RA R013944
-  - Henrique Vitale Cassú - RA N916FJ2
-  - Marcelo Augusto de Souza Silva - RA F356JE0
-- Professor(a) orientador(a): [preencher pelo autor]
-- Polo / Campus: [preencher pelo autor]
+- Integrantes do grupo (nome e número de matrícula):
+  - David Andrew Dezidério Gomes Silva - F3530E8
+  - Carlos Henrique Santana Rodrigues - R013944
+  - Henrique Vitale Cassú - N916FJ2
+  - Marcelo Augusto de Souza Silva - F356JE0
+- Professora orientadora: Jacqueline Zonichenn
+- Campus: Paulista
 - Data de entrega: [preencher pelo autor]
 - Nota / avaliação: (reservado ao professor)
 - Assinaturas dos integrantes: [preencher pelo autor]

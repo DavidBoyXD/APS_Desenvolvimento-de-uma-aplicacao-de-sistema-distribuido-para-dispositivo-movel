@@ -1,9 +1,12 @@
 # Declaração de uso de Inteligência Artificial
 
 Nós, o grupo autor deste trabalho, declaramos o uso de ferramenta de
-Inteligência Artificial Generativa no desenvolvimento desta APS. Esta é uma
-declaração própria e oficial do grupo, feita de forma transparente e por nossa
-iniciativa.
+Inteligência Artificial Generativa como apoio no desenvolvimento desta APS. Esta
+é uma declaração própria e oficial do grupo, feita de forma transparente e por
+nossa iniciativa: não é um documento apresentado pela ferramenta, mas o documento
+oficial em que nós, autores, assumimos o trabalho. A ferramenta serviu apenas de
+auxílio nos processos, em pesquisa e tarefas de apoio, sem nunca conduzir o
+trabalho por conta própria.
 
 Esta declaração atende à Portaria CNPq no 2.664, de 6 de março de 2026, que
 institui a Política de Integridade na Atividade Científica do CNPq (publicada no

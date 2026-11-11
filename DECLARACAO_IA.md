@@ -1,6 +1,6 @@
 # Declaração de uso de Inteligência Artificial
 
-O grupo autor deste trabalho, declara por meio deste, o uso de ferramenta de
+Declaramos por meio deste, o uso de ferramenta de
 Inteligência Artificial Generativa como apoio no desenvolvimento da APS.
 
 Esta declaração atende à Portaria CNPq no 2.664, de 6 de março de 2026, que

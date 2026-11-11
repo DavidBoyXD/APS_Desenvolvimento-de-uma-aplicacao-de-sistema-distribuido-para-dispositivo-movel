@@ -1,12 +1,7 @@
 # 9. Declaração de uso de Inteligência Artificial
 
-Nós, o grupo autor deste trabalho, declaramos o uso de ferramenta de
-Inteligência Artificial Generativa como apoio no desenvolvimento desta APS. Esta
-é uma declaração própria e oficial do grupo, feita de forma transparente e por
-nossa iniciativa: não é um documento apresentado pela ferramenta, mas o documento
-oficial em que nós, autores, assumimos o trabalho. A ferramenta serviu apenas de
-auxílio nos processos, em pesquisa e tarefas de apoio, sem nunca conduzir o
-trabalho por conta própria.
+O grupo autor deste trabalho, declara por meio deste, o uso de ferramenta de
+Inteligência Artificial Generativa como apoio no desenvolvimento da APS.
 
 Esta declaração atende à Portaria CNPq no 2.664, de 6 de março de 2026, que
 institui a Política de Integridade na Atividade Científica do CNPq (publicada no
@@ -26,21 +21,13 @@ usada, a finalidade do uso e a etapa.
 
 ## 9.1 Declaração
 
-> Declaramos que utilizamos a ferramenta de Inteligência Artificial Generativa
-> Kiro apenas como auxílio e ferramenta de apoio, nas etapas de pesquisa, de
-> apoio à implementação do código (back-end FastAPI e app móvel React
-> Native/Expo) e de apoio à redação da documentação técnica. A condução do
-> trabalho, as decisões de projeto e de escopo, a escolha das tecnologias, a
-> validação, os testes e a responsabilidade final são do grupo. A ferramenta não
-> executou o processo por conta própria: todo o conteúdo produzido com o seu
-> apoio foi revisado criticamente e validado por nós, que assumimos integral
-> responsabilidade pela originalidade e veracidade do trabalho final.
+Declaramos que utilizamos a ferramenta de Inteligência Artificial Generativa Kiro apenas como auxílio e ferramenta de apoio, nas etapas de pesquisa, de apoio à implementação do código (back-end FastAPI e app móvel React Native/Expo) e de apoio à redação da documentação técnica. A condução do trabalho, as decisões de projeto e de escopo, a escolha das tecnologias, a validação, os testes e a responsabilidade final são do grupo. A ferramenta não executou o processo por conta própria: todo o conteúdo produzido com o seu apoio foi revisado criticamente e validado por nós, que assumimos integral responsabilidade pela originalidade e veracidade do trabalho final.
 
 ## 9.2 Detalhamento aplicado a este trabalho
 
 Este detalhamento é coerente com o do arquivo `DECLARACAO_IA.md` na raiz do
 repositório: ambos nomeiam a mesma ferramenta, a mesma finalidade e a mesma
-etapa, e contam a mesma história. Conforme os três eixos pedidos pela norma:
+etapa. Conforme os três eixos pedidos pela norma:
 
 - Ferramenta: assistente de Inteligência Artificial Generativa Kiro.
 - Finalidade: apoio à pesquisa, apoio à implementação do código (back-end
@@ -61,10 +48,6 @@ Integrantes do grupo (nome e número de matrícula):
 - Carlos Henrique Santana Rodrigues - R013944
 - Henrique Vitale Cassu - N916FJ2
 - Marcelo Augusto de Souza Silva - F356JE0
-
-Os itens abaixo dependem de ato físico na entrega e permanecem marcados como
-`[preencher pelo autor]`. Após preencher cada um, apague a marcação
-`[preencher pelo autor]` e deixe apenas o valor.
 
 - Data da assinatura: [preencher pelo autor]
 - Assinaturas dos integrantes: [preencher pelo autor]

@@ -1,9 +1,9 @@
 # Como gerar o APK (Android) com EAS Build
 
-Este guia explica, passo a passo, como você gera um arquivo **.apk** instalável
+Este guia explica, passo a passo, como gerar um arquivo **.apk** instalável
 do aplicativo móvel usando o **EAS Build** (serviço de build na nuvem do Expo).
 O build roda nos servidores do Expo, então **não** é necessário instalar o
-Android Studio nem o SDK do Android na sua máquina.
+Android Studio nem o SDK do Android na máquina local.
 
 Todos os comandos abaixo são executados **no terminal, dentro da pasta
 `mobile/`** do repositório, exceto quando indicado o contrário. Siga os passos na
@@ -12,11 +12,11 @@ ordem apresentada.
 ## Pré-requisitos (faça antes de começar)
 
 1. **Conta Expo gratuita.** Crie uma conta em
-   [https://expo.dev](https://expo.dev) (gratuita). Você vai usar esse login no
+   [https://expo.dev](https://expo.dev) (gratuita). Esse login é usado no
    passo de autenticação.
-2. **Node.js instalado** na sua máquina (versão 18 ou superior) com o `npm`.
+2. **Node.js instalado** na máquina (versão 18 ou superior) com o `npm`.
    Confira com `node --version` e `npm --version`.
-3. **Repositório clonado** na sua máquina e um terminal aberto.
+3. **Repositório clonado** na máquina local e um terminal aberto.
 
 ## Passo 1 — Entrar na pasta do app e instalar as dependências
 
@@ -42,24 +42,23 @@ Expo. Instale de forma global:
 npm install -g eas-cli
 ```
 
-- **Alternativa sem instalar global:** você pode trocar `eas` por
+- **Alternativa sem instalar global:** é possível trocar `eas` por
   `npx eas-cli@latest` em todos os comandos adiante (por exemplo,
   `npx eas-cli@latest login`). Use a forma que preferir.
 - **Onde:** terminal (qualquer pasta; é instalação global).
 - **Quando:** uma vez por máquina.
 
-## Passo 3 — Autenticar com a sua conta Expo
+## Passo 3 — Autenticar com a conta Expo
 
 ```bash
 eas login
 ```
 
-- **O que faz:** conecta o EAS CLI à **sua** conta Expo. Serão solicitados o seu
-  e-mail/usuário e a senha do Expo.
+- **O que faz:** conecta o EAS CLI à conta Expo; são solicitados o e-mail/usuário
+  e a senha do Expo.
 - **Onde:** terminal, na pasta `mobile/`.
 - **Quando:** antes de inicializar o projeto e de gerar o build. Esta etapa é
-  feita **na sua máquina**, com **as suas credenciais** — ninguém mais faz o login
-  por você.
+  feita na máquina local, com as credenciais do próprio usuário.
 - Para conferir se já está logado: `eas whoami`.
 
 ## Passo 4 — Inicializar/vincular o projeto EAS
@@ -68,12 +67,12 @@ eas login
 eas init
 ```
 
-- **O que faz:** cria (ou vincula) o projeto na sua conta Expo e **adiciona
+- **O que faz:** cria (ou vincula) o projeto na conta Expo e **adiciona
   automaticamente** o campo `extra.eas.projectId` no arquivo `mobile/app.json`,
-  já com o identificador real (um UUID). Você **não** precisa digitar nenhum
+  já com o identificador real (um UUID). Não é necessário digitar nenhum
   `projectId` à mão, e o repositório **não** traz esse campo preenchido de
   propósito: o `eas init` é quem o insere.
-- **Importante:** se você vir o erro `Invalid UUID appId` ou a mensagem
+- **Importante:** caso surja o erro `Invalid UUID appId` ou a mensagem
   `Project already linked (ID: ...)` com um valor que **não** seja um UUID, é
   porque existe um `extra.eas.projectId` invalido no `app.json`. Remova o bloco
   `extra` do `app.json` (conforme a mensagem do proprio EAS sugere) e rode
@@ -86,7 +85,7 @@ eas init
 O aplicativo lê a base da API pela variável de ambiente
 `EXPO_PUBLIC_API_BASE_URL`. As variáveis com prefixo `EXPO_PUBLIC_` são
 **embutidas no pacote em tempo de build**, ou seja, o valor é "congelado" no APK
-no momento em que você gera o build.
+no momento em que o build é gerado.
 
 - O valor padrão do código agora aponta para o **servidor público** hospedado
   no Render (`https://aps-olhovivo.onrender.com`). Por isso o APK já funciona
@@ -97,8 +96,8 @@ no momento em que você gera o build.
   de inatividade e a **primeira** requisição pode levar de 30 a 60 segundos para
   "acordar" o serviço. O cliente já tolera isso com um tempo de espera maior e
   novas tentativas automáticas; basta aguardar alguns segundos na primeira carga.
-- Defina `EXPO_PUBLIC_API_BASE_URL` apenas quando quiser apontar para **outro**
-  servidor (por exemplo, o seu back-end local no emulador `http://10.0.2.2:8000`,
+- Defina `EXPO_PUBLIC_API_BASE_URL` apenas para apontar para **outro**
+  servidor (por exemplo, o back-end local no emulador `http://10.0.2.2:8000`,
   `http://localhost:8000` no iOS/web, ou o IP da LAN em um celular físico). Para
   isso, informe o endereço **antes** de rodar o build:
 
@@ -132,8 +131,8 @@ eas build -p android --profile preview
   APK (e não um `.aab`).
 - **Onde:** terminal, na pasta `mobile/`.
 - **Quando:** depois dos passos anteriores. Na primeira vez, o EAS pode perguntar
-  se deve gerar um **keystore** de assinatura — aceite (responda `Y`); o Expo
-  guarda e gerencia esse keystore para você.
+  se deve gerar um **keystore** de assinatura; aceite (responda `Y`). O Expo
+  guarda e gerencia esse keystore automaticamente.
 - O build roda **na nuvem** e leva alguns minutos. Ao final, o terminal exibe um
   **link para baixar o .apk**.
 
@@ -143,12 +142,12 @@ eas build -p android --profile preview
 
 ## Passo 7 — Baixar o APK
 
-Você tem duas formas de obter o arquivo:
+Há duas formas de obter o arquivo:
 
 1. **Pelo link do terminal:** ao terminar, o `eas build` imprime a URL do
    artefato. Abra-a para baixar o `.apk`.
 2. **Pelo painel do Expo:** acesse [https://expo.dev](https://expo.dev), entre no
-   seu projeto e abra a seção **Builds**. Clique no build concluído e use o botão
+   projeto e abra a seção **Builds**. Clique no build concluído e use o botão
    de download do artefato.
 
 ## Passo 8 — Instalar o APK no celular
@@ -173,8 +172,8 @@ relatórios e alertas vêm da API).
   adicional (lembrando do "acordar" do plano gratuito na primeira requisição).
 - **Para usar o servidor local** através do **emulador Android**, aponte
   `EXPO_PUBLIC_API_BASE_URL` para `http://10.0.2.2:8000` com o back-end rodando
-  na sua máquina.
-- **Para apontar para outro servidor** (seu próprio deploy ou IP da LAN em um
+  na máquina local.
+- **Para apontar para outro servidor** (um deploy próprio ou IP da LAN em um
   celular físico), defina `EXPO_PUBLIC_API_BASE_URL` com esse endereço **antes**
   do build (Passo 5). As instruções para subir o servidor estão no `README.md` da
   raiz do repositório.
@@ -256,8 +255,8 @@ Google Maps, conta no Google Cloud nem impressão digital SHA-1 para o mapa.
 
 ### "Você está aqui" (GPS) — exige dev/EAS build
 
-O mapa tem um botão flutuante **"Você está aqui"** que plota a sua posição atual
-como um marcador no mapa. Esse recurso usa o pacote **`expo-location`**, que tem
+O mapa tem um botão flutuante **"Você está aqui"** que plota a posição atual do
+usuário como um marcador no mapa. Esse recurso usa o pacote **`expo-location`**, que tem
 **código nativo**, então:
 
 1. **Instale a dependência** na pasta `mobile/`:
@@ -290,9 +289,9 @@ como um marcador no mapa. Esse recurso usa o pacote **`expo-location`**, que tem
    automaticamente quando o app solicita a localização em primeiro plano.
 
 **Privacidade (LGPD):** o botão "Você está aqui" só aparece e só pede a permissão
-do sistema **depois** que você consentir com o uso da localização na tela de
+do sistema **depois** que o usuário consentir com o uso da localização na tela de
 consentimento do app (consentimento de localização é **opcional** e separado do
 aceite dos Termos). A coordenada obtida é usada **apenas no aparelho**, para
-desenhar o marcador no mapa — **ela não é enviada ao servidor**. Sem
-consentimento, nenhuma permissão de localização é solicitada. **Não** usamos
+desenhar o marcador no mapa (ela não é enviada ao servidor). Sem
+consentimento, nenhuma permissão de localização é solicitada. A aplicação não usa
 localização em segundo plano (background).

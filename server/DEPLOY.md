@@ -4,7 +4,7 @@ Este guia explica, passo a passo, como publicar o **servidor FastAPI** (pasta
 `server/`) em um serviço de hospedagem com plano gratuito e, em seguida, gerar o
 **APK** do aplicativo apontando para esse endereço público. Ao final, o app
 Android funcionará **em qualquer lugar** (inclusive no celular com dados móveis,
-longe do seu computador), e não apenas no emulador ou na rede local.
+fora da rede local), e não apenas no emulador ou na rede local.
 
 ## Visão geral: por que hospedar o servidor
 
@@ -12,7 +12,7 @@ O aplicativo móvel é a parte **cliente** de um sistema distribuído: ele depen
 de um **servidor FastAPI** para obter regiões, medições, relatórios e alertas.
 
 - No emulador Android, o app fala com o servidor local pelo endereço
-  `http://10.0.2.2:8000` (apelido do `localhost` da sua máquina). Isso **não**
+  `http://10.0.2.2:8000` (apelido do `localhost` da máquina). Isso **não**
   funciona em um celular físico.
 - Para que o **APK instalado em um celular** funcione em qualquer rede, o
   servidor precisa estar acessível pela internet, em um endereço público **HTTPS**
@@ -30,7 +30,7 @@ A pasta `server/` já contém tudo o que o serviço de hospedagem precisa:
   usa a porta injetada pela plataforma:
   `uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}`. Os PaaS gratuitos
   (Render, Railway, Fly.io) injetam a porta na variável de ambiente `PORT`; o
-  servidor escuta nela automaticamente, sem você precisar configurar nada.
+  servidor escuta nela automaticamente, sem necessidade de configuração manual.
 - **`server/.dockerignore`** — mantém a imagem enxuta (exclui `data/`, `.venv/`,
   caches e testes).
 - **`server/render.yaml`** — blueprint opcional do Render (descreve um Web Service
@@ -57,8 +57,8 @@ A pasta `server/` já contém tudo o que o serviço de hospedagem precisa:
    ([https://fly.io](https://fly.io)) funcionam de forma equivalente usando o
    mesmo `Dockerfile`.
 
-Você faz tudo pelo **site do serviço** (no navegador) e pela conta conectada ao
-seu GitHub. Nenhum segredo precisa ser commitado no repositório.
+Tudo é feito pelo **site do serviço** (no navegador) e pela conta conectada ao
+GitHub. Nenhum segredo precisa ser commitado no repositório.
 
 ## Caminho A — Docker via Render (recomendado)
 
@@ -68,7 +68,7 @@ Fly.io (todos aceitam Dockerfile).
 1. Acesse [https://dashboard.render.com](https://dashboard.render.com) e faça
    login.
 2. Clique em **New → Web Service**.
-3. Conecte a sua conta do GitHub e selecione o repositório deste projeto.
+3. Conecte a conta do GitHub e selecione o repositório deste projeto.
 4. Configure o serviço:
    - **Root Directory:** `server`
    - **Language/Runtime:** `Docker` (o Render detecta o `server/Dockerfile`
@@ -81,8 +81,8 @@ Fly.io (todos aceitam Dockerfile).
    `https://SEU_SERVICO.onrender.com`. Guarde essa URL: ela será usada no build
    do APK.
 
-> **Atalho opcional (blueprint):** em vez de configurar os campos na mão, você
-> pode usar **New → Blueprint** e apontar para o arquivo `server/render.yaml`
+> **Atalho opcional (blueprint):** em vez de configurar os campos na mão, é
+> possível usar **New > Blueprint** e apontar para o arquivo `server/render.yaml`
 > deste repositório. Ele já declara o Web Service Docker, o plano `free` e o
 > health check `/health`.
 
@@ -107,7 +107,7 @@ partir do Python:
 
 ## Como testar o servidor publicado
 
-Com o serviço **Live**, abra no navegador (trocando `SEU_SERVIDOR` pela sua URL):
+Com o serviço **Live**, abra no navegador (trocando `SEU_SERVIDOR` pela URL pública):
 
 - `https://SEU_SERVIDOR/health` — deve responder `{"status":"ok"}`.
 - `https://SEU_SERVIDOR/docs` — abre o Swagger (documentação interativa da API).
@@ -146,10 +146,10 @@ usa a URL pública obtida acima no lugar do servidor local.
 
 **Quem faz o quê, onde e quando:**
 
-1. **Você**, no **site do serviço** (Render), publica o servidor e copia a URL
-   pública — *primeiro*.
-2. **Você**, no **terminal, na pasta `mobile/`**, roda o `eas build` com
-   `EXPO_PUBLIC_API_BASE_URL=https://SEU_SERVIDOR` — *depois* de ter a URL.
+1. No **site do serviço** (Render), publica-se o servidor e copia-se a URL
+   pública (*primeiro*).
+2. No **terminal, na pasta `mobile/`**, roda-se o `eas build` com
+   `EXPO_PUBLIC_API_BASE_URL=https://SEU_SERVIDOR` (*depois* de ter a URL).
 3. O EAS gera o `.apk` na nuvem e devolve um link de download; instale no celular
    e o app passará a falar com o servidor público em qualquer rede.
 
@@ -173,7 +173,7 @@ dados em tempo real; sem ela, o servidor responde com o fallback de exemplo
 (`tempo_real=false`), de modo que o deploy funciona mesmo sem o token. Nunca
 comite o token no repositório.
 
-Se, mais adiante, você quiser **persistência real** (dados sobrevivendo a
+Se, mais adiante, for desejada **persistência real** (dados sobrevivendo a
 redeploys), isso é **opcional** e fora do escopo mínimo: basta provisionar um
 **PostgreSQL gerenciado** (o Render oferece um plano gratuito) e definir a
 variável de ambiente `DATABASE_URL` do Web Service para a URL de conexão, no

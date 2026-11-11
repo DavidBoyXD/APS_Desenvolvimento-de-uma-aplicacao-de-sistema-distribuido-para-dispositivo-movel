@@ -60,7 +60,7 @@ desenhado para funcionar **com** e **sem** token:
 
 1. Acesse o portal do desenvolvedor da SPTrans:
    [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
-2. Cadastre-se / faça login e solicite a sua **chave de ativação** (token) da API
+2. Cadastre-se / faça login e solicite a **chave de ativação** (token) da API
    Olho Vivo. O cadastro é gratuito; o próprio portal traz a opção de solicitar a
    chave de ativação.
 3. Copie o token recebido. **Nunca** escreva o token no código nem o publique em
@@ -69,7 +69,7 @@ desenhado para funcionar **com** e **sem** token:
 ### 7.3.2 Configurar a variável de ambiente `SPTRANS_TOKEN`
 
 Defina a variável de ambiente ANTES de iniciar o servidor (o valor abaixo é apenas
-um **placeholder**; use o seu token real no seu ambiente):
+um **placeholder**; use o token real no ambiente):
 
 ```bash
 # Linux / macOS
@@ -118,7 +118,7 @@ EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8000 npx expo start
 # Simulador iOS ou navegador (web):
 EXPO_PUBLIC_API_BASE_URL=http://localhost:8000 npx expo start
 
-# Celular fisico (Expo Go): use o IP da sua maquina na rede local
+# Celular fisico (Expo Go): use o IP da maquina na rede local
 EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:8000 npx expo start
 ```
 
@@ -279,17 +279,17 @@ Com o servidor no ar e o app aberto, percorra o fluxo:
    controles de zoom +/- ficam no canto inferior esquerdo.
 
 7. **"Você está aqui" (GPS, condicionado ao consentimento).** Ainda no mapa, se
-   você consentiu com a localização no passo 0, aparece o controle **"📍 Você está
+   houve consentimento de localização no passo 0, aparece o controle **"📍 Você está
    aqui"** no canto inferior direito. Ao tocá-lo, o app pede (uma única vez) a
    permissão de localização do sistema e, concedida, plota um marcador "Você está
-   aqui" na sua posição atual, **apenas no mapa do aparelho**: a coordenada
-   **nunca é enviada ao servidor**. Se você recusou o consentimento, o controle
+   aqui" na posição atual do aparelho, **apenas no mapa do aparelho**: a coordenada
+   **nunca é enviada ao servidor**. Se o consentimento foi recusado, o controle
    não aparece (é possível reativá-lo na tela de Privacidade). Caso a permissão do
    SO seja negada ou o GPS esteja desligado, o app exibe uma mensagem amigável e o
    mapa continua funcionando.
 
 8. **Privacidade e direitos do titular (LGPD).** Abra a tela de **Privacidade**.
-   Nela você pode **ver os dados guardados localmente** no aparelho (linhas
+   Nela é possível **ver os dados guardados localmente** no aparelho (linhas
    favoritas e o registro de consentimento), **excluir** esses dados locais e
    **revogar** o consentimento de localização. Como o app não tem conta nem coleta
    dados no servidor, esses direitos (acesso, correção, exclusão e revogação) são

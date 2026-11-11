@@ -226,7 +226,7 @@ O cliente lê a base da API pela variável de ambiente
 - Emulador Android: `10.0.2.2` é o apelido que o emulador usa para alcançar o
   `localhost` da máquina host, por isso o padrão já funciona com o servidor local.
 - Simulador iOS ou web: use `http://localhost:8000`.
-- Dispositivo físico (Expo Go): use o IP da sua máquina na rede local, por
+- Dispositivo físico (Expo Go): use o IP da máquina na rede local, por
   exemplo `http://192.168.0.10:8000`.
 
 Exemplos para definir a variável antes de iniciar o Expo:
@@ -235,7 +235,7 @@ Exemplos para definir a variável antes de iniciar o Expo:
 # Simulador iOS ou navegador
 EXPO_PUBLIC_API_BASE_URL=http://localhost:8000 npx expo start
 
-# Dispositivo fisico via Expo Go (troque pelo IP da sua maquina na LAN)
+# Dispositivo fisico via Expo Go (troque pelo IP da maquina na LAN)
 EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:8000 npx expo start
 ```
 
@@ -270,9 +270,9 @@ variam a cada atualização de transporte.
 
 ### Como gerar o APK (Android)
 
-Para instalar o aplicativo em um celular Android sem usar o Expo Go, você pode
+Para instalar o aplicativo em um celular Android sem usar o Expo Go, é possível
 gerar um arquivo `.apk` com o **EAS Build** (serviço de build na nuvem do Expo).
-O passo a passo completo e numerado (pré-requisitos, autenticação com a sua conta
+O passo a passo completo e numerado (pré-requisitos, autenticação com a conta
 Expo, inicialização do projeto, geração e instalação do APK) está em
 [mobile/BUILD_APK.md](mobile/BUILD_APK.md).
 
@@ -287,7 +287,7 @@ Passo a passo para obter e configurar o token:
 
 1. Acesse o portal do desenvolvedor da SPTrans:
    [https://www.sptrans.com.br/desenvolvedores/](https://www.sptrans.com.br/desenvolvedores/).
-2. Cadastre-se / faça login e solicite a sua **chave de ativação** (token) da API
+2. Cadastre-se / faça login e solicite a **chave de ativação** (token) da API
    Olho Vivo. O cadastro é gratuito.
 3. Copie o token recebido.
 4. Exporte a variável de ambiente `SPTRANS_TOKEN` com esse valor ANTES de subir o
